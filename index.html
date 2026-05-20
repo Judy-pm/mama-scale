@@ -1093,7 +1093,7 @@ body {
       flex: 1;
     }
   </style>
-  <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="top-bar"></div>
@@ -1157,7 +1157,7 @@ body {
       <!-- 管理主页面 -->
       <div class="admin-page active" id="admin-main-page">
         <div class="admin-header">
-          <h1>📊 后台管理 <span id="cloudbase-status" style="font-size:12px; color:var(--color-gray); margin-left:8px;">⏳ 连接云端...</span></h1>
+          <h1>📊 后台管理 <span id="cloud-status" style="font-size:12px; color:var(--color-gray); margin-left:8px;">⏳ 连接云端...</span></h1>
           <button class="btn btn-outline btn-sm" onclick="switchToEval()">返回评估</button>
         </div>
         
@@ -1243,108 +1243,101 @@ body {
 
   <!-- ===== 共享数据：量表定义 ===== -->
   <script>
-// ========== CloudBase 初始化 ==========
-const tcbApp = cloudbase.init({
-  env: 'guiyuan-d6g6ahlr5e67229a5',
-  region: 'ap-shanghai',
-  accessKey: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2d1aXl1YW4tZDZnNmFobHI1ZTY3MjI5YTUuYXAtc2hhbmdoYWkudGNiLWFwaS50ZW5jZW50Y2xvdWRhcGkuY29tIiwic3ViIjoiYW5vbiIsImF1ZCI6Imd1aXl1YW4tZDZnNmFobHI1ZTY3MjI5YTUiLCJleHAiOjQwODI5NDAzMjIsImlhdCI6MTc3OTI1NzEyMiwibm9uY2UiOiJWb3lBazVvOVROQ1dVcG4telFmUWRRIiwiYXRfaGFzaCI6IlZveUFrNW85VE5DV1Vwbi16UWZRZFEiLCJuYW1lIjoiQW5vbnltb3VzIiwic2NvcGUiOiJhbm9ueW1vdXMiLCJwcm9qZWN0X2lkIjoiZ3VpeXVhbi1kNmc2YWhscjVlNjcyMjlhNSIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.mvtGfV9lenEKH8ZXlmEK3LtNXIC0VO0vIjTOWuHMVWBoDdfDKCOuMjNBVk7W4j-a4pwg0ND0oHaTkf5MhDZ3nejcCwcGVSE26lih4hW86C4KbP2tRgm1Msi9PGEmzWoBQDQXYXnJD6jMlEY0chco7i1LuInusxlo8qapBnFY3TPdhUANdEaqua27Ez59WdlLTeVVXZ49hccECH3C8fxDTWU63Mc4R2EmahuTDrtDxDbVq8OyhaJdZOi7nOP-go7w_Q7zWKj3I-zVRmThf5C2iguYxNKsHv7USPqKNaz3VeFbNIjCqfHBxAO_S9-1BFt7VZ3_UO4HMeYnka_CPAtgVQ'
-});
-const tcbDb = tcbApp.database();
+// ========== Supabase 初始化 ==========
+const SUPABASE_URL = 'https://excwsowelxxkboljyobw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WygUWp1cIUAtYCV0x-2fSg_a9RIuY7j';
+let supabaseClient = null;
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('[Supabase] 客户端初始化成功');
+} catch (e) {
+  console.warn('[Supabase] 客户端初始化失败:', e.message);
+}
 
-// CloudBase 云数据库操作模块
+// Supabase 云数据库操作模块
 const CloudBaseManager = {
   // 保存评估记录到云数据库
   async saveAssessment(patientName, patientPhone, record) {
+    if (!supabaseClient) return false;
     try {
       const doc = {
-        patientName: patientName,
-        patientPhone: patientPhone,
-        scaleId: record.scaleId,
-        scaleName: record.scaleName,
+        patient_name: patientName,
+        patient_phone: patientPhone,
+        scale_id: record.scaleId,
+        scale_name: record.scaleName,
         answers: record.answers,
-        totalScore: record.totalScore,
-        scoreDisplay: record.scoreDisplay,
+        total_score: record.totalScore,
+        score_display: record.scoreDisplay,
         level: record.level,
         subscales: record.subscales || null,
-        mainConstitution: record.mainConstitution || null,
-        tendencyConstitutions: record.tendencyConstitutions || null,
-        constitutionScores: record.constitutionScores || null,
-        anxietyScore: record.anxietyScore || null,
-        depressionScore: record.depressionScore || null,
-        anxietyLevel: record.anxietyLevel || null,
-        depressionLevel: record.depressionLevel || null,
-        date: record.date,
-        time: record.time,
-        createdAt: new Date(),
-        createdBy: 'self'
+        main_constitution: record.mainConstitution || null,
+        tendency_constitutions: record.tendencyConstitutions || null,
+        constitution_scores: record.constitutionScores || null,
+        anxiety_score: record.anxietyScore || null,
+        depression_score: record.depressionScore || null,
+        anxiety_level: record.anxietyLevel || null,
+        depression_level: record.depressionLevel || null,
+        eval_date: record.date,
+        eval_time: record.time,
+        created_by: 'self'
       };
-      await tcbDb.collection('assessments').add(doc);
-      console.log('[CloudBase] 评估记录已同步到云端');
+      const { error } = await supabaseClient.from('assessments').insert({ data: doc });
+      if (error) throw error;
+      console.log('[Supabase] 评估记录已同步到云端');
       return true;
     } catch (e) {
-      console.warn('[CloudBase] 云端保存失败，数据已保存在本地:', e.message);
+      console.warn('[Supabase] 云端保存失败，数据已保存在本地:', e.message);
       return false;
     }
   },
 
   // 从云数据库读取所有评估记录，按患者分组
   async getAllPatientsFromCloud() {
+    if (!supabaseClient) return null;
     try {
-      // 分批查询，每页最多100条
-      let allRecords = [];
-      let offset = 0;
-      const batchSize = 100;
-      let hasMore = true;
-      
-      while (hasMore) {
-        const result = await tcbDb.collection('assessments')
-          .orderBy('createdAt', 'desc')
-          .skip(offset)
-          .limit(batchSize)
-          .get();
-        
-        if (result.data && result.data.length > 0) {
-          allRecords = allRecords.concat(result.data);
-          offset += batchSize;
-          if (result.data.length < batchSize) {
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
+      const { data: rows, error } = await supabaseClient
+        .from('assessments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+      if (error) throw error;
+      if (!rows || rows.length === 0) return [];
 
       // 按患者分组
       const patientMap = {};
-      allRecords.forEach(doc => {
-        const key = doc.patientName + '_' + doc.patientPhone;
+      rows.forEach(row => {
+        const doc = row.data || {};
+        const pName = doc.patient_name || '';
+        const pPhone = doc.patient_phone || '';
+        if (!pName) return;
+        const key = pName + '_' + pPhone;
         if (!patientMap[key]) {
           patientMap[key] = {
-            name: doc.patientName,
-            phone: doc.patientPhone,
-            createTime: doc.createdAt,
-            lastVisit: doc.createdAt,
+            name: pName,
+            phone: pPhone,
+            createTime: row.created_at,
+            lastVisit: row.created_at,
             records: []
           };
         }
         // 转换为本地格式
         const record = {
-          scaleId: doc.scaleId,
-          scaleName: doc.scaleName,
-          date: doc.date,
-          time: doc.time,
+          scaleId: doc.scale_id,
+          scaleName: doc.scale_name,
+          date: doc.eval_date,
+          time: doc.eval_time,
           answers: doc.answers,
-          totalScore: doc.totalScore,
-          scoreDisplay: doc.scoreDisplay,
+          totalScore: doc.total_score,
+          scoreDisplay: doc.score_display,
           level: doc.level,
           subscales: doc.subscales || null,
-          mainConstitution: doc.mainConstitution || null,
-          tendencyConstitutions: doc.tendencyConstitutions || null,
-          constitutionScores: doc.constitutionScores || null,
-          anxietyScore: doc.anxietyScore || null,
-          depressionScore: doc.depressionScore || null,
-          anxietyLevel: doc.anxietyLevel || null,
-          depressionLevel: doc.depressionLevel || null
+          mainConstitution: doc.main_constitution || null,
+          tendencyConstitutions: doc.tendency_constitutions || null,
+          constitutionScores: doc.constitution_scores || null,
+          anxietyScore: doc.anxiety_score || null,
+          depressionScore: doc.depression_score || null,
+          anxietyLevel: doc.anxiety_level || null,
+          depressionLevel: doc.depression_level || null
         };
         // 去重：同一量表同一天不重复
         const existIdx = patientMap[key].records.findIndex(r =>
@@ -1356,51 +1349,57 @@ const CloudBaseManager = {
           patientMap[key].records.push(record);
         }
         // 更新最近访问时间
-        if (new Date(doc.createdAt) > new Date(patientMap[key].lastVisit)) {
-          patientMap[key].lastVisit = doc.createdAt;
+        if (new Date(row.created_at) > new Date(patientMap[key].lastVisit)) {
+          patientMap[key].lastVisit = row.created_at;
         }
       });
 
       return Object.values(patientMap);
     } catch (e) {
-      console.warn('[CloudBase] 云端读取失败，使用本地数据:', e.message);
+      console.warn('[Supabase] 云端读取失败，使用本地数据:', e.message);
       return null;
     }
   },
 
   // 从云数据库读取单个患者的评估记录
   async getPatientFromCloud(name, phone) {
+    if (!supabaseClient) return null;
     try {
-      const result = await tcbDb.collection('assessments')
-        .where({
-          patientName: name,
-          patientPhone: phone
-        })
-        .orderBy('createdAt', 'desc')
-        .limit(1000)
-        .get();
+      const { data: rows, error } = await supabaseClient
+        .from('assessments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      if (!rows || rows.length === 0) return null;
 
-      if (!result.data || result.data.length === 0) return null;
+      // 筛选该患者
+      const patientRows = rows.filter(row => {
+        const doc = row.data || {};
+        return doc.patient_name === name && doc.patient_phone === phone;
+      });
+      if (patientRows.length === 0) return null;
 
       const records = [];
-      result.data.forEach(doc => {
+      patientRows.forEach(row => {
+        const doc = row.data || {};
         const record = {
-          scaleId: doc.scaleId,
-          scaleName: doc.scaleName,
-          date: doc.date,
-          time: doc.time,
+          scaleId: doc.scale_id,
+          scaleName: doc.scale_name,
+          date: doc.eval_date,
+          time: doc.eval_time,
           answers: doc.answers,
-          totalScore: doc.totalScore,
-          scoreDisplay: doc.scoreDisplay,
+          totalScore: doc.total_score,
+          scoreDisplay: doc.score_display,
           level: doc.level,
           subscales: doc.subscales || null,
-          mainConstitution: doc.mainConstitution || null,
-          tendencyConstitutions: doc.tendencyConstitutions || null,
-          constitutionScores: doc.constitutionScores || null,
-          anxietyScore: doc.anxietyScore || null,
-          depressionScore: doc.depressionScore || null,
-          anxietyLevel: doc.anxietyLevel || null,
-          depressionLevel: doc.depressionLevel || null
+          mainConstitution: doc.main_constitution || null,
+          tendencyConstitutions: doc.tendency_constitutions || null,
+          constitutionScores: doc.constitution_scores || null,
+          anxietyScore: doc.anxiety_score || null,
+          depressionScore: doc.depression_score || null,
+          anxietyLevel: doc.anxiety_level || null,
+          depressionLevel: doc.depression_level || null
         };
         // 去重
         const existIdx = records.findIndex(r =>
@@ -1416,24 +1415,29 @@ const CloudBaseManager = {
       return {
         name: name,
         phone: phone,
-        createTime: result.data[result.data.length - 1].createdAt,
-        lastVisit: result.data[0].createdAt,
+        createTime: patientRows[patientRows.length - 1].created_at,
+        lastVisit: patientRows[0].created_at,
         records: records
       };
     } catch (e) {
-      console.warn('[CloudBase] 云端读取患者数据失败:', e.message);
+      console.warn('[Supabase] 云端读取患者数据失败:', e.message);
       return null;
     }
   },
 
-  // 初始化：尝试访问集合，检测是否可用
+  // 初始化：尝试访问表，检测是否可用
   async init() {
+    if (!supabaseClient) {
+      console.warn('[Supabase] 客户端未初始化');
+      return false;
+    }
     try {
-      await tcbDb.collection('assessments').limit(1).get();
-      console.log('[CloudBase] 数据库连接正常');
+      const { data, error } = await supabaseClient.from('assessments').select('id').limit(1);
+      if (error) throw error;
+      console.log('[Supabase] 数据库连接正常');
       return true;
     } catch (e) {
-      console.warn('[CloudBase] 数据库连接异常，请在腾讯云CloudBase控制台创建 assessments 集合:', e.message);
+      console.warn('[Supabase] 数据库连接异常:', e.message);
       return false;
     }
   }
@@ -12113,7 +12117,7 @@ const App = {
   init() {
     // 初始化CloudBase连接检测
     CloudBaseManager.init().then(ok => {
-      const statusEl = document.getElementById('cloudbase-status');
+      const statusEl = document.getElementById('cloud-status');
       if (statusEl) {
         if (ok) {
           statusEl.textContent = '☁️ 云端已连接';
