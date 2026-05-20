@@ -12942,12 +12942,10 @@ const App = {
     Object.keys(dateGroups).sort().reverse().forEach(date => {
       html += `<div class="history-date">${date}</div>`;
       dateGroups[date].forEach(r => {
-        const levelColor = r.level ? r.level.color : 'gray';
         html += `
-          <div class="history-item" onclick="App.showPage('scaleResult', ${JSON.stringify(r).replace(/"/g, '&quot;')})">
+          <div class="history-item" style="cursor:default;">
             <div class="history-item-name">${r.scaleName}</div>
-            <div class="history-item-score" style="color: var(--color-${levelColor})">${r.scoreDisplay}</div>
-            <div class="history-item-level">${r.level ? r.level.label : ''}</div>
+            <div class="history-item-level" style="color:var(--color-gray);">已完成</div>
           </div>
         `;
       });
