@@ -1093,7 +1093,7 @@ body {
       flex: 1;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="top-bar"></div>
@@ -1248,12 +1248,12 @@ const SUPABASE_URL = 'https://excwsowelxxkboljyobw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WygUWp1cIUAtYCV0x-2fSg_a9RIuY7j';
 let supabaseClient = null;
 try {
-  const sbLib = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+  const sbLib = (typeof supabase !== 'undefined') ? supabase : null;
   if (sbLib && sbLib.createClient) {
     supabaseClient = sbLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[Supabase] 客户端初始化成功');
+    console.log('[Supabase] 客户端初始化成功, client:', !!supabaseClient);
   } else {
-    console.warn('[Supabase] SDK未加载，将使用本地模式');
+    console.warn('[Supabase] SDK未加载，window.supabase=', typeof supabase);
   }
 } catch (e) {
   console.warn('[Supabase] 客户端初始化失败:', e.message);
