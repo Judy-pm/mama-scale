@@ -1138,6 +1138,16 @@ body {
     <div id="scale-result-content"></div>
   </div>
   
+  <!-- 提交成功页 -->
+  <div class="page" id="page-submitSuccess">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; padding:32px;">
+      <div style="width:80px; height:80px; background:linear-gradient(135deg, #27AE60, #2ECC71); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:40px; margin-bottom:24px;">✅</div>
+      <h2 style="font-size:22px; color:var(--color-primary-dark); margin-bottom:12px;">提交成功</h2>
+      <p style="font-size:16px; color:var(--color-text-secondary); margin-bottom:32px; line-height:1.6;">您的评估已提交，医生将在后台查看您的评估结果。<br>如需查看历史评估，请点击下方按钮。</p>
+      <button class="btn btn-primary btn-lg" onclick="App.showPage('home')" style="min-width:200px;">返回首页</button>
+    </div>
+  </div>
+  
   <!-- 历史记录页 -->
   <div class="page" id="page-history">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
@@ -12791,13 +12801,14 @@ const App = {
     
     StorageManager.saveRecord(this.currentPatient.name, this.currentPatient.phone, record);
     
-    // 双写：同时保存到CloudBase云数据库
+    // 双写：同时保存到Supabase云数据库
     CloudBaseManager.saveAssessment(this.currentPatient.name, this.currentPatient.phone, record);
     
     // 更新当前患者数据
     this.currentPatient = StorageManager.getPatient(this.currentPatient.name, this.currentPatient.phone);
     
-    this.showPage('scaleResult', record);
+    // 患者端不显示结果，只提示提交成功
+    this.showPage('submitSuccess');
   },
   
   // ========== 结果展示 ==========
