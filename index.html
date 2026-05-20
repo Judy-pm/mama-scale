@@ -12274,7 +12274,7 @@ const App = {
           <div class="scale-card ${completed ? 'completed' : ''}" onclick="App.showPage('scaleFill', '${scale.id}')">
             <div class="scale-card-name">${scale.name}</div>
             <div class="scale-card-desc">${scale.description.substring(0, 40)}...</div>
-            ${completed ? `<div class="scale-card-status">已评估 · ${lastRecord ? lastRecord.scoreDisplay : ''}</div>` : 
+            ${completed ? `<div class="scale-card-status">已评估</div>` : 
               '<div class="scale-card-status pending">待评估</div>'}
             <div class="scale-card-count">${scale.questions.length}题</div>
           </div>
