@@ -1093,6 +1093,7 @@ body {
       flex: 1;
     }
   </style>
+  <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
 </head>
 <body>
   <div class="top-bar"></div>
@@ -1242,6 +1243,202 @@ body {
 
   <!-- ===== 共享数据：量表定义 ===== -->
   <script>
+// ========== CloudBase 初始化 ==========
+const tcbApp = cloudbase.init({
+  env: 'guiyuan-d6g6ahlr5e67229a5',
+  region: 'ap-shanghai',
+  accessKey: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2d1aXl1YW4tZDZnNmFobHI1ZTY3MjI5YTUuYXAtc2hhbmdoYWkudGNiLWFwaS50ZW5jZW50Y2xvdWRhcGkuY29tIiwic3ViIjoiYW5vbiIsImF1ZCI6Imd1aXl1YW4tZDZnNmFobHI1ZTY3MjI5YTUiLCJleHAiOjQwODI5NDAzMjIsImlhdCI6MTc3OTI1NzEyMiwibm9uY2UiOiJWb3lBazVvOVROQ1dVcG4telFmUWRRIiwiYXRfaGFzaCI6IlZveUFrNW85VE5DV1Vwbi16UWZRZFEiLCJuYW1lIjoiQW5vbnltb3VzIiwic2NvcGUiOiJhbm9ueW1vdXMiLCJwcm9qZWN0X2lkIjoiZ3VpeXVhbi1kNmc2YWhscjVlNjcyMjlhNSIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.mvtGfV9lenEKH8ZXlmEK3LtNXIC0VO0vIjTOWuHMVWBoDdfDKCOuMjNBVk7W4j-a4pwg0ND0oHaTkf5MhDZ3nejcCwcGVSE26lih4hW86C4KbP2tRgm1Msi9PGEmzWoBQDQXYXnJD6jMlEY0chco7i1LuInusxlo8qapBnFY3TPdhUANdEaqua27Ez59WdlLTeVVXZ49hccECH3C8fxDTWU63Mc4R2EmahuTDrtDxDbVq8OyhaJdZOi7nOP-go7w_Q7zWKj3I-zVRmThf5C2iguYxNKsHv7USPqKNaz3VeFbNIjCqfHBxAO_S9-1BFt7VZ3_UO4HMeYnka_CPAtgVQ'
+});
+const tcbDb = tcbApp.database();
+
+// CloudBase 云数据库操作模块
+const CloudBaseManager = {
+  // 保存评估记录到云数据库
+  async saveAssessment(patientName, patientPhone, record) {
+    try {
+      const doc = {
+        patientName: patientName,
+        patientPhone: patientPhone,
+        scaleId: record.scaleId,
+        scaleName: record.scaleName,
+        answers: record.answers,
+        totalScore: record.totalScore,
+        scoreDisplay: record.scoreDisplay,
+        level: record.level,
+        subscales: record.subscales || null,
+        mainConstitution: record.mainConstitution || null,
+        tendencyConstitutions: record.tendencyConstitutions || null,
+        constitutionScores: record.constitutionScores || null,
+        anxietyScore: record.anxietyScore || null,
+        depressionScore: record.depressionScore || null,
+        anxietyLevel: record.anxietyLevel || null,
+        depressionLevel: record.depressionLevel || null,
+        date: record.date,
+        time: record.time,
+        createdAt: new Date(),
+        createdBy: 'self'
+      };
+      await tcbDb.collection('assessments').add(doc);
+      console.log('[CloudBase] 评估记录已同步到云端');
+      return true;
+    } catch (e) {
+      console.warn('[CloudBase] 云端保存失败，数据已保存在本地:', e.message);
+      return false;
+    }
+  },
+
+  // 从云数据库读取所有评估记录，按患者分组
+  async getAllPatientsFromCloud() {
+    try {
+      // 分批查询，每页最多100条
+      let allRecords = [];
+      let offset = 0;
+      const batchSize = 100;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const result = await tcbDb.collection('assessments')
+          .orderBy('createdAt', 'desc')
+          .skip(offset)
+          .limit(batchSize)
+          .get();
+        
+        if (result.data && result.data.length > 0) {
+          allRecords = allRecords.concat(result.data);
+          offset += batchSize;
+          if (result.data.length < batchSize) {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      // 按患者分组
+      const patientMap = {};
+      allRecords.forEach(doc => {
+        const key = doc.patientName + '_' + doc.patientPhone;
+        if (!patientMap[key]) {
+          patientMap[key] = {
+            name: doc.patientName,
+            phone: doc.patientPhone,
+            createTime: doc.createdAt,
+            lastVisit: doc.createdAt,
+            records: []
+          };
+        }
+        // 转换为本地格式
+        const record = {
+          scaleId: doc.scaleId,
+          scaleName: doc.scaleName,
+          date: doc.date,
+          time: doc.time,
+          answers: doc.answers,
+          totalScore: doc.totalScore,
+          scoreDisplay: doc.scoreDisplay,
+          level: doc.level,
+          subscales: doc.subscales || null,
+          mainConstitution: doc.mainConstitution || null,
+          tendencyConstitutions: doc.tendencyConstitutions || null,
+          constitutionScores: doc.constitutionScores || null,
+          anxietyScore: doc.anxietyScore || null,
+          depressionScore: doc.depressionScore || null,
+          anxietyLevel: doc.anxietyLevel || null,
+          depressionLevel: doc.depressionLevel || null
+        };
+        // 去重：同一量表同一天不重复
+        const existIdx = patientMap[key].records.findIndex(r =>
+          r.scaleId === record.scaleId && r.date === record.date
+        );
+        if (existIdx >= 0) {
+          patientMap[key].records[existIdx] = record;
+        } else {
+          patientMap[key].records.push(record);
+        }
+        // 更新最近访问时间
+        if (new Date(doc.createdAt) > new Date(patientMap[key].lastVisit)) {
+          patientMap[key].lastVisit = doc.createdAt;
+        }
+      });
+
+      return Object.values(patientMap);
+    } catch (e) {
+      console.warn('[CloudBase] 云端读取失败，使用本地数据:', e.message);
+      return null;
+    }
+  },
+
+  // 从云数据库读取单个患者的评估记录
+  async getPatientFromCloud(name, phone) {
+    try {
+      const result = await tcbDb.collection('assessments')
+        .where({
+          patientName: name,
+          patientPhone: phone
+        })
+        .orderBy('createdAt', 'desc')
+        .limit(1000)
+        .get();
+
+      if (!result.data || result.data.length === 0) return null;
+
+      const records = [];
+      result.data.forEach(doc => {
+        const record = {
+          scaleId: doc.scaleId,
+          scaleName: doc.scaleName,
+          date: doc.date,
+          time: doc.time,
+          answers: doc.answers,
+          totalScore: doc.totalScore,
+          scoreDisplay: doc.scoreDisplay,
+          level: doc.level,
+          subscales: doc.subscales || null,
+          mainConstitution: doc.mainConstitution || null,
+          tendencyConstitutions: doc.tendencyConstitutions || null,
+          constitutionScores: doc.constitutionScores || null,
+          anxietyScore: doc.anxietyScore || null,
+          depressionScore: doc.depressionScore || null,
+          anxietyLevel: doc.anxietyLevel || null,
+          depressionLevel: doc.depressionLevel || null
+        };
+        // 去重
+        const existIdx = records.findIndex(r =>
+          r.scaleId === record.scaleId && r.date === record.date
+        );
+        if (existIdx >= 0) {
+          records[existIdx] = record;
+        } else {
+          records.push(record);
+        }
+      });
+
+      return {
+        name: name,
+        phone: phone,
+        createTime: result.data[result.data.length - 1].createdAt,
+        lastVisit: result.data[0].createdAt,
+        records: records
+      };
+    } catch (e) {
+      console.warn('[CloudBase] 云端读取患者数据失败:', e.message);
+      return null;
+    }
+  },
+
+  // 初始化：尝试访问集合，检测是否可用
+  async init() {
+    try {
+      await tcbDb.collection('assessments').limit(1).get();
+      console.log('[CloudBase] 数据库连接正常');
+      return true;
+    } catch (e) {
+      console.warn('[CloudBase] 数据库连接异常，请在腾讯云CloudBase控制台创建 assessments 集合:', e.message);
+      return false;
+    }
+  }
+};
+
 // 量表数据文件 - 女性抗衰门诊H5量表评估系统
 // 包含28个量表的完整题目、选项和评分逻辑
 
@@ -11914,6 +12111,19 @@ const App = {
   
   // 初始化
   init() {
+    // 初始化CloudBase连接检测
+    CloudBaseManager.init().then(ok => {
+      const statusEl = document.getElementById('cloudbase-status');
+      if (statusEl) {
+        if (ok) {
+          statusEl.textContent = '☁️ 云端已连接';
+          statusEl.style.color = '#27ae60';
+        } else {
+          statusEl.textContent = '⚠️ 云端未连接';
+          statusEl.style.color = '#e74c3c';
+        }
+      }
+    });
     this.showPage('home');
   },
   
@@ -11974,14 +12184,30 @@ const App = {
     `;
   },
   
-  doLogin() {
+  async doLogin() {
     const name = document.getElementById('input-name').value.trim();
     const phone = document.getElementById('input-phone').value.trim();
     
     if (!name) { alert('请输入姓名'); return; }
     if (!phone || phone.length < 11) { alert('请输入正确的手机号'); return; }
     
-    this.currentPatient = StorageManager.getPatient(name, phone) || { name, phone, records: [] };
+    // 优先从云端读取，失败则降级读localStorage
+    const cloudPatient = await CloudBaseManager.getPatientFromCloud(name, phone);
+    const localPatient = StorageManager.getPatient(name, phone);
+    
+    if (cloudPatient && localPatient) {
+      // 合并云端和本地数据
+      const mergedRecords = [...(localPatient.records || [])];
+      (cloudPatient.records || []).forEach(cr => {
+        const existIdx = mergedRecords.findIndex(r =>
+          r.scaleId === cr.scaleId && r.date === cr.date
+        );
+        if (existIdx < 0) mergedRecords.push(cr);
+      });
+      this.currentPatient = { ...localPatient, records: mergedRecords };
+    } else {
+      this.currentPatient = cloudPatient || localPatient || { name, phone, records: [] };
+    }
     this.showPage('scaleList');
   },
   
@@ -12556,6 +12782,9 @@ const App = {
     
     StorageManager.saveRecord(this.currentPatient.name, this.currentPatient.phone, record);
     
+    // 双写：同时保存到CloudBase云数据库
+    CloudBaseManager.saveAssessment(this.currentPatient.name, this.currentPatient.phone, record);
+    
     // 更新当前患者数据
     this.currentPatient = StorageManager.getPatient(this.currentPatient.name, this.currentPatient.phone);
     
@@ -12727,7 +12956,8 @@ const App = {
   <script>
     // 管理应用
     const AdminApp = {
-      init() {
+      async init() {
+        await CloudBaseManager.init();
         this.renderDashboard();
       },
       
@@ -12748,8 +12978,10 @@ const App = {
         }
       },
       
-      renderDashboard() {
-        const patients = StorageManager.getPatients();
+      async renderDashboard() {
+        // 优先从云端读取，失败降级读localStorage
+        const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
+        const patients = cloudPatients || StorageManager.getPatients();
         const totalPatients = patients.length;
         const totalRecords = patients.reduce((sum, p) => sum + (p.records ? p.records.length : 0), 0);
         
@@ -12815,8 +13047,10 @@ const App = {
         document.getElementById('dashboard-content').innerHTML = html;
       },
       
-      renderPatients() {
-        const patients = StorageManager.getPatients();
+      async renderPatients() {
+        // 优先从云端读取，失败降级读localStorage
+        const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
+        const patients = cloudPatients || StorageManager.getPatients();
         const scaleMap = {};
         SCALES.forEach(s => scaleMap[s.id] = s.name);
         
@@ -12879,8 +13113,10 @@ const App = {
         });
       },
       
-      showDetail(patientIdx) {
-        const patients = StorageManager.getPatients();
+      async showDetail(patientIdx) {
+        // 优先从云端读取，失败降级读localStorage
+        const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
+        const patients = cloudPatients || StorageManager.getPatients();
         const patient = patients[patientIdx];
         const scaleMap = {};
         SCALES.forEach(s => scaleMap[s.id] = s.name);
@@ -13031,8 +13267,10 @@ const App = {
         alert('配置已保存');
       },
       
-      renderExport() {
-        const patients = StorageManager.getPatients();
+      async renderExport() {
+        // 优先从云端读取，失败降级读localStorage
+        const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
+        const patients = cloudPatients || StorageManager.getPatients();
         const totalRecords = patients.reduce((sum, p) => sum + (p.records ? p.records.length : 0), 0);
         
         let html = `
