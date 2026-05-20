@@ -1034,6 +1034,64 @@ body {
     .admin-password-box .pwd-btns button {
       flex: 1;
     }
+
+    /* 修改密码弹窗 */
+    .change-pwd-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+    .change-pwd-overlay.show {
+      display: flex;
+    }
+    .change-pwd-box {
+      background: white;
+      border-radius: 16px;
+      padding: 32px 24px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .change-pwd-box h3 {
+      color: var(--color-primary-dark);
+      margin-bottom: 16px;
+    }
+    .change-pwd-box input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    .change-pwd-box input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(123,104,174,0.15);
+    }
+    .change-pwd-box label {
+      display: block;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      text-align: left;
+      margin-bottom: 2px;
+      margin-top: 4px;
+    }
+    .change-pwd-box .pwd-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .change-pwd-box .pwd-btns button {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -1107,6 +1165,7 @@ body {
           <button class="btn btn-secondary" onclick="AdminApp.showTab('patients', this)">患者列表</button>
           <button class="btn btn-secondary" onclick="AdminApp.showTab('config', this)">量表配置</button>
           <button class="btn btn-secondary" onclick="AdminApp.showTab('export', this)">数据导出</button>
+          <button class="btn btn-secondary" onclick="showChangePasswordDialog()" style="margin-left:auto;">🔑 修改密码</button>
         </div>
         
         <!-- 数据概览 -->
@@ -1145,6 +1204,24 @@ body {
       <div class="pwd-btns">
         <button class="btn btn-outline" onclick="cancelAdminSwitch()">取消</button>
         <button class="btn btn-primary" onclick="verifyAdminPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改密码弹窗 -->
+  <div class="change-pwd-overlay" id="change-pwd-overlay">
+    <div class="change-pwd-box">
+      <h3>🔑 修改管理密码</h3>
+      <label>旧密码</label>
+      <input type="password" id="old-password" placeholder="请输入旧密码" />
+      <label>新密码</label>
+      <input type="password" id="new-password" placeholder="请输入新密码" />
+      <label>确认新密码</label>
+      <input type="password" id="confirm-password" placeholder="再次输入新密码"
+             onkeydown="if(event.key==='Enter')doChangePassword()" />
+      <div class="pwd-btns">
+        <button class="btn btn-outline" onclick="cancelChangePassword()">取消</button>
+        <button class="btn btn-primary" onclick="doChangePassword()">确认修改</button>
       </div>
     </div>
   </div>
@@ -13007,8 +13084,13 @@ const App = {
   <script>
     // 当前模式
     let currentMode = 'eval';
-    const ADMIN_PASSWORD = 'ksmz';
+    const DEFAULT_ADMIN_PASSWORD = 'ksmz';
     let adminAuthenticated = false;
+
+    // 获取当前管理密码（优先localStorage，否则默认）
+    function getAdminPassword() {
+      return localStorage.getItem('admin_password') || DEFAULT_ADMIN_PASSWORD;
+    }
     
     // 切换到评估模式
     function switchToEval() {
@@ -13039,7 +13121,7 @@ const App = {
     // 验证管理密码
     function verifyAdminPassword() {
       const pwd = document.getElementById('mode-switch-password').value;
-      if (pwd === ADMIN_PASSWORD) {
+      if (pwd === getAdminPassword()) {
         adminAuthenticated = true;
         document.getElementById('admin-password-overlay').classList.remove('show');
         doSwitchToAdmin();
@@ -13054,6 +13136,66 @@ const App = {
     function cancelAdminSwitch() {
       document.getElementById('admin-password-overlay').classList.remove('show');
     }
+
+    // 显示修改密码对话框
+    function showChangePasswordDialog() {
+      document.getElementById('old-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      document.getElementById('change-pwd-overlay').classList.add('show');
+      setTimeout(() => document.getElementById('old-password').focus(), 100);
+    }
+
+    // 取消修改密码
+    function cancelChangePassword() {
+      document.getElementById('change-pwd-overlay').classList.remove('show');
+    }
+
+    // 执行修改密码
+    function doChangePassword() {
+      const oldPwd = document.getElementById('old-password').value;
+      const newPwd = document.getElementById('new-password').value;
+      const confirmPwd = document.getElementById('confirm-password').value;
+
+      if (!oldPwd) {
+        alert('请输入旧密码');
+        document.getElementById('old-password').focus();
+        return;
+      }
+      if (oldPwd !== getAdminPassword()) {
+        alert('旧密码错误');
+        document.getElementById('old-password').value = '';
+        document.getElementById('old-password').focus();
+        return;
+      }
+      if (!newPwd) {
+        alert('新密码不能为空');
+        document.getElementById('new-password').focus();
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        alert('两次输入的新密码不一致');
+        document.getElementById('confirm-password').value = '';
+        document.getElementById('confirm-password').focus();
+        return;
+      }
+      if (newPwd === oldPwd) {
+        alert('新密码不能与旧密码相同');
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+        document.getElementById('new-password').focus();
+        return;
+      }
+
+      localStorage.setItem('admin_password', newPwd);
+      document.getElementById('change-pwd-overlay').classList.remove('show');
+      alert('密码修改成功！');
+    }
+
+    // 点击修改密码弹窗外关闭
+    document.getElementById('change-pwd-overlay').addEventListener('click', function(e) {
+      if (e.target === this) cancelChangePassword();
+    });
     
     // 执行切换到管理模式
     function doSwitchToAdmin() {
