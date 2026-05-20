@@ -1214,6 +1214,8 @@ body {
       <h3>🔑 修改管理密码</h3>
       <label>旧密码</label>
       <input type="password" id="old-password" placeholder="请输入旧密码" />
+      <label>安全验证 — 手机号</label>
+      <input type="tel" id="verify-phone" placeholder="请输入注册手机号" maxlength="11" />
       <label>新密码</label>
       <input type="password" id="new-password" placeholder="请输入新密码" />
       <label>确认新密码</label>
@@ -13085,11 +13087,17 @@ const App = {
     // 当前模式
     let currentMode = 'eval';
     const DEFAULT_ADMIN_PASSWORD = 'ksmz';
+    const DEFAULT_ADMIN_PHONE = '13071893480'; // 默认管理员手机号
     let adminAuthenticated = false;
 
     // 获取当前管理密码（优先localStorage，否则默认）
     function getAdminPassword() {
       return localStorage.getItem('admin_password') || DEFAULT_ADMIN_PASSWORD;
+    }
+
+    // 获取管理员手机号（优先localStorage，否则默认）
+    function getAdminPhone() {
+      return localStorage.getItem('admin_phone') || DEFAULT_ADMIN_PHONE;
     }
     
     // 切换到评估模式
@@ -13140,6 +13148,7 @@ const App = {
     // 显示修改密码对话框
     function showChangePasswordDialog() {
       document.getElementById('old-password').value = '';
+      document.getElementById('verify-phone').value = '';
       document.getElementById('new-password').value = '';
       document.getElementById('confirm-password').value = '';
       document.getElementById('change-pwd-overlay').classList.add('show');
@@ -13154,6 +13163,7 @@ const App = {
     // 执行修改密码
     function doChangePassword() {
       const oldPwd = document.getElementById('old-password').value;
+      const phone = document.getElementById('verify-phone').value.trim();
       const newPwd = document.getElementById('new-password').value;
       const confirmPwd = document.getElementById('confirm-password').value;
 
@@ -13166,6 +13176,17 @@ const App = {
         alert('旧密码错误');
         document.getElementById('old-password').value = '';
         document.getElementById('old-password').focus();
+        return;
+      }
+      if (!phone) {
+        alert('请输入注册手机号');
+        document.getElementById('verify-phone').focus();
+        return;
+      }
+      if (phone !== getAdminPhone()) {
+        alert('手机号不匹配');
+        document.getElementById('verify-phone').value = '';
+        document.getElementById('verify-phone').focus();
         return;
       }
       if (!newPwd) {
