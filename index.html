@@ -12152,6 +12152,8 @@ const App = {
     } else {
       this.currentPatient = cloudPatient || localPatient || { name, phone, records: [] };
     }
+    // 查询医生开单
+    this.currentPrescriptions = await CloudBaseManager.getPrescriptions(name, phone);
     this.showPage('scaleList');
   },
   
@@ -12164,6 +12166,9 @@ const App = {
   renderScaleList() {
     const config = StorageManager.getScaleConfig();
     const enabledIds = config.enabledScales || SCALES.map(s => s.id);
+    // 如果有医生开单，只显示开单的量表
+    const prescriptionIds = this.currentPrescriptions || null;
+    const displayIds = prescriptionIds ? prescriptionIds.filter(id => enabledIds.includes(id)) : enabledIds;
     const categories = {};
     const completedIds = new Set();
     
@@ -12174,7 +12179,7 @@ const App = {
     
     // 按分类组织
     SCALES.forEach(scale => {
-      if (!enabledIds.includes(scale.id)) return;
+      if (!displayIds.includes(scale.id)) return;
       if (!categories[scale.category]) categories[scale.category] = [];
       categories[scale.category].push(scale);
     });
@@ -12210,6 +12215,12 @@ const App = {
     });
     
     html += '</div>';
+    
+    // 如果没有可显示的量表
+    if (Object.keys(categories).length === 0) {
+      html = '<div class="empty-state"><p>📋 暂无待评估量表</p><p style="color:var(--color-text-secondary);font-size:14px;">请咨询医生为您开具评估量表</p></div>';
+    }
+    
     document.getElementById('scale-list-content').innerHTML = html;
   },
   
