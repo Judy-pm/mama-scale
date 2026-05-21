@@ -682,6 +682,9 @@ textarea.form-input { resize: vertical; min-height: 80px; }
         <div class="nav-item" onclick="switchPage('prescribe', this)" data-page="prescribe">
           <span class="nav-icon">📝</span> 问卷管理
         </div>
+        <div class="nav-item" onclick="switchPage('consultation', this)" data-page="consultation">
+          <span class="nav-icon">🩺</span> 问诊
+        </div>
         <div class="nav-item" onclick="switchPage('checkup', this)" data-page="checkup">
           <span class="nav-icon">🧬</span> 体检解读
         </div>
@@ -757,6 +760,11 @@ textarea.form-input { resize: vertical; min-height: 80px; }
         <!-- ===== 问卷管理（开单） ===== -->
         <div id="page-prescribe" class="page-content">
           <div id="prescribe-content"></div>
+        </div>
+        
+        <!-- ===== 问诊管理 ===== -->
+        <div id="page-consultation" class="page-content">
+          <div id="consultation-content"></div>
         </div>
         
         <!-- ===== 体检解读 ===== -->
@@ -11853,6 +11861,7 @@ const PAGE_TITLES = {
   'patients': '👥 客户管理',
   'health-plan': '📋 健康计划',
   'prescribe': '📝 问卷管理',
+  'consultation': '🩺 问诊',
   'checkup': '🧬 体检解读',
   'ai-workspace': '🤖 AI工作台',
   'clinical-docs': '📄 临床文档',
@@ -11885,6 +11894,7 @@ function switchPage(page, navItem) {
     case 'dashboard': AdminApp.renderDashboard(); break;
     case 'patients': AdminApp.renderPatients(); break;
     case 'prescribe': AdminApp.renderPrescribe(); break;
+    case 'consultation': AdminApp.renderConsultation(); break;
     case 'checkup': AdminApp.renderCheckup(); break;
     case 'ai-workspace': AdminApp.renderAIWorkspace(); break;
     case 'settings': AdminApp.renderSettings(); break;
@@ -12468,6 +12478,8 @@ const AdminApp = {
       });
       scaleCheckboxes += '</div>';
     });
+    // 中医问诊单（特殊选项，不在SCALES中）
+    scaleCheckboxes += '<div class="scale-category"><div class="scale-category-title">中医问诊</div><label class="scale-check-item"><input type="checkbox" class="scale-check" value="tcm_consultation" /> \u{1FA7A} 中医问诊单</label></div>';
     
     const pending = prescriptions.filter(p => p.status === 'pending');
     const completed = prescriptions.filter(p => p.status === 'completed');
@@ -12630,6 +12642,24 @@ const AdminApp = {
               <div style="font-size:13px;color:var(--color-gray);">${getAdminPhone()}</div>
             </div>
             <span style="font-size:13px;color:var(--color-green);">已绑定</span>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <h4>🤖 AI配置</h4>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
+            <div>
+              <div style="font-weight:600;">DeepSeek API Key</div>
+              <div style="font-size:13px;color:var(--color-gray);">用于问诊AI智能总结</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="AdminApp.configDeepSeekKey()">配置</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+            <div>
+              <div style="font-weight:600;">API状态</div>
+              <div style="font-size:13px;color:var(--color-gray);" id="deepseek-status">未配置</div>
+            </div>
+            <span style="font-size:13px;" id="deepseek-badge">—</span>
           </div>
         </div>
         
@@ -12986,8 +13016,529 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
   },
 
   ckCloseRpt(){document.getElementById('ck-reportModal').classList.remove('show')},
-  ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}</style></head><body>'+c+'</body></html>');w.document.close();setTimeout(()=>w.print(),500)}
+  ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}</style></head><body>'+c+'</body></html>');w.document.close();setTimeout(()=>w.print(),500)},
 
+
+  // ========== 问诊管理 ==========
+  currentConsultationTab: 'records',
+  currentConsultationId: null,
+  currentConsultationData: null,
+  currentTonguePulseConsultationId: null,
+
+  async renderConsultation() {
+    const tabs = [
+      { id: 'records', name: '问诊记录', icon: '📋' },
+      { id: 'detail', name: '详情/AI总结', icon: '🤖' },
+      { id: 'tongue-pulse', name: '舌象脉象', icon: '👅' }
+    ];
+    let tabHtml = '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">';
+    tabs.forEach(t => {
+      const active = this.currentConsultationTab === t.id ? 'btn-primary' : 'btn-outline';
+      tabHtml += `<button class="btn ${active} btn-sm" onclick="AdminApp.switchConsultationTab('${t.id}')">${t.icon} ${t.name}</button>`;
+    });
+    tabHtml += '</div>';
+    let contentHtml = '';
+    switch (this.currentConsultationTab) {
+      case 'records': contentHtml = await this.renderConsultationRecords(); break;
+      case 'detail': contentHtml = this.renderConsultationDetail(); break;
+      case 'tongue-pulse': contentHtml = this.renderTonguePulse(); break;
+      default: contentHtml = await this.renderConsultationRecords();
+    }
+    document.getElementById('consultation-content').innerHTML = tabHtml + contentHtml;
+    this.updateDeepSeekStatus();
+  },
+
+  switchConsultationTab(tab) {
+    this.currentConsultationTab = tab;
+    this.renderConsultation();
+  },
+
+  async renderConsultationRecords() {
+    let records = [];
+    try {
+      const { data, error } = await CloudBaseManager.sb.from('tcm_consultations').select('*').order('created_at', { ascending: false }).limit(200);
+      if (!error && data) records = data;
+    } catch (e) { console.warn('获取问诊记录失败:', e); }
+    if (records.length === 0) {
+      return '<div style="text-align:center;padding:60px 20px;color:var(--color-gray);"><div style="font-size:48px;margin-bottom:16px;">🩺</div><p>暂无问诊记录</p><p style="font-size:13px;margin-top:8px;">患者提交问诊单后将在此显示</p></div>';
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:12px;">';
+    records.forEach(r => {
+      const time = new Date(r.created_at).toLocaleString('zh-CN');
+      const complaint = (r.chief_complaint || '').substring(0, 30) + ((r.chief_complaint || '').length > 30 ? '...' : '');
+      const statusMap = { submitted: '待处理', reviewing: '审阅中', completed: '已完成' };
+      const statusColor = { submitted: 'var(--color-orange)', reviewing: 'var(--color-primary)', completed: 'var(--color-green)' };
+      html += `<div class="prescription-card" style="cursor:pointer;" onclick="AdminApp.viewConsultation('${r.id}')">`;
+      html += `<div class="rx-header"><strong>${r.patient_name || ''}</strong><span style="color:${statusColor[r.status]||'var(--color-gray)'};font-size:12px;">${statusMap[r.status]||r.status}</span></div>`;
+      html += `<div class="rx-meta">${complaint || '无主诉'}</div>`;
+      html += `<div style="color:var(--color-gray);font-size:12px;margin-top:4px;">${time}</div>`;
+      if (r.ai_summary) html += '<span style="display:inline-block;margin-top:6px;padding:2px 8px;border-radius:4px;font-size:11px;background:#F0E8FA;color:var(--color-primary);">🤖 已AI总结</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  },
+
+  async viewConsultation(id) {
+    this.currentConsultationId = id;
+    this.currentConsultationTab = 'detail';
+    try {
+      const { data, error } = await CloudBaseManager.sb.from('tcm_consultations').select('*').eq('id', id).single();
+      if (error) throw error;
+      this.currentConsultationData = data;
+    } catch (e) {
+      console.warn('获取问诊详情失败:', e);
+      alert('获取问诊详情失败');
+      return;
+    }
+    this.renderConsultation();
+  },
+
+  renderConsultationDetail() {
+    const r = this.currentConsultationData;
+    if (!r) return '<div style="text-align:center;padding:60px;color:var(--color-gray);">请先从问诊记录中选择一条记录</div>';
+    const time = new Date(r.created_at).toLocaleString('zh-CN');
+    const fields = [
+      { key: 'chief_complaint', label: '主诉', icon: '🎯', required: true },
+      { key: 'present_illness', label: '现病史', icon: '📋' },
+      { key: 'medical_history', label: '就医史', icon: '🏥' },
+      { key: 'medication_history', label: '用药史', icon: '💊' },
+      { key: 'lab_results', label: '检验结果', icon: '🔬' },
+      { key: 'past_history', label: '既往史', icon: '📖' },
+      { key: 'surgical_history', label: '手术史', icon: '🔪' },
+      { key: 'allergy_history', label: '过敏史', icon: '⚠️' },
+      { key: 'family_history', label: '家族史', icon: '👨‍👩‍👧‍👦' },
+      { key: 'menstrual_history', label: '婚育及月经史', icon: '🌸' }
+    ];
+    const lifestyleFields = [
+      { key: 'emotional_status', label: '情绪状态', icon: '😊', type: 'json' },
+      { key: 'dietary_habits', label: '饮食习惯', icon: '🍽️', type: 'json' },
+      { key: 'sleep_quality', label: '睡眠质量', icon: '😴', type: 'json' },
+      { key: 'living_environment', label: '生活环境', icon: '🏡' },
+      { key: 'work_stress', label: '工作压力', icon: '💼', type: 'json' },
+      { key: 'exercise_habits', label: '运动习惯', icon: '🏃', type: 'json' },
+      { key: 'other_notes', label: '其他补充', icon: '📝' }
+    ];
+    let html = '<div id="consultation-detail-print">';
+    html += '<div class="info-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">';
+    html += `<div><h3 style="color:var(--color-primary-dark);">🩺 ${r.patient_name||''} 的问诊记录</h3><div style="color:var(--color-gray);font-size:13px;margin-top:4px;">${time} | ${r.patient_phone||''}</div></div>`;
+    html += '<div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="AdminApp.generateAISummary()">🤖 AI智能总结</button><button class="btn btn-outline btn-sm" onclick="AdminApp.printConsultation()">🖨️ 打印</button></div>';
+    html += '</div>';
+    fields.forEach(f => {
+      const val = r[f.key];
+      if (!val) return;
+      html += '<div class="info-card">';
+      html += `<div style="font-weight:600;color:var(--color-primary-dark);margin-bottom:6px;">${f.icon} ${f.label}`;
+      if (f.required) html += ' <span style="color:var(--color-red);font-size:11px;">必填</span>';
+      html += '</div>';
+      html += `<div style="color:var(--color-text);line-height:1.8;white-space:pre-wrap;">${val}</div>`;
+      html += '</div>';
+    });
+    lifestyleFields.forEach(f => {
+      const val = r[f.key];
+      if (!val) return;
+      html += '<div class="info-card">';
+      html += `<div style="font-weight:600;color:var(--color-primary-dark);margin-bottom:6px;">${f.icon} ${f.label}</div>`;
+      if (f.type === 'json' && typeof val === 'object') {
+        const parts = [];
+        if (val.main) parts.push(val.main);
+        if (val.detail) parts.push(val.detail);
+        if (val.frequency) parts.push('频率: ' + val.frequency);
+        if (val.preference) parts.push('偏好: ' + (Array.isArray(val.preference) ? val.preference.join('、') : val.preference));
+        html += `<div style="color:var(--color-text);line-height:1.8;">${parts.join(' | ')}</div>`;
+      } else if (typeof val === 'string') {
+        html += `<div style="color:var(--color-text);line-height:1.8;white-space:pre-wrap;">${val}</div>`;
+      } else {
+        html += `<div style="color:var(--color-text);line-height:1.8;">${JSON.stringify(val, null, 2)}</div>`;
+      }
+      html += '</div>';
+    });
+    if (r.ai_summary) {
+      html += '<div class="info-card" style="border:2px solid var(--color-primary);background:linear-gradient(135deg,#F8F6FA,#F0E8FA);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3 style="color:var(--color-primary);">🤖 AI智能总结</h3><span style="font-size:11px;color:var(--color-gray);">由DeepSeek AI生成，仅供参考</span></div>';
+      const summary = r.ai_summary;
+      const summaryDimensions = [
+        { key: 'chief_complaint', label: '主诉' },
+        { key: 'present_illness', label: '现病史' },
+        { key: 'medical_history', label: '就医史' },
+        { key: 'medication_history', label: '用药史' },
+        { key: 'lab_results', label: '检验结果' },
+        { key: 'past_history', label: '既往史' },
+        { key: 'surgical_history', label: '手术史' },
+        { key: 'allergy_history', label: '过敏史' },
+        { key: 'family_history', label: '家族史' },
+        { key: 'menstrual_history', label: '婚育及月经史' },
+        { key: 'lifestyle', label: '情绪/饮食/睡眠/压力等' }
+      ];
+      summaryDimensions.forEach(d => {
+        if (summary[d.key]) {
+          const rawVal = r[d.key] || '';
+          const isAbnormal = d.key !== 'lifestyle' && (
+            rawVal.includes('异常') || rawVal.includes('障碍') || rawVal.includes('过敏') ||
+            rawVal.includes('疼痛') || rawVal.includes('失眠') || rawVal.includes('焦虑') || rawVal.includes('抑郁')
+          );
+          html += `<div style="margin-bottom:10px;padding:8px 12px;background:white;border-radius:8px;border-left:3px solid ${isAbnormal?'var(--color-orange)':'var(--color-green)'};">`;
+          html += `<div style="font-weight:600;font-size:14px;color:var(--color-primary-dark);">${d.label}`;
+          if (isAbnormal) html += ' <span style="color:var(--color-orange);font-size:11px;">⚠ 需关注</span>';
+          html += '</div>';
+          html += `<div style="font-size:14px;color:var(--color-text);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${summary[d.key]}</div>`;
+          html += '</div>';
+        }
+      });
+      html += '</div>';
+    }
+    if (r.syndrome_differentiation) {
+      const sd = r.syndrome_differentiation;
+      html += '<div class="info-card" style="border:2px solid var(--color-orange);background:#FFF8F0;">';
+      html += '<h3 style="color:var(--color-orange);">🔮 参考辨证</h3>';
+      if (sd.primary) html += `<div style="font-size:16px;font-weight:700;color:var(--color-darkred);margin:8px 0;">${sd.primary}</div>`;
+      if (sd.secondary && sd.secondary.length) html += `<div style="margin:4px 0;">兼证：${sd.secondary.join('、')}</div>`;
+      if (sd.evidence) html += `<div style="font-size:13px;color:var(--color-text-secondary);margin-top:8px;line-height:1.6;">${sd.evidence}</div>`;
+      html += '<div style="font-size:11px;color:var(--color-gray);margin-top:8px;">⚠️ 参考辨证，请医生结合临床判断</div>';
+      html += '</div>';
+    }
+    html += '<div class="info-card">';
+    html += '<h4 style="color:var(--color-primary-dark);margin-bottom:8px;">📝 医生备注</h4>';
+    html += `<textarea id="doctor-notes-input" class="form-input" rows="3" placeholder="输入医生备注...">${r.doctor_notes||''}</textarea>`;
+    html += '<button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="AdminApp.saveDoctorNotes()">保存备注</button>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  },
+
+  async generateAISummary() {
+    const apiKey = localStorage.getItem('deepseek_api_key');
+    if (!apiKey) { alert('请先在"设置"中配置DeepSeek API Key'); return; }
+    const r = this.currentConsultationData;
+    if (!r) return;
+    const btn = event.target.closest('button');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '⏳ 生成中...';
+    btn.disabled = true;
+    try {
+      const consultationData = [
+        '主诉: ' + (r.chief_complaint || '无'),
+        '现病史: ' + (r.present_illness || '无'),
+        '就医史: ' + (r.medical_history || '无'),
+        '用药史: ' + (r.medication_history || '无'),
+        '检验结果: ' + (r.lab_results || '无'),
+        '既往史: ' + (r.past_history || '无'),
+        '手术史: ' + (r.surgical_history || '无'),
+        '过敏史: ' + (r.allergy_history || '无'),
+        '家族史: ' + (r.family_history || '无'),
+        '婚育及月经史: ' + (r.menstrual_history || '无'),
+        '情绪状态: ' + JSON.stringify(r.emotional_status || {}),
+        '饮食习惯: ' + JSON.stringify(r.dietary_habits || {}),
+        '睡眠质量: ' + JSON.stringify(r.sleep_quality || {}),
+        '生活环境: ' + (r.living_environment || '无'),
+        '工作压力: ' + JSON.stringify(r.work_stress || {}),
+        '运动习惯: ' + JSON.stringify(r.exercise_habits || {}),
+        '其他补充: ' + (r.other_notes || '无')
+      ].join('\n');
+      const systemPrompt = '你是一个专业的中医+功能医学健康管理系统AI助手。请根据患者的问诊信息，按照以下11个维度进行结构化总结：1.主诉 2.现病史 3.就医史 4.用药史 5.检验结果 6.既往史 7.手术史 8.过敏史 9.家族史 10.婚育及月经史 11.情绪/饮食/睡眠/压力等生活方式（功能医学相关）。请用JSON格式返回，key分别为: chief_complaint, present_illness, medical_history, medication_history, lab_results, past_history, surgical_history, allergy_history, family_history, menstrual_history, lifestyle。每个维度用简洁专业的语言总结，突出异常和需要关注的点。';
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: '请根据以下问诊信息，按指定维度进行结构化总结：\n' + consultationData }
+          ],
+          temperature: 0.3
+        })
+      });
+      if (!response.ok) throw new Error('API调用失败: ' + response.status);
+      const result = await response.json();
+      const content = result.choices[0].message.content;
+      let summary;
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        summary = jsonMatch ? JSON.parse(jsonMatch[0]) : { lifestyle: content };
+      } catch (parseErr) { summary = { lifestyle: content }; }
+      await CloudBaseManager.sb.from('tcm_consultations').update({ ai_summary: summary }).eq('id', this.currentConsultationId);
+      this.currentConsultationData.ai_summary = summary;
+      this.renderConsultation();
+    } catch (e) {
+      console.error('AI总结失败:', e);
+      alert('AI总结失败: ' + e.message + '\n将显示原始问诊数据。');
+      btn.innerHTML = origText;
+      btn.disabled = false;
+    }
+  },
+
+  async saveDoctorNotes() {
+    const notes = document.getElementById('doctor-notes-input').value;
+    try {
+      await CloudBaseManager.sb.from('tcm_consultations').update({ doctor_notes: notes, updated_at: new Date().toISOString() }).eq('id', this.currentConsultationId);
+      this.currentConsultationData.doctor_notes = notes;
+      alert('备注已保存');
+    } catch (e) { alert('保存失败'); }
+  },
+
+  printConsultation() {
+    const el = document.getElementById('consultation-detail-print');
+    if (!el) return;
+    const w = window.open('', '_blank');
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>问诊记录</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333;max-width:700px;margin:0 auto}.info-card{background:white;border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;margin-bottom:12px}h3,h4{color:#5A4D7A;margin:0 0 8px}</style></head><body>' + el.innerHTML + '</body></html>');
+    w.document.close();
+    setTimeout(() => w.print(), 500);
+  },
+
+  renderTonguePulse() {
+    let html = '<div class="info-card"><h4>📋 选择问诊记录</h4>';
+    html += '<select id="tp-consultation-select" class="form-input" onchange="AdminApp.loadTonguePulse()"><option value="">-- 请选择 --</option></select>';
+    html += '</div>';
+    html += '<div class="info-card" style="margin-top:16px;">';
+    html += '<h4 style="color:var(--color-primary-dark);margin-bottom:12px;">👅 舌象记录</h4>';
+    html += '<div class="form-group"><label>舌色（可多选）</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['淡白','淡红','红','绛红','紫暗'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="checkbox" class="tongue-color-check" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌形（可多选）</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['正常','胖大','瘦薄','齿痕','裂纹','芒刺'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="checkbox" class="tongue-shape-check" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌苔-颜色</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['薄白','白','薄黄','黄','灰','黑'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="radio" name="coating-color" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌苔-质地</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['薄','厚','腻','剥','无苔'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="radio" name="coating-texture" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌苔-分布（可多选）</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['全舌','舌根','舌中','舌尖','舌边'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="checkbox" class="coating-dist-check" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌下络脉（可多选）</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['正常','瘀点','青紫','曲张'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="checkbox" class="sublingual-check" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>舌象照片（选填）</label>';
+    html += '<input type="file" id="tongue-photo" accept="image/*" onchange="AdminApp.previewTonguePhoto(this)" style="display:none;" />';
+    html += '<button class="btn btn-outline btn-sm" onclick="document.getElementById(\'tongue-photo\').click()">📷 上传照片</button>';
+    html += '<div id="tongue-photo-preview" style="margin-top:8px;"></div></div>';
+    html += '<div class="form-group"><label>舌象备注</label><textarea id="tongue-notes" class="form-input" rows="2" placeholder="舌象补充说明..."></textarea></div>';
+    html += '</div>';
+    html += '<div class="info-card" style="margin-top:16px;">';
+    html += '<h4 style="color:var(--color-primary-dark);margin-bottom:12px;">🖐️ 脉象记录</h4>';
+    html += '<div class="form-group"><label>脉位</label><div style="display:flex;gap:8px;">';
+    ['浮','沉','中'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="radio" name="pulse-position" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>脉率</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    [['迟','<60'],['平','60-90'],['数','90-120'],['疾','>120']].forEach(([v,d]) => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="radio" name="pulse-rate" value="${v}" /> ${v}(${d})</label>`;
+    });
+    html += '</div><div style="margin-top:8px;"><label style="font-size:13px;">实际心率(次/分): </label><input type="number" id="pulse-bpm" class="form-input" style="width:100px;display:inline-block;" min="30" max="200" /></div></div>';
+    html += '<div class="form-group"><label>脉力</label><div style="display:flex;gap:8px;">';
+    ['虚','实','弱'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="radio" name="pulse-force" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>脉形（可多选）</label><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    ['滑','涩','弦','紧','细','洪','濡','微','散','结','代','促'].forEach(v => {
+      html += `<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:14px;cursor:pointer;"><input type="checkbox" class="pulse-shape-check" value="${v}" /> ${v}</label>`;
+    });
+    html += '</div></div>';
+    html += '<div class="form-group"><label>脉象备注</label><textarea id="pulse-notes" class="form-input" rows="2" placeholder="脉象补充说明..."></textarea></div>';
+    html += '</div>';
+    html += '<div id="syndrome-result" style="margin-top:16px;"></div>';
+    html += '<div style="margin-top:20px;display:flex;gap:12px;">';
+    html += '<button class="btn btn-primary btn-lg" onclick="AdminApp.saveTonguePulse()">💾 保存舌象脉象</button>';
+    html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.autoDifferentiate()">🔮 自动辨证</button>';
+    html += '</div>';
+    setTimeout(() => this.loadConsultationSelect(), 100);
+    return html;
+  },
+
+  async loadConsultationSelect() {
+    const sel = document.getElementById('tp-consultation-select');
+    if (!sel) return;
+    try {
+      const { data, error } = await CloudBaseManager.sb.from('tcm_consultations').select('id,patient_name,chief_complaint,created_at,tongue,pulse').order('created_at', { ascending: false }).limit(50);
+      if (error) throw error;
+      if (data) {
+        data.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.patient_name + ' - ' + (r.chief_complaint||'无主诉').substring(0,15) + ' (' + new Date(r.created_at).toLocaleDateString('zh-CN') + ')' + (r.tongue ? ' [已有舌象]' : '');
+          sel.appendChild(opt);
+        });
+      }
+    } catch (e) { console.warn('加载问诊记录列表失败:', e); }
+  },
+
+  async loadTonguePulse() {
+    const id = document.getElementById('tp-consultation-select').value;
+    this.currentTonguePulseConsultationId = id;
+    if (!id) return;
+    try {
+      const { data, error } = await CloudBaseManager.sb.from('tcm_consultations').select('*').eq('id', id).single();
+      if (error) throw error;
+      if (data.tongue) {
+        const t = data.tongue;
+        (t.color||[]).forEach(v => { const ck = document.querySelector('.tongue-color-check[value="'+v+'"]'); if(ck) ck.checked=true; });
+        (t.shape||[]).forEach(v => { const ck = document.querySelector('.tongue-shape-check[value="'+v+'"]'); if(ck) ck.checked=true; });
+        if(t.coating_color){const rd=document.querySelector('input[name="coating-color"][value="'+t.coating_color+'"]');if(rd)rd.checked=true;}
+        if(t.coating_texture){const rd=document.querySelector('input[name="coating-texture"][value="'+t.coating_texture+'"]');if(rd)rd.checked=true;}
+        (t.coating_distribution||[]).forEach(v=>{const ck=document.querySelector('.coating-dist-check[value="'+v+'"]');if(ck)ck.checked=true;});
+        (t.sublingual||[]).forEach(v=>{const ck=document.querySelector('.sublingual-check[value="'+v+'"]');if(ck)ck.checked=true;});
+        if(t.notes)document.getElementById('tongue-notes').value=t.notes;
+      }
+      if (data.pulse) {
+        const p = data.pulse;
+        if(p.position){const rd=document.querySelector('input[name="pulse-position"][value="'+p.position+'"]');if(rd)rd.checked=true;}
+        if(p.rate){const rd=document.querySelector('input[name="pulse-rate"][value="'+p.rate+'"]');if(rd)rd.checked=true;}
+        if(p.bpm)document.getElementById('pulse-bpm').value=p.bpm;
+        if(p.force){const rd=document.querySelector('input[name="pulse-force"][value="'+p.force+'"]');if(rd)rd.checked=true;}
+        (p.shape||[]).forEach(v=>{const ck=document.querySelector('.pulse-shape-check[value="'+v+'"]');if(ck)ck.checked=true;});
+        if(p.notes)document.getElementById('pulse-notes').value=p.notes;
+      }
+      if(data.syndrome_differentiation) this.renderSyndromeResult(data.syndrome_differentiation);
+    } catch (e) { console.warn('加载舌脉数据失败:', e); }
+  },
+
+  previewTonguePhoto(input) {
+    const preview = document.getElementById('tongue-photo-preview');
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.innerHTML = '<img src="' + e.target.result + '" style="max-width:200px;border-radius:8px;border:1px solid var(--color-border);" />';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  },
+
+  async saveTonguePulse() {
+    const id = this.currentTonguePulseConsultationId;
+    if (!id) { alert('请先选择问诊记录'); return; }
+    const tongue = {
+      color: Array.from(document.querySelectorAll('.tongue-color-check:checked')).map(c=>c.value),
+      shape: Array.from(document.querySelectorAll('.tongue-shape-check:checked')).map(c=>c.value),
+      coating_color: (document.querySelector('input[name="coating-color"]:checked')||{}).value||'',
+      coating_texture: (document.querySelector('input[name="coating-texture"]:checked')||{}).value||'',
+      coating_distribution: Array.from(document.querySelectorAll('.coating-dist-check:checked')).map(c=>c.value),
+      sublingual: Array.from(document.querySelectorAll('.sublingual-check:checked')).map(c=>c.value),
+      photo: document.getElementById('tongue-photo-preview').querySelector('img')?document.getElementById('tongue-photo-preview').querySelector('img').src:'',
+      notes: document.getElementById('tongue-notes').value
+    };
+    const pulse = {
+      position: (document.querySelector('input[name="pulse-position"]:checked')||{}).value||'',
+      rate: (document.querySelector('input[name="pulse-rate"]:checked')||{}).value||'',
+      bpm: document.getElementById('pulse-bpm').value||'',
+      force: (document.querySelector('input[name="pulse-force"]:checked')||{}).value||'',
+      shape: Array.from(document.querySelectorAll('.pulse-shape-check:checked')).map(c=>c.value),
+      notes: document.getElementById('pulse-notes').value
+    };
+    try {
+      await CloudBaseManager.sb.from('tcm_consultations').update({ tongue, pulse, updated_at: new Date().toISOString() }).eq('id', id);
+      alert('舌象脉象已保存');
+    } catch (e) { alert('保存失败: ' + e.message); }
+  },
+
+  autoDifferentiate() {
+    const tongue = {
+      color: Array.from(document.querySelectorAll('.tongue-color-check:checked')).map(c=>c.value),
+      shape: Array.from(document.querySelectorAll('.tongue-shape-check:checked')).map(c=>c.value),
+      coating_color: (document.querySelector('input[name="coating-color"]:checked')||{}).value||'',
+      coating_texture: (document.querySelector('input[name="coating-texture"]:checked')||{}).value||'',
+      sublingual: Array.from(document.querySelectorAll('.sublingual-check:checked')).map(c=>c.value)
+    };
+    const pulse = {
+      position: (document.querySelector('input[name="pulse-position"]:checked')||{}).value||'',
+      rate: (document.querySelector('input[name="pulse-rate"]:checked')||{}).value||'',
+      force: (document.querySelector('input[name="pulse-force"]:checked')||{}).value||'',
+      shape: Array.from(document.querySelectorAll('.pulse-shape-check:checked')).map(c=>c.value)
+    };
+    const results = [];
+    const tc=tongue.color, ts=tongue.shape, tcc=tongue.coating_color, tct=tongue.coating_texture;
+    const tsl=tongue.sublingual, pp=pulse.position, pr=pulse.rate, pf=pulse.force, ps=pulse.shape;
+    if(tc.includes('淡白')&&pp==='沉'&&(pf==='虚'||pf==='弱')&&ps.includes('细'))results.push({name:'气血两虚',evidence:'舌淡白+脉沉细弱',confidence:0.9});
+    if(tc.includes('淡白')&&pp==='沉'&&pr==='迟')results.push({name:'阳虚',evidence:'舌淡+脉沉迟',confidence:0.85});
+    if(tc.includes('红')&&ps.includes('弦')&&pr==='数')results.push({name:'肝火旺盛',evidence:'舌红+脉弦数',confidence:0.85});
+    if(tc.includes('紫暗')&&(ps.includes('涩')||tsl.includes('瘀点')||tsl.includes('青紫')))results.push({name:'血瘀',evidence:'舌紫暗+脉涩/舌下瘀点',confidence:0.85});
+    if((ts.includes('胖大')&&ts.includes('齿痕'))&&(pf==='弱'||ps.includes('濡')))results.push({name:'脾虚湿盛',evidence:'舌胖大有齿痕+脉濡/弱',confidence:0.85});
+    if((tc.includes('红')||tc.includes('绛红'))&&(tct==='剥'||tct==='无苔')&&ps.includes('细')&&pr==='数')results.push({name:'阴虚火旺',evidence:'舌红少苔+脉细数',confidence:0.9});
+    if((tcc==='黄'||tcc==='薄黄')&&(tct==='腻'||tct==='厚')&&ps.includes('滑')&&pr==='数')results.push({name:'湿热',evidence:'苔黄腻+脉滑数',confidence:0.9});
+    if(tcc==='白'&&(tct==='腻'||tct==='厚')&&(ps.includes('濡')||pf==='弱')&&(pr==='迟'||pr==='平'))results.push({name:'寒湿',evidence:'苔白腻+脉濡缓',confidence:0.85});
+    if(tc.includes('淡白')&&ts.includes('胖大')&&pp==='沉'&&pf==='弱')results.push({name:'脾肾阳虚',evidence:'舌淡胖+脉沉弱',confidence:0.8});
+    if(tc.includes('红')&&tct==='厚'&&pp==='沉'&&pf==='实')results.push({name:'里实热证',evidence:'舌红苔厚+脉沉实',confidence:0.8});
+    if(tc.includes('绛红')&&pr==='数'&&pf==='实')results.push({name:'热入营血',evidence:'舌绛红+脉数实',confidence:0.85});
+    if(ps.includes('弦')&&tc.includes('红')&&pf==='实')results.push({name:'肝郁化火',evidence:'脉弦实+舌红',confidence:0.8});
+    if(ps.includes('弦')&&ps.includes('滑')&&tct==='腻')results.push({name:'痰湿郁结',evidence:'脉弦滑+苔腻',confidence:0.8});
+    if(tc.includes('淡红')&&tcc==='薄白'&&pp==='中'&&pf==='实')results.push({name:'正常/气血调和',evidence:'舌淡红苔薄白+脉平实',confidence:0.9});
+    if(ps.includes('结')||ps.includes('代'))results.push({name:'心气不足/心阳不振',evidence:'脉结代',confidence:0.8});
+    if(ps.includes('促')&&pr==='数')results.push({name:'阳热亢盛',evidence:'脉促数',confidence:0.8});
+    if(tc.includes('红')&&ts.includes('瘦薄')&&ps.includes('细'))results.push({name:'阴虚',evidence:'舌红瘦薄+脉细',confidence:0.8});
+    if(tcc==='黑'&&pr==='数')results.push({name:'热极',evidence:'苔黑+脉数',confidence:0.85});
+    if(tcc==='黑'&&pr==='迟'&&pp==='沉')results.push({name:'寒极',evidence:'苔黑+脉沉迟',confidence:0.85});
+    if(tc.includes('紫暗')&&ps.includes('弦'))results.push({name:'气滞血瘀',evidence:'舌紫暗+脉弦',confidence:0.8});
+    if(ts.includes('齿痕')&&tct==='腻'&&pp==='沉')results.push({name:'脾虚痰湿',evidence:'舌有齿痕苔腻+脉沉',confidence:0.8});
+    if(ps.includes('洪')&&tc.includes('红')&&pr==='数')results.push({name:'气分热盛',evidence:'脉洪数+舌红',confidence:0.85});
+    if(pp==='浮'&&pr==='数'&&pf==='实')results.push({name:'表热证',evidence:'脉浮数实',confidence:0.8});
+    if(pp==='浮'&&pr==='迟'&&pf==='虚')results.push({name:'表虚证',evidence:'脉浮迟虚',confidence:0.8});
+    if(ps.includes('微')&&tc.includes('淡白')&&pp==='沉')results.push({name:'阳气暴脱',evidence:'脉微+舌淡白+脉沉',confidence:0.85});
+    if(ts.includes('裂纹')&&tc.includes('红')&&ps.includes('细'))results.push({name:'阴虚液亏',evidence:'舌红裂纹+脉细',confidence:0.8});
+    results.sort((a,b)=>b.confidence-a.confidence);
+    let differentiation;
+    if(results.length===0){
+      differentiation={primary:'辨证信息不足',secondary:[],evidence:'当前舌象脉象组合未匹配到常见辨证模式，请医生结合临床判断。'};
+    } else {
+      differentiation={primary:results[0].name,secondary:results.slice(1).map(r=>r.name),evidence:results.map(r=>r.name+'（'+r.evidence+'，置信度'+Math.round(r.confidence*100)+'%）').join('\n')};
+    }
+    this.renderSyndromeResult(differentiation);
+    if(this.currentTonguePulseConsultationId){
+      CloudBaseManager.sb.from('tcm_consultations').update({syndrome_differentiation:differentiation,updated_at:new Date().toISOString()}).eq('id',this.currentTonguePulseConsultationId).then(()=>console.log('辨证结果已保存')).catch(e=>console.warn('保存辨证结果失败:',e));
+    }
+  },
+
+  renderSyndromeResult(sd) {
+    const container = document.getElementById('syndrome-result');
+    if(!container) return;
+    let html = '<div class="info-card" style="border:2px solid var(--color-orange);background:#FFF8F0;">';
+    html += '<h3 style="color:var(--color-orange);">🔮 参考辨证</h3>';
+    if(sd.primary) html += `<div style="font-size:18px;font-weight:700;color:var(--color-darkred);margin:8px 0;">${sd.primary}</div>`;
+    if(sd.secondary&&sd.secondary.length) html += `<div style="margin:4px 0;">兼证：${sd.secondary.join('、')}</div>`;
+    if(sd.evidence) html += `<div style="font-size:13px;color:var(--color-text-secondary);margin-top:8px;line-height:1.6;white-space:pre-wrap;">${sd.evidence}</div>`;
+    html += '<div style="font-size:11px;color:var(--color-gray);margin-top:8px;">⚠️ 参考辨证，请医生结合临床判断</div>';
+    html += '</div>';
+    container.innerHTML = html;
+  },
+
+  configDeepSeekKey() {
+    const currentKey = localStorage.getItem('deepseek_api_key')||'';
+    const key = prompt('请输入DeepSeek API Key：', currentKey);
+    if(key===null) return;
+    if(key.trim()){
+      localStorage.setItem('deepseek_api_key', key.trim());
+      alert('API Key已保存');
+      this.updateDeepSeekStatus();
+    } else {
+      localStorage.removeItem('deepseek_api_key');
+      alert('API Key已清除');
+      this.updateDeepSeekStatus();
+    }
+  },
+
+  updateDeepSeekStatus() {
+    const key = localStorage.getItem('deepseek_api_key');
+    const statusEl = document.getElementById('deepseek-status');
+    const badgeEl = document.getElementById('deepseek-badge');
+    if(statusEl) statusEl.textContent = key ? '已配置 ('+key.substring(0,8)+'...)' : '未配置';
+    if(badgeEl){
+      badgeEl.textContent = key ? '✅ 已就绪' : '—';
+      badgeEl.style.color = key ? 'var(--color-green)' : 'var(--color-gray)';
+    }
+  }
 };
 
 // ========== 编辑患者信息辅助函数 ==========
