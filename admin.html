@@ -1090,8 +1090,41 @@ body {
     .change-pwd-box .pwd-btns button {
       flex: 1;
     }
+    
+    /* ========== 体检解读 ========== */
+    .ck-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .ck-title{font-size:15px;font-weight:600;color:var(--color-primary-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+    .ck-title .arrow{transition:transform .2s;font-size:12px}
+    .ck-body{overflow:hidden;transition:max-height .3s}
+    .ck-body.collapsed{max-height:0!important;overflow:hidden}
+    .ck-fg{margin-bottom:10px}
+    .ck-fg label{display:block;font-size:12px;font-weight:500;color:#666;margin-bottom:3px}
+    .ck-fg label .ref{font-weight:400;color:#999;font-size:11px;margin-left:4px}
+    .ck-fg input,.ck-fg select{width:100%;padding:8px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;outline:none;transition:border .2s,background .2s}
+    .ck-fg input:focus,.ck-fg select:focus{border-color:var(--color-primary)}
+    .ck-fg input.abnormal{border-color:var(--color-red);background:#FFF5F5}
+    .ck-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .ck-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .ck-dim{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid #ccc}
+    .ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}
+    .ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}
+    .ck-rec{background:linear-gradient(135deg,var(--color-primary-bg),#fff);border-radius:8px;padding:14px;margin-top:16px;border:1px solid rgba(123,104,174,.2)}
+    .ck-rec h3{color:var(--color-primary-dark);margin-bottom:10px;font-size:15px}
+    .ck-rec-item{padding:8px 0;border-bottom:1px dashed #e0e0e0;font-size:13px;line-height:1.6}
+    .ck-rec-item:last-child{border-bottom:none}
+    .ck-qr{text-align:center;margin:20px 0;padding:16px;background:var(--color-primary-bg);border-radius:8px}
+    .ck-rpt{background:#fff;border-radius:12px;padding:20px;max-width:700px;margin:0 auto}
+    .ck-rpt-header{text-align:center;margin-bottom:20px;border-bottom:2px solid var(--color-primary);padding-bottom:12px}
+    .ck-rpt-header h2{color:var(--color-primary-dark);font-size:20px}
+    .ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:16px;background:var(--color-primary-bg);padding:10px;border-radius:6px}
+    .ck-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+    .ck-modal.show{display:flex}
+    .ck-modal-box{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto}
+    @media(max-width:600px){.ck-g2,.ck-g3{grid-template-columns:1fr}}
+    @media print{.ck-modal-box{max-width:100%;padding:0;box-shadow:none}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="top-bar"></div>
@@ -1121,6 +1154,7 @@ body {
     <div class="admin-nav" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
       <button class="btn btn-secondary active" onclick="showAdminTab('dashboard', this)">数据概览</button>
       <button class="btn btn-secondary" onclick="showAdminTab('prescribe', this)" style="background:#27AE60; color:white; border-color:#27AE60;">📋 开单</button>
+      <button class="btn btn-secondary" onclick="showAdminTab('checkup', this)" style="background:#E67E22; color:white; border-color:#E67E22;">🧬 体检解读</button>
       <button class="btn btn-secondary" onclick="showAdminTab('patients', this)">患者列表</button>
       <button class="btn btn-secondary" onclick="showAdminTab('export', this)">数据导出</button>
       <button class="btn btn-secondary" onclick="showAdminTab('changepwd', this)" style="margin-left:auto;">🔑 密码</button>
@@ -1129,6 +1163,10 @@ body {
     <!-- 开单页面 -->
     <div id="tab-prescribe" class="admin-page" style="display:none;">
       <div id="prescribe-content"></div>
+    </div>
+    
+    <div id="tab-checkup" class="admin-page" style="display:none;">
+      <div id="checkup-content"></div>
     </div>
     
     <!-- 数据概览 -->
@@ -1171,6 +1209,9 @@ try {
 
 // Supabase 云数据库操作模块
 const CloudBaseManager = {
+  // 暴露supabaseClient供体检模块使用
+  get sb() { return supabaseClient; },
+  
   // 保存评估记录到云数据库
   async saveAssessment(patientName, patientPhone, record) {
     if (!supabaseClient) return false;
@@ -12022,6 +12063,7 @@ function showAdminTab(tab, btn) {
   switch(tab) {
     case 'dashboard': AdminApp.renderDashboard(); break;
     case 'prescribe': AdminApp.renderPrescribe(); break;
+    case 'checkup': AdminApp.renderCheckup(); break;
     case 'patients': AdminApp.renderPatients(); break;
     case 'export': AdminApp.renderExport(); break;
     case 'changepwd': AdminApp.renderChangePwd(); break;
@@ -12364,8 +12406,267 @@ const AdminApp = {
     localStorage.setItem('admin_password', newPwd);
     alert('密码修改成功！');
     this.renderChangePwd();
-  }
+  },
+
+  // ========== 体检解读模块 ==========
+  ckEditId: null,
+  ckTab: 'input',
+  
+  CK_DIMS: [
+    {id:'general',name:'一般检查',icon:'📏',fields:[
+      {k:'height',n:'身高',u:'cm',r:()=>[150,200],t:'n'},
+      {k:'weight',n:'体重',u:'kg',r:()=>[40,100],t:'n'},
+      {k:'bmi',n:'BMI',u:'',r:()=>[18.5,24],t:'n',auto:1},
+      {k:'sbp',n:'收缩压',u:'mmHg',r:()=>[90,140],t:'n'},
+      {k:'dbp',n:'舒张压',u:'mmHg',r:()=>[60,90],t:'n'}]},
+    {id:'blood',name:'血常规',icon:'🩸',fields:[
+      {k:'wbc',n:'白细胞WBC',u:'×10⁹/L',r:()=>[3.5,9.5],t:'n'},
+      {k:'rbc',n:'红细胞RBC',u:'×10¹²/L',r:g=>g==='女'?[3.8,5.1]:[4.3,5.8],t:'n'},
+      {k:'hgb',n:'血红蛋白HGB',u:'g/L',r:g=>g==='女'?[115,150]:[130,175],t:'n'},
+      {k:'plt',n:'血小板PLT',u:'×10⁹/L',r:()=>[125,350],t:'n'}]},
+    {id:'urine',name:'尿常规',icon:'🧪',fields:[
+      {k:'u_pro',n:'尿蛋白',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']},
+      {k:'u_glu',n:'尿糖',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']},
+      {k:'u_bld',n:'尿潜血',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']}]},
+    {id:'liver',name:'肝功能',icon:'🫁',fields:[
+      {k:'alt',n:'ALT谷丙',u:'U/L',r:()=>[7,40],t:'n'},
+      {k:'ast',n:'AST谷草',u:'U/L',r:()=>[13,35],t:'n'},
+      {k:'ggt',n:'GGT',u:'U/L',r:()=>[7,45],t:'n'},
+      {k:'tbil',n:'TBIL',u:'μmol/L',r:()=>[5.1,28],t:'n'},
+      {k:'alb',n:'白蛋白',u:'g/L',r:()=>[40,55],t:'n'}]},
+    {id:'kidney',name:'肾功能',icon:'🫘',fields:[
+      {k:'cr',n:'肌酐Cr',u:'μmol/L',r:g=>g==='女'?[41,73]:[57,111],t:'n'},
+      {k:'bun',n:'BUN',u:'mmol/L',r:()=>[2.6,7.5],t:'n'},
+      {k:'ua',n:'尿酸UA',u:'μmol/L',r:g=>g==='女'?[155,357]:[208,428],t:'n'}]},
+    {id:'glucose',name:'血糖代谢',icon:'🍬',fields:[
+      {k:'fbg',n:'空腹血糖',u:'mmol/L',r:()=>[3.9,6.1],t:'n'},
+      {k:'hba1c',n:'HbA1c',u:'%',r:()=>[4.0,6.0],t:'n'}]},
+    {id:'lipid',name:'血脂',icon:'🧈',fields:[
+      {k:'tc',n:'总胆固醇',u:'mmol/L',r:()=>[2.8,5.2],t:'n'},
+      {k:'tg',n:'甘油三酯',u:'mmol/L',r:()=>[0.56,1.7],t:'n'},
+      {k:'hdl',n:'HDL',u:'mmol/L',r:g=>g==='女'?[1.3,1.9]:[1.0,1.6],t:'n'},
+      {k:'ldl',n:'LDL',u:'mmol/L',r:()=>[0,3.4],t:'n'}]},
+    {id:'thyroid',name:'甲状腺',icon:'🦋',fields:[
+      {k:'tsh',n:'TSH',u:'mIU/L',r:()=>[0.27,4.2],t:'n'},
+      {k:'ft3',n:'FT3',u:'pmol/L',r:()=>[3.1,6.8],t:'n'},
+      {k:'ft4',n:'FT4',u:'pmol/L',r:()=>[12.0,22.0],t:'n'}]},
+    {id:'hormone',name:'性激素（女）',icon:'🌸',fields:[
+      {k:'fsh',n:'FSH',u:'IU/L',r:()=>[3.5,12.5],t:'n'},
+      {k:'lh',n:'LH',u:'IU/L',r:()=>[2.4,12.6],t:'n'},
+      {k:'e2',n:'E2',u:'pmol/L',r:()=>[46,607],t:'n'},
+      {k:'prog',n:'P孕酮',u:'nmol/L',r:()=>[0.6,4.7],t:'n'},
+      {k:'testo',n:'T睾酮',u:'nmol/L',r:()=>[0.29,1.67],t:'n'},
+      {k:'prl',n:'PRL',u:'μg/L',r:()=>[3.4,24.1],t:'n'},
+      {k:'amh',n:'AMH',u:'ng/mL',r:()=>[2,6.8],t:'n'}]},
+    {id:'bone',name:'骨骼',icon:'🦴',fields:[
+      {k:'bmd_t',n:'骨密度T值',u:'',r:()=>[1,-1],t:'n',sp:'bmd'},
+      {k:'vitd',n:'VitD',u:'ng/mL',r:()=>[20,100],t:'n'},
+      {k:'ca',n:'血钙',u:'mmol/L',r:()=>[2.11,2.52],t:'n'},
+      {k:'phos',n:'血磷',u:'mmol/L',r:()=>[0.85,1.51],t:'n'}]},
+    {id:'tumor',name:'肿瘤标志物',icon:'🔬',fields:[
+      {k:'afp',n:'AFP',u:'μg/L',r:()=>[0,7],t:'n'},
+      {k:'cea',n:'CEA',u:'μg/L',r:()=>[0,5],t:'n'},
+      {k:'ca125',n:'CA125',u:'U/mL',r:()=>[0,35],t:'n'},
+      {k:'ca199',n:'CA199',u:'U/mL',r:()=>[0,37],t:'n'}]},
+    {id:'gyno',name:'妇科',icon:'👩‍⚕️',fields:[
+      {k:'tct',n:'TCT',u:'',r:()=>['正常'],t:'s',opts:['正常','ASC-US','LSIL','HSIL']},
+      {k:'hpv',n:'HPV',u:'',r:()=>['阴性'],t:'s',opts:['阴性','阳性']}]},
+    {id:'cardio',name:'心血管',icon:'❤️',fields:[
+      {k:'ecg',n:'心电图',u:'',r:()=>['正常'],t:'s',opts:['正常','窦性心动过速','窦性心动过缓','ST-T改变','房颤','其他']}]}
+  ],
+
+  ckG(){return document.getElementById('ck_gender')?.value||'女'},
+  ckRefStr(f){const g=this.ckG(),rv=f.r(g);if(f.t==='s')return rv[0];if(f.sp==='bmd')return '>-1';if(rv[0]===0)return '<'+rv[1];return rv[0]+'~'+rv[1]},
+  ckLR(s){if(s>=90)return{t:'优秀',e:'🟢',c:'#27AE60',cls:'excellent'};if(s>=70)return{t:'良好',e:'🟢',c:'#2ECC71',cls:'good'};if(s>=50)return{t:'轻度风险',e:'🟡',c:'#F39C12',cls:'mild'};if(s>=30)return{t:'中度风险',e:'🟠',c:'#E67E22',cls:'moderate'};return{t:'高度风险',e:'🔴',c:'#E74C3C',cls:'severe'}},
+
+  renderCheckup() {
+    const tabs = [
+      {id:'ck-input',label:'📋 体检录入'},
+      {id:'ck-interp',label:'🧠 智能解读'},
+      {id:'ck-records',label:'📊 体检记录'}
+    ];
+    let nav = '<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">';
+    tabs.forEach((t,i) => {
+      nav += `<button class="btn btn-secondary ${i===0?'active':''}" onclick="AdminApp.ckSwitchTab('${t.id}',this)">${t.label}</button>`;
+    });
+    nav += '</div>';
+
+    let content = nav;
+    content += '<div id="ck-input">';
+    content += '<div class="ck-card"><div class="ck-title">👤 患者基本信息</div>';
+    content += '<div class="ck-g2"><div class="ck-fg"><label>姓名 *</label><input id="ck_name" placeholder="患者姓名"></div><div class="ck-fg"><label>手机号</label><input id="ck_phone" placeholder="手机号" maxlength="11"></div></div>';
+    content += '<div class="ck-g3"><div class="ck-fg"><label>年龄 *</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期 *</label><input id="ck_date" type="date"></div></div>';
+    content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_package" placeholder="如：女性甄选套餐"></div>';
+    content += '</div>';
+    content += '<div id="ck_indicatorCards"></div>';
+    content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存体检数据</button>';
+    content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckReset()" style="margin-top:8px">🔄 重置表单</button>';
+    content += '</div>';
+
+    content += '<div id="ck-interp" style="display:none">';
+    content += '<div class="ck-card"><div class="ck-title">🔍 选择体检记录</div><select style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:12px" id="ck_interpSel" onchange="AdminApp.ckOnInterpSel()"><option value="">-- 请选择 --</option></select><button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.ckRunInterp()" id="ck_interpBtn" disabled>🧠 生成解读报告</button></div>';
+    content += '<div id="ck_interpResult"></div>';
+    content += '</div>';
+
+    content += '<div id="ck-records" style="display:none"><div id="ck_recordsList"></div></div>';
+
+    document.getElementById('checkup-content').innerHTML = content;
+    document.getElementById('ck_date').value = new Date().toISOString().split('T')[0];
+    this.ckBuildCards();
+  },
+
+  ckSwitchTab(id, btn) {
+    document.querySelectorAll('#checkup-content .btn-secondary').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    ['ck-input','ck-interp','ck-records'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none'});
+    if(id==='ck-records') this.ckLoadRecs();
+    if(id==='ck-interp') this.ckLoadInterp();
+  },
+
+  ckBuildCards() {
+    let h='';
+    this.CK_DIMS.forEach(d=>{
+      h+=`<div class="ck-card"><div class="ck-title" onclick="AdminApp.ckTogCard(this)">${d.icon} ${d.name}<span class="arrow">▼</span></div><div class="ck-body"><div class="ck-g2">`;
+      d.fields.forEach(f=>{
+        const rl=this.ckRefStr(f),uid='cki_'+f.k;
+        if(f.t==='s') h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><select id="${uid}" data-k="${f.k}"><option value="">--</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+        else h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="number" step="any" data-k="${f.k}" placeholder="${f.auto?'自动计算':'输入值'}" ${f.auto?'readonly':''} oninput="AdminApp.ckOnIn('${f.k}')"></div>`;
+      });
+      h+='</div></div></div>';
+    });
+    document.getElementById('ck_indicatorCards').innerHTML=h;
+  },
+
+  ckTogCard(el){const b=el.nextElementSibling,a=el.querySelector('.arrow');b.classList.toggle('collapsed');a.classList.toggle('collapsed')},
+  ckGenderChange(){this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const re=document.getElementById('ckrf_'+f.k);if(re)re.textContent='参考: '+this.ckRefStr(f);const el=document.getElementById('cki_'+f.k);if(el&&el.type==='number')this.ckChkAbn(f.k)})})},
+  ckOnIn(k){if(k==='height'||k==='weight'){const h=parseFloat(document.getElementById('cki_height')?.value),w=parseFloat(document.getElementById('cki_weight')?.value);if(h>0&&w>0){document.getElementById('cki_bmi').value=(w/((h/100)**2)).toFixed(1);this.ckChkAbn('bmi')}}this.ckChkAbn(k)},
+  ckChkAbn(k){const el=document.getElementById('cki_'+k);if(!el||el.type!=='number')return;const v=parseFloat(el.value);if(isNaN(v)){el.classList.remove('abnormal');return}const g=this.ckG(),f=this.CK_DIMS.flatMap(d=>d.fields).find(x=>x.k===k);if(!f||f.t!=='n')return;const rv=f.r(g);let ab=false;if(f.sp==='bmd')ab=v<-1;else if(rv[0]===0)ab=v>rv[1];else ab=v<rv[0]||v>rv[1];el.classList.toggle('abnormal',ab)},
+
+  async ckSave(){
+    const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,dt=document.getElementById('ck_date').value,pk=document.getElementById('ck_package').value.trim();
+    if(!nm){alert('请输入患者姓名');return}if(!ag){alert('请输入年龄');return}if(!dt){alert('请选择体检日期');return}
+    const ind={};this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el)ind[f.k]=el.value})});
+    const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
+    try{
+      const data={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
+      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(data).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(data)}
+      alert('✅ 保存成功');this.ckReset();this.ckEditId=null;
+    }catch(e){alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存体检数据'}
+  },
+
+  ckReset(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});this.ckEditId=null},
+
+  async ckLoadRecs(){
+    const c=document.getElementById('ck_recordsList');c.innerHTML='<div style="text-align:center;padding:20px;color:#999">加载中...</div>';
+    try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;if(!data||!data.length){c.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">暂无体检记录</div>';return}
+    let h='';data.forEach(rec=>{const ip=rec.interpretation;let sc='--',lv='--',co='#999',em='⚪';if(ip&&ip.overall_score!=null){sc=Math.round(ip.overall_score);const r=this.ckLR(sc);lv=r.t;co=r.c;em=r.e}
+    h+=`<div style="background:#fff;border-radius:8px;padding:12px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><strong>${rec.patient_name}</strong> · ${rec.patient_gender} · ${rec.patient_age}岁<br><span style="font-size:12px;color:#999">${rec.package_name||'未填写'} | ${rec.checkup_date}</span></div><div style="text-align:center"><div style="font-size:20px;font-weight:700;color:${co}">${sc}</div><div style="font-size:11px;color:${co}">${em} ${lv}</div></div><div style="display:flex;gap:6px">${ip?`<button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewRpt('${rec.id}')">📄</button>`:''}<button class="btn btn-outline btn-sm" onclick="AdminApp.ckEditRec('${rec.id}')">✏️</button><button class="btn btn-outline btn-sm" style="color:var(--color-red);border-color:var(--color-red)" onclick="AdminApp.ckDelRec('${rec.id}')">🗑️</button></div></div>`});
+    c.innerHTML=h}catch(e){c.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">加载失败</div>'}
+  },
+
+  async ckEditRec(id){try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;this.ckEditId=id;document.getElementById('ck_name').value=data.patient_name||'';document.getElementById('ck_phone').value=data.patient_phone||'';document.getElementById('ck_age').value=data.patient_age||'';document.getElementById('ck_gender').value=data.patient_gender||'女';document.getElementById('ck_date').value=data.checkup_date||'';document.getElementById('ck_package').value=data.package_name||'';if(data.indicators){this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el&&data.indicators[f.k]!=null)el.value=data.indicators[f.k]})})}this.ckSwitchTab('ck-input',document.querySelector('#checkup-content .btn-secondary'));alert('已加载记录，可编辑后保存')}catch(e){alert('加载失败')}},
+
+  async ckDelRec(id){if(!confirm('确定删除？'))return;try{await CloudBaseManager.sb.from('health_checkups').delete().eq('id',id);alert('已删除');this.ckLoadRecs()}catch(e){alert('删除失败')}},
+
+  async ckLoadInterp(){const sel=document.getElementById('ck_interpSel');sel.innerHTML='<option value="">-- 请选择 --</option>';try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;data.forEach(rec=>{const o=document.createElement('option');o.value=rec.id;o.textContent=rec.patient_name+' · '+rec.checkup_date+(rec.package_name?' · '+rec.package_name:'');sel.appendChild(o)})}catch(e){}},
+  ckOnInterpSel(){document.getElementById('ck_interpBtn').disabled=!document.getElementById('ck_interpSel').value;document.getElementById('ck_interpResult').innerHTML=''},
+
+  async ckRunInterp(){
+    const sid=document.getElementById('ck_interpSel').value;if(!sid)return;const btn=document.getElementById('ck_interpBtn');btn.disabled=true;btn.textContent='⏳ 解读中...';const rd=document.getElementById('ck_interpResult');rd.innerHTML='<div style="text-align:center;padding:20px;color:#999">解读中...</div>';
+    try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',sid).single();if(error)throw error;const ip=this.ckInterpRec(rec);await CloudBaseManager.sb.from('health_checkups').update({interpretation:ip,report_generated:true}).eq('id',rec.id);this.ckRenderInterp({...rec,interpretation:ip});alert('✅ 解读完成')}catch(e){rd.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">解读失败</div>';alert('解读失败')}finally{btn.disabled=false;btn.textContent='🧠 生成解读报告'}
+  },
+
+  ckInterpRec(rec){
+    const ind=rec.indicators||{},g=rec.patient_gender||'女';
+    const dScores={},dAbn={},recs=[];
+    this.CK_DIMS.forEach(dim=>{let sc=100;const abn=[];
+    dim.fields.forEach(f=>{const rv=ind[f.k];if(!rv&&rv!==0&&rv!=='')return;
+    if(f.t==='s'){const norm=f.r(g)[0];if(rv&&rv!==norm){const sev=['±','+','++','+++'].indexOf(rv);sc-=sev>=0?10+sev*10:20;abn.push({k:f.k,n:f.n,v:rv,norm})}}
+    else{const val=parseFloat(rv);if(isNaN(val))return;const ref=f.r(g);let out=false,dev=0;
+    if(f.sp==='bmd'){if(val<-1){out=true;dev=Math.abs(val+1)}}else if(ref[0]===0){if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}else{if(val<ref[0]){out=true;dev=(ref[0]-val)/Math.max(ref[0],0.01)}else if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}
+    if(out){let d=dev<0.1?10+dev*100:dev<0.3?20+(dev-0.1)*100:40+Math.min((dev-0.3)*100,20);d=Math.min(d,60);sc-=d;abn.push({k:f.k,n:f.n,v:val,ref,dev,d})}}
+    });dScores[dim.id]=Math.max(0,Math.min(100,Math.round(sc)));dAbn[dim.id]=abn});
+
+    const v=k=>parseFloat(ind[k])||0,s=k=>ind[k]||'';
+    if(g==='女'){
+      if(v('amh')>0&&v('amh')<2)recs.push({dim:'hormone',title:'卵巢储备功能下降',detail:'AMH < 2',suggest:'推荐Kupperman量表+卵巢抗衰管理'});
+      if(v('fsh')>10&&v('fsh')<=25)recs.push({dim:'hormone',title:'卵巢功能减退趋势',detail:'FSH 10~25',suggest:'推荐更年期评估+中医体质辨识'});
+      if(v('fsh')>25)recs.push({dim:'hormone',title:'卵巢功能衰退',detail:'FSH > 25',suggest:'推荐性激素动态评估+中西医结合抗衰'});
+    }
+    if(v('ldl')>3.4)recs.push({dim:'lipid',title:'血脂异常',detail:'LDL '+v('ldl'),suggest:'推荐营养评估+代谢管理'});
+    if(v('fbg')>=5.6&&v('fbg')<7)recs.push({dim:'glucose',title:'空腹血糖受损',detail:'FBG '+v('fbg'),suggest:'推荐代谢综合征筛查'});
+    if(v('fbg')>=7)recs.push({dim:'glucose',title:'疑似糖尿病',detail:'FBG '+v('fbg'),suggest:'建议内分泌科就诊'});
+    if(v('hba1c')>=5.7&&v('hba1c')<6.5)recs.push({dim:'glucose',title:'糖尿病前期',detail:'HbA1c '+v('hba1c')+'%',suggest:'推荐代谢抗衰管理'});
+    const uaT=g==='女'?360:420;if(v('ua')>uaT)recs.push({dim:'kidney',title:'高尿酸血症',detail:'UA '+v('ua'),suggest:'推荐饮食+代谢管理'});
+    if(v('tsh')>4.2&&v('tsh')<=10)recs.push({dim:'thyroid',title:'亚临床甲减可能',detail:'TSH '+v('tsh'),suggest:'推荐甲状腺功能评估'});
+    if(v('tsh')>10)recs.push({dim:'thyroid',title:'临床甲减可能',detail:'TSH '+v('tsh'),suggest:'建议内分泌科就诊'});
+    if(v('vitd')>0&&v('vitd')<20)recs.push({dim:'bone',title:'VitD缺乏',detail:'VitD '+v('vitd'),suggest:'推荐营养评估+VD补充'});
+    if(v('bmd_t')<-1&&v('bmd_t')>=-2.5)recs.push({dim:'bone',title:'骨量减少',detail:'T值 '+v('bmd_t'),suggest:'推荐骨质疏松风险评估'});
+    if(v('bmd_t')<-2.5)recs.push({dim:'bone',title:'骨质疏松',detail:'T值 '+v('bmd_t'),suggest:'推荐骨骼抗衰管理'});
+    const bmi=v('bmi');if(bmi>24&&bmi<=28)recs.push({dim:'general',title:'超重',detail:'BMI '+bmi,suggest:'推荐营养+运动评估'});
+    if(bmi>28)recs.push({dim:'general',title:'肥胖',detail:'BMI '+bmi,suggest:'推荐代谢综合管理'});
+    if(v('sbp')>140)recs.push({dim:'general',title:'高血压',detail:'收缩压 '+v('sbp'),suggest:'建议心血管科就诊'});
+    if(v('alt')>40)recs.push({dim:'liver',title:'肝功能异常',detail:'ALT '+v('alt'),suggest:'推荐肝脏保护+生活方式干预'});
+    const crT=g==='女'?97:133;if(v('cr')>crT)recs.push({dim:'kidney',title:'肾功能异常',detail:'Cr '+v('cr'),suggest:'建议肾内科就诊'});
+    if(v('ca125')>35)recs.push({dim:'tumor',title:'CA125升高',detail:'CA125 '+v('ca125'),suggest:'建议妇科进一步检查'});
+    if(s('tct')&&s('tct')!=='正常')recs.push({dim:'gyno',title:'宫颈细胞学异常',detail:'TCT: '+s('tct'),suggest:'建议阴道镜检查'});
+    if(s('hpv')==='阳性')recs.push({dim:'gyno',title:'HPV感染',detail:'HPV阳性',suggest:'推荐免疫调节评估+定期随访'});
+    if(s('ecg')==='ST-T改变')recs.push({dim:'cardio',title:'心肌缺血可能',detail:'心电图ST-T改变',suggest:'建议心内科就诊'});
+
+    const wt={general:1.5,blood:1,urine:.8,liver:1.2,kidney:1.2,glucose:1.5,lipid:1.3,thyroid:1,hormone:1.2,bone:1,tumor:1.5,gyno:1,cardio:1.5};
+    let tw=0,ws=0;Object.keys(dScores).forEach(did=>{const dim=this.CK_DIMS.find(x=>x.id===did);const hv=dim.fields.some(f=>ind[f.k]&&ind[f.k]!=='');if(hv){ws+=dScores[did]*(wt[did]||1);tw+=(wt[did]||1)}});
+    const overall=tw>0?ws/tw:0;
+    return{overall_score:Math.round(overall*10)/10,dim_scores:dScores,dim_abnormals:dAbn,recommendations:recs,interpreted_at:new Date().toISOString()}
+  },
+
+  ckRenderInterp(rec){
+    const ip=rec.interpretation,ovl=this.ckLR(ip.overall_score);
+    let h=`<div class="ck-card" style="text-align:center"><div style="font-size:48px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:16px;color:${ovl.c}">${ovl.e} ${ovl.t}</div></div>`;
+    this.CK_DIMS.forEach(dim=>{const sc=ip.dim_scores[dim.id];if(sc==null)return;const hv=dim.fields.some(f=>rec.indicators[f.k]&&rec.indicators[f.k]!=='');if(!hv)return;const r=this.ckLR(sc),abn=ip.dim_abnormals[dim.id]||[];
+    h+=`<div class="ck-dim ${r.cls}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">${dim.icon} ${dim.name}</span><span style="font-size:20px;font-weight:700;color:${r.c}">${sc} ${r.e}</span></div>`;
+    if(abn.length){h+='<div style="font-size:13px;color:#E74C3C;margin-top:6px;line-height:1.7">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:13px;color:#27AE60">✅ 各项正常</div>';
+    h+='</div>'});
+    if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+    h+=`<div style="text-align:center;margin-top:16px"><button class="btn btn-primary btn-lg" onclick="AdminApp.ckViewRpt('${rec.id}')" style="max-width:300px">📄 查看完整报告</button></div>`;
+    document.getElementById('ck_interpResult').innerHTML=h;
+  },
+
+  async ckViewRpt(id){
+    try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;if(!rec.interpretation){alert('尚未解读');return}this.ckRenderRpt(rec);document.getElementById('ck-reportModal').classList.add('show')}catch(e){alert('加载失败')}
+  },
+
+  ckRenderRpt(rec){
+    const ip=rec.interpretation,ovl=this.ckLR(ip.overall_score);
+    let h=`<div class="ck-rpt"><div class="ck-rpt-header"><h2>🧬 归元AI · 体检解读报告</h2><p style="color:#999;font-size:12px;margin-top:4px">固本归元 · 科学抗衰</p></div>`;
+    h+=`<div class="ck-rpt-patient"><div><span style="color:#666">姓名：</span><strong>${rec.patient_name}</strong></div><div><span style="color:#666">性别：</span><strong>${rec.patient_gender}</strong></div><div><span style="color:#666">年龄：</span><strong>${rec.patient_age}岁</strong></div><div><span style="color:#666">日期：</span><strong>${rec.checkup_date}</strong></div><div><span style="color:#666">套餐：</span><strong>${rec.package_name||'—'}</strong></div><div><span style="color:#666">解读：</span><strong>${new Date(ip.interpreted_at).toLocaleString('zh-CN')}</strong></div></div>`;
+    h+=`<div style="text-align:center;margin:20px 0"><div style="font-size:56px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:12px;color:#999">综合健康评分</div><div style="font-size:18px;color:${ovl.c};margin-top:4px">${ovl.e} ${ovl.t}</div></div>`;
+    h+='<h3 style="font-size:15px;color:var(--color-primary-dark);margin:16px 0 10px">📊 各维度评分</h3>';
+    this.CK_DIMS.forEach(dim=>{const sc=ip.dim_scores[dim.id];if(sc==null)return;const hv=dim.fields.some(f=>rec.indicators[f.k]&&rec.indicators[f.k]!=='');if(!hv)return;const r=this.ckLR(sc),abn=ip.dim_abnormals[dim.id]||[];
+    h+=`<div class="ck-dim ${r.cls}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">${dim.icon} ${dim.name}</span><span style="font-size:18px;font-weight:700;color:${r.c}">${sc} ${r.e}</span></div>`;
+    if(abn.length){h+='<div style="font-size:12px;color:#E74C3C;margin-top:4px;line-height:1.6">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:12px;color:#27AE60">✅ 各项正常</div>';
+    h+='</div>'});
+    if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+    h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入归元AI评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
+    h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">归元AI · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
+    document.getElementById('ck-reportContent').innerHTML=h;
+    setTimeout(()=>{const qe=document.getElementById('ck-qrcode');if(qe){qe.innerHTML='';try{new QRCode(qe,{text:'https://judy-pm.github.io/mama-scale/',width:128,height:128,colorDark:'#5B4A8A',colorLight:'#ffffff'})}catch(e){qe.innerHTML='<p style="font-size:11px;color:#999">二维码生成失败</p>'}}},100);
+  },
+
+  ckCloseRpt(){document.getElementById('ck-reportModal').classList.remove('show')},
+  ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}</style></head><body>'+c+'</body></html>');w.document.close();setTimeout(()=>w.print(),500)}
 };
   </script>
+
+  <!-- 体检解读报告弹窗 -->
+  <div id="ck-reportModal" class="ck-modal" onclick="if(event.target===this)AdminApp.ckCloseRpt()">
+    <div class="ck-modal-box">
+      <div style="text-align:right;margin-bottom:8px">
+        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckPrintRpt()">🖨️ 打印</button>
+        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckCloseRpt()">✕ 关闭</button>
+      </div>
+      <div id="ck-reportContent"></div>
+    </div>
+  </div>
+
 </body>
 </html>
