@@ -12060,8 +12060,15 @@ const App = {
   
   // 初始化
   init() {
-    CloudBaseManager.init();
+    console.log('[App] init() called');
+    try {
+      CloudBaseManager.init();
+    } catch(e) {
+      console.warn('[App] CloudBaseManager.init error:', e);
+    }
+    console.log('[App] calling showPage home');
     this.showPage('home');
+    console.log('[App] showPage home done');
   },
   
   // ========== 页面路由 ==========
