@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>归元AI · 体检解读系统</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root{--cp:#7B68AE;--cpd:#5B4A8A;--cpl:#9B8DCE;--cpb:#F5F3FA;--cd:#E74C3C;--cw:#F39C12;--cs:#27AE60;--br:12px;--sh:0 2px 12px rgba(123,104,174,.12);--shl:0 8px 32px rgba(123,104,174,.18)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:var(--cpb);color:#333;min-height:100vh}
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#5B4A8A,#7B68AE,#9B8DCE)}
+.login-box{background:#fff;border-radius:var(--br);padding:48px 40px;width:360px;box-shadow:var(--shl);text-align:center}
+.login-box h1{font-size:24px;color:var(--cpd);margin-bottom:8px}
+.login-box p{font-size:13px;color:#999;margin-bottom:28px}
+.login-box input{width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;outline:none;transition:border .2s}
+.login-box input:focus{border-color:var(--cp)}
+.login-box button{width:100%;padding:12px;background:var(--cp);color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin-top:16px;transition:background .2s}
+.login-box button:hover{background:var(--cpd)}
+.login-error{color:var(--cd);font-size:13px;margin-top:8px;display:none}
+.app-header{background:linear-gradient(135deg,var(--cpd),var(--cp));color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.app-header h1{font-size:18px;font-weight:600}
+.app-header .logout-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer}
+.tab-nav{display:flex;background:#fff;border-bottom:2px solid #f0f0f0;position:sticky;top:60px;z-index:90}
+.tab-nav button{flex:1;padding:14px 8px;border:none;background:none;font-size:14px;font-weight:500;color:#999;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab-nav button.active{color:var(--cp);border-bottom-color:var(--cp);background:var(--cpb)}
+.tab-nav button:hover{color:var(--cp)}
+.tab-content{display:none;padding:16px;max-width:800px;margin:0 auto}
+.tab-content.active{display:block}
+.card{background:#fff;border-radius:var(--br);padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-size:16px;font-weight:600;color:var(--cpd);margin-bottom:16px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.card-title .arrow{transition:transform .2s;font-size:12px}
+.card-title .arrow.collapsed{transform:rotate(-90deg)}
+.card-body{overflow:hidden;transition:max-height .3s ease}
+.card-body.collapsed{max-height:0!important;overflow:hidden}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:13px;font-weight:500;color:#666;margin-bottom:4px}
+.fg label .ref{font-weight:400;color:#999;font-size:11px;margin-left:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border .2s,background .2s;background:#fff}
+.fg input:focus,.fg select:focus{border-color:var(--cp)}
+.fg input.abnormal{border-color:var(--cd);background:#FFF5F5}
+.fg input[readonly]{background:#f9f9f9;color:#666}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn-p{background:var(--cp);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:15px;cursor:pointer;width:100%;transition:background .2s;font-weight:500}
+.btn-p:hover{background:var(--cpd)}
+.btn-p:disabled{background:#ccc;cursor:not-allowed}
+.btn-o{background:#fff;color:var(--cp);border:2px solid var(--cp);padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-o:hover{background:var(--cpb)}
+.btn-d{background:#fff;color:var(--cd);border:1.5px solid var(--cd);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer}
+.btn-d:hover{background:#FFF5F5}
+.btn-s{padding:6px 14px;font-size:13px;border-radius:6px}
+.record-item{background:#fff;border-radius:var(--br);padding:16px;margin-bottom:10px;box-shadow:var(--sh);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.record-info h3{font-size:15px;color:#333;margin-bottom:4px}
+.record-info p{font-size:12px;color:#999}
+.record-score{text-align:center;min-width:60px}
+.record-score .score{font-size:22px;font-weight:700}
+.record-score .level{font-size:11px}
+.record-actions{display:flex;gap:6px;flex-shrink:0}
+.sel-rec{width:100%;padding:12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;background:#fff;margin-bottom:16px}
+.dim-card{background:#fff;border-radius:10px;padding:16px;margin-bottom:10px;border-left:4px solid #ccc}
+.dim-card.excellent{border-left-color:#27AE60}.dim-card.good{border-left-color:#2ECC71}
+.dim-card.mild{border-left-color:#F39C12}.dim-card.moderate{border-left-color:#E67E22}.dim-card.severe{border-left-color:#E74C3C}
+.dim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dim-name{font-weight:600;font-size:15px}
+.dim-score{font-size:20px;font-weight:700}
+.dim-abnormal{font-size:13px;color:var(--cd);margin-top:6px;line-height:1.7}
+.report-container{background:#fff;border-radius:var(--br);padding:24px;max-width:700px;margin:0 auto}
+.report-header{text-align:center;margin-bottom:24px;border-bottom:2px solid var(--cp);padding-bottom:16px}
+.report-header h2{color:var(--cpd);font-size:22px}
+.report-header p{color:#999;font-size:13px;margin-top:4px}
+.report-patient{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:20px;background:var(--cpb);padding:12px;border-radius:8px}
+.report-patient span{color:#666}.report-patient strong{color:#333}
+.overall-score{text-align:center;margin:24px 0}
+.overall-score .big-score{font-size:56px;font-weight:700}
+.overall-score .big-level{font-size:18px;margin-top:4px}
+.rec-section{background:linear-gradient(135deg,var(--cpb),#fff);border-radius:10px;padding:16px;margin-top:20px;border:1px solid rgba(123,104,174,.2)}
+.rec-section h3{color:var(--cpd);margin-bottom:12px;font-size:16px}
+.rec-item{padding:10px 0;border-bottom:1px dashed #e0e0e0;font-size:13px;line-height:1.7}
+.rec-item:last-child{border-bottom:none}
+.qr-section{text-align:center;margin:24px 0;padding:20px;background:var(--cpb);border-radius:10px}
+.qr-section h4{color:var(--cpd);margin-bottom:12px}
+.qr-section #qrcode{display:inline-block;margin-bottom:8px}
+.qr-section p{font-size:12px;color:#999}
+.report-footer{text-align:center;margin-top:24px;padding-top:16px;border-top:1px solid #e0e0e0;color:#999;font-size:12px}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.success{background:var(--cs)}
+.toast.error{background:var(--cd)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:var(--br);padding:24px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto}
+.loading{text-align:center;padding:40px;color:#999}
+.loading::after{content:'';display:inline-block;width:24px;height:24px;border:3px solid var(--cpl);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:48px 20px;color:#ccc}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+@media print{.app-header,.tab-nav,.no-print,.record-actions,.logout-btn{display:none!important}body{background:#fff}.tab-content{display:none!important}.tab-content.printing{display:block!important;padding:0}.card,.dim-card{box-shadow:none;border:1px solid #e0e0e0}.report-container{padding:0}.overall-score .big-score{font-size:42px}}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}.record-item{flex-direction:column;align-items:flex-start}.record-actions{width:100%;justify-content:flex-end}.report-patient{grid-template-columns:1fr}.login-box{width:90%;padding:32px 24px}}
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div id="loginPage" class="login-page"><div class="login-box"><h1>🧬 归元AI</h1><p>体检解读系统 · 管理端</p><input type="password" id="loginPwd" placeholder="请输入管理密码" autofocus><div id="loginError" class="login-error">密码错误</div><button onclick="doLogin()">登 录</button></div></div>
+<div id="appPage" style="display:none">
+  <header class="app-header no-print"><h1>🧬 归元AI · 体检解读</h1><button class="logout-btn" onclick="doLogout()">退出登录</button></header>
+  <nav class="tab-nav no-print"><button class="active" onclick="switchTab('input')">📋 体检录入</button><button onclick="switchTab('interp')">🧠 智能解读</button><button onclick="switchTab('records')">📊 体检记录</button></nav>
+  <div id="tab-input" class="tab-content active">
+    <div class="card"><div class="card-title">👤 患者基本信息</div>
+      <div class="g2"><div class="fg"><label>姓名 *</label><input id="p_name" placeholder="患者姓名"></div><div class="fg"><label>手机号</label><input id="p_phone" placeholder="手机号码" maxlength="11"></div></div>
+      <div class="g3"><div class="fg"><label>年龄 *</label><input id="p_age" type="number" placeholder="岁" min="1" max="120"></div><div class="fg"><label>性别</label><select id="p_gender" onchange="onGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="fg"><label>体检日期 *</label><input id="p_date" type="date"></div></div>
+      <div class="fg"><label>体检套餐</label><input id="p_package" placeholder="如：女性精英套餐"></div>
+    </div>
+    <div id="indicatorCards"></div>
+    <button class="btn-p" id="saveBtn" onclick="saveCheckup()" style="margin-top:8px">💾 保存体检数据</button>
+    <button class="btn-o" onclick="resetForm()" style="margin-top:8px;width:100%">🔄 重置表单</button>
+  </div>
+  <div id="tab-interp" class="tab-content">
+    <div class="card no-print"><div class="card-title">🔍 选择体检记录</div><select class="sel-rec" id="interpSelect" onchange="onInterpSel()"><option value="">-- 请选择已录入的体检记录 --</option></select><button class="btn-p" onclick="runInterpretation()" id="interpBtn" disabled>🧠 生成解读报告</button></div>
+    <div id="interpResult"></div>
+  </div>
+  <div id="tab-records" class="tab-content"><div id="recordsList"></div></div>
+</div>
+<div id="reportModal" class="modal-overlay" onclick="if(event.target===this)closeReport()"><div class="modal-box"><div style="text-align:right;margin-bottom:8px" class="no-print"><button class="btn-o btn-s" onclick="printReport()">🖨️ 打印</button> <button class="btn-o btn-s" onclick="closeReport()">✕ 关闭</button></div><div id="reportContent"></div></div></div>
+
+<script>
+const SU='https://excwsowelxxkboljyobw.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Y3dzb3dlbHh4a2JvbGp5b2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODU1NzEsImV4cCI6MjA5NDg2MTU3MX0.sNSkYXgme1M352IHvj_mDl7BY_OxZA3OLH2mMTvPblY';
+const sb=window.supabase?window.supabase.createClient(SU,SK):null;
+
+const DIMS=[
+{id:'general',name:'一般检查',icon:'📏',fields:[
+{k:'height',n:'身高',u:'cm',r:()=>[150,200],t:'n'},
+{k:'weight',n:'体重',u:'kg',r:()=>[40,100],t:'n'},
+{k:'bmi',n:'BMI',u:'',r:()=>[18.5,24],t:'n',auto:1},
+{k:'sbp',n:'收缩压',u:'mmHg',r:()=>[90,140],t:'n'},
+{k:'dbp',n:'舒张压',u:'mmHg',r:()=>[60,90],t:'n'}]},
+{id:'blood',name:'血常规',icon:'🩸',fields:[
+{k:'wbc',n:'白细胞WBC',u:'×10⁹/L',r:()=>[3.5,9.5],t:'n'},
+{k:'rbc',n:'红细胞RBC',u:'×10¹²/L',r:g=>g==='女'?[3.8,5.1]:[4.3,5.8],t:'n'},
+{k:'hgb',n:'血红蛋白HGB',u:'g/L',r:g=>g==='女'?[115,150]:[130,175],t:'n'},
+{k:'plt',n:'血小板PLT',u:'×10⁹/L',r:()=>[125,350],t:'n'}]},
+{id:'urine',name:'尿常规',icon:'🧪',fields:[
+{k:'u_pro',n:'尿蛋白',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']},
+{k:'u_glu',n:'尿糖',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']},
+{k:'u_bld',n:'尿潜血',u:'',r:()=>['阴性'],t:'s',opts:['阴性','±','+','++','+++']}]},
+{id:'liver',name:'肝功能',icon:'🫁',fields:[
+{k:'alt',n:'ALT谷丙转氨酶',u:'U/L',r:()=>[7,40],t:'n'},
+{k:'ast',n:'AST谷草转氨酶',u:'U/L',r:()=>[13,35],t:'n'},
+{k:'ggt',n:'GGT',u:'U/L',r:()=>[7,45],t:'n'},
+{k:'tbil',n:'总胆红素TBIL',u:'μmol/L',r:()=>[5.1,28],t:'n'},
+{k:'alb',n:'白蛋白ALB',u:'g/L',r:()=>[40,55],t:'n'}]},
+{id:'kidney',name:'肾功能',icon:'🫘',fields:[
+{k:'cr',n:'肌酐Cr',u:'μmol/L',r:g=>g==='女'?[41,73]:[57,111],t:'n'},
+{k:'bun',n:'尿素氮BUN',u:'mmol/L',r:()=>[2.6,7.5],t:'n'},
+{k:'ua',n:'尿酸UA',u:'μmol/L',r:g=>g==='女'?[155,357]:[208,428],t:'n'}]},
+{id:'glucose',name:'血糖代谢',icon:'🍬',fields:[
+{k:'fbg',n:'空腹血糖FBG',u:'mmol/L',r:()=>[3.9,6.1],t:'n'},
+{k:'hba1c',n:'糖化血红蛋白HbA1c',u:'%',r:()=>[4.0,6.0],t:'n'}]},
+{id:'lipid',name:'血脂',icon:'🧈',fields:[
+{k:'tc',n:'总胆固醇TC',u:'mmol/L',r:()=>[2.8,5.2],t:'n'},
+{k:'tg',n:'甘油三酯TG',u:'mmol/L',r:()=>[0.56,1.7],t:'n'},
+{k:'hdl',n:'高密度脂蛋白HDL',u:'mmol/L',r:g=>g==='女'?[1.3,1.9]:[1.0,1.6],t:'n'},
+{k:'ldl',n:'低密度脂蛋白LDL',u:'mmol/L',r:()=>[0,3.4],t:'n'}]},
+{id:'thyroid',name:'甲状腺',icon:'🦋',fields:[
+{k:'tsh',n:'TSH',u:'mIU/L',r:()=>[0.27,4.2],t:'n'},
+{k:'ft3',n:'FT3',u:'pmol/L',r:()=>[3.1,6.8],t:'n'},
+{k:'ft4',n:'FT4',u:'pmol/L',r:()=>[12.0,22.0],t:'n'}]},
+{id:'hormone',name:'性激素（女性）',icon:'🌸',fields:[
+{k:'fsh',n:'FSH',u:'IU/L',r:()=>[3.5,12.5],t:'n'},
+{k:'lh',n:'LH',u:'IU/L',r:()=>[2.4,12.6],t:'n'},
+{k:'e2',n:'E2雌二醇',u:'pmol/L',r:()=>[46,607],t:'n'},
+{k:'prog',n:'P孕酮',u:'nmol/L',r:()=>[0.6,4.7],t:'n'},
+{k:'testo',n:'T睾酮',u:'nmol/L',r:()=>[0.29,1.67],t:'n'},
+{k:'prl',n:'PRL泌乳素',u:'μg/L',r:()=>[3.4,24.1],t:'n'},
+{k:'amh',n:'AMH',u:'ng/mL',r:()=>[2,6.8],t:'n'}]},
+{id:'bone',name:'骨骼',icon:'🦴',fields:[
+{k:'bmd_t',n:'骨密度T值',u:'',r:()=>[1,-1],t:'n',sp:'bmd'},
+{k:'vitd',n:'维生素D',u:'ng/mL',r:()=>[20,100],t:'n'},
+{k:'ca',n:'血钙Ca',u:'mmol/L',r:()=>[2.11,2.52],t:'n'},
+{k:'phos',n:'血磷P',u:'mmol/L',r:()=>[0.85,1.51],t:'n'}]},
+{id:'tumor',name:'肿瘤标志物',icon:'🔬',fields:[
+{k:'afp',n:'AFP',u:'μg/L',r:()=>[0,7],t:'n'},
+{k:'cea',n:'CEA',u:'μg/L',r:()=>[0,5],t:'n'},
+{k:'ca125',n:'CA125',u:'U/mL',r:()=>[0,35],t:'n'},
+{k:'ca199',n:'CA199',u:'U/mL',r:()=>[0,37],t:'n'}]},
+{id:'gyno',name:'妇科',icon:'👩‍⚕️',fields:[
+{k:'tct',n:'TCT',u:'',r:()=>['正常'],t:'s',opts:['正常','ASC-US','LSIL','HSIL']},
+{k:'hpv',n:'HPV',u:'',r:()=>['阴性'],t:'s',opts:['阴性','阳性']}]},
+{id:'cardio',name:'心血管',icon:'❤️',fields:[
+{k:'ecg',n:'心电图结论',u:'',r:()=>['正常'],t:'s',opts:['正常','窦性心动过速','窦性心动过缓','ST-T改变','房颤','其他']}]}
+];
+
+let editId=null;
+function G(){return document.getElementById('p_gender')?.value||'女'}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function refStr(f){const g=G(),rv=f.r(g);if(f.t==='s')return rv[0];if(f.sp==='bmd')return '>-1';if(rv[0]===0)return '<'+rv[1];return rv[0]+'~'+rv[1]}
+function lr(s){if(s>=90)return{t:'优秀',e:'🟢',c:'#27AE60',cls:'excellent'};if(s>=70)return{t:'良好',e:'🟢',c:'#2ECC71',cls:'good'};if(s>=50)return{t:'轻度风险',e:'🟡',c:'#F39C12',cls:'mild'};if(s>=30)return{t:'中度风险',e:'🟠',c:'#E67E22',cls:'moderate'};return{t:'高度风险',e:'🔴',c:'#E74C3C',cls:'severe'}}
+function toast(m,ty){const t=document.getElementById('toast');t.textContent=m;t.className='toast show '+(ty||'');setTimeout(()=>t.className='toast',2500)}
+
+// Login
+function doLogin(){const p=document.getElementById('loginPwd').value;if(p==='ksmz'||p===localStorage.getItem('gp')){localStorage.setItem('gp',p);document.getElementById('loginPage').style.display='none';document.getElementById('appPage').style.display='block';init()}else{const e=document.getElementById('loginError');e.style.display='block';setTimeout(()=>e.style.display='none',2000)}}
+function doLogout(){localStorage.removeItem('gp');document.getElementById('appPage').style.display='none';document.getElementById('loginPage').style.display='flex';document.getElementById('loginPwd').value=''}
+window.addEventListener('load',()=>{if(localStorage.getItem('gp')==='ksmz'){document.getElementById('loginPage').style.display='none';document.getElementById('appPage').style.display='block';init()}document.getElementById('loginPwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()})});
+
+function init(){buildCards();document.getElementById('p_date').value=new Date().toISOString().split('T')[0];loadRecs()}
+function switchTab(n){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-nav button').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');{input:0,interp:1,records:2}[n];document.querySelectorAll('.tab-nav button')[{input:0,interp:1,records:2}[n]].classList.add('active');if(n==='records')loadRecs();if(n==='interp')loadInterp()}
+
+// Build cards
+function buildCards(){
+let h='';
+DIMS.forEach(d=>{
+h+=`<div class="card"><div class="card-title" onclick="togCard(this)">${d.icon} ${d.name}<span class="arrow">▼</span></div><div class="card-body"><div class="g2">`;
+d.fields.forEach(f=>{
+const rl=refStr(f),uid='i_'+f.k;
+if(f.t==='s')h+=`<div class="fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="rf_${f.k}">参考: ${rl}</span></label><select id="${uid}" data-k="${f.k}"><option value="">--</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+else h+=`<div class="fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="rf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="number" step="any" data-k="${f.k}" placeholder="${f.auto?'自动计算':'输入值'}" ${f.auto?'readonly':''} oninput="onIn('${f.k}')"></div>`;
+});
+h+='</div></div></div>';
+});
+document.getElementById('indicatorCards').innerHTML=h;
+}
+function togCard(el){const b=el.nextElementSibling,a=el.querySelector('.arrow');b.classList.toggle('collapsed');a.classList.toggle('collapsed')}
+function onGenderChange(){DIMS.forEach(d=>{d.fields.forEach(f=>{const re=document.getElementById('rf_'+f.k);if(re)re.textContent='参考: '+refStr(f);const el=document.getElementById('i_'+f.k);if(el&&el.type==='number')chkAbn(f.k)})})}
+function onIn(k){if(k==='height'||k==='weight'){const h=parseFloat(document.getElementById('i_height')?.value),w=parseFloat(document.getElementById('i_weight')?.value);if(h>0&&w>0){document.getElementById('i_bmi').value=(w/((h/100)**2)).toFixed(1);chkAbn('bmi')}}chkAbn(k)}
+function chkAbn(k){const el=document.getElementById('i_'+k);if(!el||el.type!=='number')return;const v=parseFloat(el.value);if(isNaN(v)){el.classList.remove('abnormal');return}const g=G(),f=DIMS.flatMap(d=>d.fields).find(x=>x.k===k);if(!f||f.t!=='n')return;const rv=f.r(g);let ab=false;if(f.sp==='bmd')ab=v<-1;else if(rv[0]===0)ab=v>rv[1];else ab=v<rv[0]||v>rv[1];el.classList.toggle('abnormal',ab)}
+
+// Save
+async function saveCheckup(){
+const nm=document.getElementById('p_name').value.trim(),ph=document.getElementById('p_phone').value.trim(),ag=parseInt(document.getElementById('p_age').value),gd=document.getElementById('p_gender').value,dt=document.getElementById('p_date').value,pk=document.getElementById('p_package').value.trim();
+if(!nm)return toast('请输入患者姓名','error');if(!ag)return toast('请输入年龄','error');if(!dt)return toast('请选择体检日期','error');
+const ind={};DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('i_'+f.k);if(el)ind[f.k]=el.value})});
+const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
+try{
+const data={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
+let res;if(editId){res=await sb.from('health_checkups').update(data).eq('id',editId).select()}else{res=await sb.from('health_checkups').insert(data).select()}
+if(res.error)throw res.error;toast('✅ 保存成功','success');resetForm();editId=null;
+}catch(e){console.error(e);toast('保存失败: '+(e.message||'未知错误'),'error')}finally{btn.disabled=false;btn.textContent='💾 保存体检数据'}
+}
+
+function resetForm(){document.getElementById('p_name').value='';document.getElementById('p_phone').value='';document.getElementById('p_age').value='';document.getElementById('p_package').value='';document.getElementById('p_date').value=new Date().toISOString().split('T')[0];DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('i_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});editId=null}
+
+// Records
+async function loadRecs(){
+const c=document.getElementById('recordsList');c.innerHTML='<div class="loading">加载中</div>';
+try{const{data,error}=await sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;if(!data||!data.length){c.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>暂无体检记录</p></div>';return}
+let h='';data.forEach(rec=>{const ip=rec.interpretation;let sc='--',lv='--',co='#999',em='⚪';if(ip&&ip.overall_score!=null){sc=Math.round(ip.overall_score);const r=lr(sc);lv=r.t;co=r.c;em=r.e}
+h+=`<div class="record-item"><div class="record-info"><h3>${esc(rec.patient_name)} · ${esc(rec.patient_gender)} · ${rec.patient_age}岁</h3><p>${esc(rec.package_name||'未填写套餐')} | ${rec.checkup_date}</p></div><div class="record-score"><div class="score" style="color:${co}">${sc}</div><div class="level" style="color:${co}">${em} ${lv}</div></div><div class="record-actions">${ip?`<button class="btn-o btn-s" onclick="viewRpt('${rec.id}')">📄</button>`:''}<button class="btn-o btn-s" onclick="editRec('${rec.id}')">✏️</button><button class="btn-d btn-s" onclick="delRec('${rec.id}')">🗑️</button></div></div>`});
+c.innerHTML=h}catch(e){c.innerHTML='<div class="empty-state"><p>加载失败</p></div>'}
+}
+
+async function editRec(id){try{const{data,error}=await sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;editId=id;document.getElementById('p_name').value=data.patient_name||'';document.getElementById('p_phone').value=data.patient_phone||'';document.getElementById('p_age').value=data.patient_age||'';document.getElementById('p_gender').value=data.patient_gender||'女';document.getElementById('p_date').value=data.checkup_date||'';document.getElementById('p_package').value=data.package_name||'';if(data.indicators){DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('i_'+f.k);if(el&&data.indicators[f.k]!=null)el.value=data.indicators[f.k]})})}switchTab('input');toast('已加载记录，可编辑后保存')}catch(e){toast('加载失败','error')}}
+
+async function delRec(id){if(!confirm('确定删除此条体检记录？'))return;try{await sb.from('health_checkups').delete().eq('id',id);toast('已删除','success');loadRecs()}catch(e){toast('删除失败','error')}}
+
+// Interp select
+async function loadInterp(){const sel=document.getElementById('interpSelect');sel.innerHTML='<option value="">-- 请选择已录入的体检记录 --</option>';try{const{data,error}=await sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;data.forEach(rec=>{const o=document.createElement('option');o.value=rec.id;o.textContent=rec.patient_name+' · '+rec.checkup_date+(rec.package_name?' · '+rec.package_name:'');sel.appendChild(o)})}catch(e){}}
+function onInterpSel(){document.getElementById('interpBtn').disabled=!document.getElementById('interpSelect').value;document.getElementById('interpResult').innerHTML=''}
+
+// Interpretation Engine
+async function runInterpretation(){
+const sid=document.getElementById('interpSelect').value;if(!sid)return;const btn=document.getElementById('interpBtn');btn.disabled=true;btn.textContent='⏳ 解读中...';const rd=document.getElementById('interpResult');rd.innerHTML='<div class="loading">正在运行解读引擎...</div>';
+try{const{data:rec,error}=await sb.from('health_checkups').select('*').eq('id',sid).single();if(error)throw error;const ip=interpRec(rec);await sb.from('health_checkups').update({interpretation:ip,report_generated:true}).eq('id',rec.id);renderInterp({...rec,interpretation:ip});toast('✅ 解读完成','success')}catch(e){rd.innerHTML='<div class="empty-state"><p>解读失败</p></div>';toast('解读失败','error')}finally{btn.disabled=false;btn.textContent='🧠 生成解读报告'}
+}
+
+function interpRec(rec){
+const ind=rec.indicators||{},g=rec.patient_gender||'女',age=rec.patient_age||30;
+const dScores={},dAbn={},recs=[];
+DIMS.forEach(dim=>{let sc=100;const abn=[];
+dim.fields.forEach(f=>{const rv=ind[f.k];if(!rv&&rv!==0&&rv!=='')return;
+if(f.t==='s'){const norm=f.r(g)[0];if(rv&&rv!==norm){const sev=['±','+','++','+++'].indexOf(rv);sc-=sev>=0?10+sev*10:20;abn.push({k:f.k,n:f.n,v:rv,norm})}}
+else{const val=parseFloat(rv);if(isNaN(val))return;const ref=f.r(g);let out=false,dev=0;
+if(f.sp==='bmd'){if(val<-1){out=true;dev=Math.abs(val-(-1))}}
+else if(ref[0]===0){if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}
+else{if(val<ref[0]){out=true;dev=(ref[0]-val)/Math.max(ref[0],0.01)}else if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}
+if(out){let d=dev<0.1?10+dev*100:dev<0.3?20+(dev-0.1)*100:40+Math.min((dev-0.3)*100,20);d=Math.min(d,60);sc-=d;abn.push({k:f.k,n:f.n,v:val,ref,dev,d})}}
+});dScores[dim.id]=Math.max(0,Math.min(100,Math.round(sc)));dAbn[dim.id]=abn});
+
+// Anti-aging recommendations
+const v=k=>parseFloat(ind[k])||0, s=k=>ind[k]||'';
+if(g==='女'){
+if(v('amh')>0&&v('amh')<2)recs.push({dim:'hormone',title:'卵巢储备功能下降',detail:'AMH < 2 ng/mL',suggest:'推荐Kupperman量表+卵巢抗衰管理'});
+if(v('fsh')>10&&v('fsh')<=25)recs.push({dim:'hormone',title:'卵巢功能减退趋势',detail:'FSH 10~25 IU/L',suggest:'推荐更年期评估+中医体质辨识'});
+if(v('fsh')>25)recs.push({dim:'hormone',title:'卵巢功能衰退',detail:'FSH > 25 IU/L',suggest:'推荐性激素动态评估+中西医结合抗衰'});
+}
+if(v('ldl')>3.4)recs.push({dim:'lipid',title:'血脂异常',detail:'LDL '+v('ldl')+' mmol/L',suggest:'推荐营养评估+代谢管理'});
+if(v('fbg')>=5.6&&v('fbg')<7)recs.push({dim:'glucose',title:'空腹血糖受损',detail:'FBG '+v('fbg')+' mmol/L',suggest:'推荐代谢综合征筛查'});
+if(v('fbg')>=7)recs.push({dim:'glucose',title:'疑似糖尿病',detail:'FBG '+v('fbg')+' mmol/L',suggest:'建议内分泌科就诊'});
+if(v('hba1c')>=5.7&&v('hba1c')<6.5)recs.push({dim:'glucose',title:'糖尿病前期',detail:'HbA1c '+v('hba1c')+'%',suggest:'推荐代谢抗衰管理'});
+const uaT=g==='女'?360:420;if(v('ua')>uaT)recs.push({dim:'kidney',title:'高尿酸血症',detail:'UA '+v('ua')+' μmol/L',suggest:'推荐饮食+代谢管理'});
+if(v('tsh')>4.2&&v('tsh')<=10)recs.push({dim:'thyroid',title:'亚临床甲减可能',detail:'TSH '+v('tsh')+' mIU/L',suggest:'推荐甲状腺功能评估'});
+if(v('tsh')>10)recs.push({dim:'thyroid',title:'临床甲减可能',detail:'TSH '+v('tsh')+' mIU/L',suggest:'建议内分泌科就诊'});
+if(v('vitd')>0&&v('vitd')<20)recs.push({dim:'bone',title:'维生素D缺乏',detail:'VitD '+v('vitd')+' ng/mL',suggest:'推荐营养评估+VD补充'});
+if(v('bmd_t')<-1&&v('bmd_t')>=-2.5)recs.push({dim:'bone',title:'骨量减少',detail:'T值 '+v('bmd_t'),suggest:'推荐骨质疏松风险评估'});
+if(v('bmd_t')<-2.5)recs.push({dim:'bone',title:'骨质疏松',detail:'T值 '+v('bmd_t'),suggest:'推荐骨骼抗衰管理'});
+const bmi=v('bmi');if(bmi>24&&bmi<=28)recs.push({dim:'general',title:'超重',detail:'BMI '+bmi,suggest:'推荐营养+运动评估'});
+if(bmi>28)recs.push({dim:'general',title:'肥胖',detail:'BMI '+bmi,suggest:'推荐代谢综合管理'});
+if(v('sbp')>140)recs.push({dim:'general',title:'高血压',detail:'收缩压 '+v('sbp')+' mmHg',suggest:'建议心血管科就诊'});
+if(v('alt')>40)recs.push({dim:'liver',title:'肝功能异常',detail:'ALT '+v('alt')+' U/L',suggest:'推荐肝脏保护+生活方式干预'});
+const crT=g==='女'?97:133;if(v('cr')>crT)recs.push({dim:'kidney',title:'肾功能异常',detail:'Cr '+v('cr')+' μmol/L',suggest:'建议肾内科就诊'});
+if(v('ca125')>35)recs.push({dim:'tumor',title:'CA125升高',detail:'CA125 '+v('ca125')+' U/mL',suggest:'建议妇科进一步检查'});
+if(s('tct')&&s('tct')!=='正常')recs.push({dim:'gyno',title:'宫颈细胞学异常',detail:'TCT: '+s('tct'),suggest:'建议阴道镜检查'});
+if(s('hpv')==='阳性')recs.push({dim:'gyno',title:'HPV感染',detail:'HPV阳性',suggest:'推荐免疫调节评估+定期随访'});
+if(s('ecg')==='ST-T改变')recs.push({dim:'cardio',title:'心肌缺血可能',detail:'心电图ST-T改变',suggest:'建议心内科就诊'});
+
+// Overall
+const wt={general:1.5,blood:1,urine:.8,liver:1.2,kidney:1.2,glucose:1.5,lipid:1.3,thyroid:1,hormone:1.2,bone:1,tumor:1.5,gyno:1,cardio:1.5};
+let tw=0,ws=0;
+Object.keys(dScores).forEach(did=>{const dim=DIMS.find(x=>x.id===did);const hv=dim.fields.some(f=>ind[f.k]&&ind[f.k]!=='');if(hv){ws+=dScores[did]*(wt[did]||1);tw+=(wt[did]||1)}});
+const overall=tw>0?ws/tw:0;
+return{overall_score:Math.round(overall*10)/10,dim_scores:dScores,dim_abnormals:dAbn,recommendations:recs,interpreted_at:new Date().toISOString()}
+}
+
+function renderInterp(rec){
+const ip=rec.interpretation,ovl=lr(ip.overall_score);
+let h=`<div class="card" style="text-align:center"><div style="font-size:48px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:16px;color:${ovl.c}">${ovl.e} ${ovl.t}</div></div>`;
+DIMS.forEach(dim=>{const sc=ip.dim_scores[dim.id];if(sc==null)return;const hv=dim.fields.some(f=>rec.indicators[f.k]&&rec.indicators[f.k]!=='');if(!hv)return;const r=lr(sc),abn=ip.dim_abnormals[dim.id]||[];
+h+=`<div class="dim-card ${r.cls}"><div class="dim-header"><span class="dim-name">${dim.icon} ${dim.name}</span><span class="dim-score" style="color:${r.c}">${sc} ${r.e}</span></div>`;
+if(abn.length){h+='<div class="dim-abnormal">⚠️ 异常指标：<br>';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:13px;color:#27AE60">✅ 各项指标正常</div>';
+h+='</div>'});
+if(ip.recommendations&&ip.recommendations.length){h+='<div class="rec-section"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+h+=`<div style="text-align:center;margin-top:16px"><button class="btn-p" onclick="viewRpt('${rec.id}')" style="max-width:300px;margin:0 auto">📄 查看完整报告</button></div>`;
+document.getElementById('interpResult').innerHTML=h;
+}
+
+// Report
+async function viewRpt(id){
+try{const{data:rec,error}=await sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;if(!rec.interpretation){toast('该记录尚未解读','error');return}renderRpt(rec);document.getElementById('reportModal').classList.add('show')}catch(e){toast('加载报告失败','error')}
+}
+
+function renderRpt(rec){
+const ip=rec.interpretation,ovl=lr(ip.overall_score),g=rec.patient_gender||'女';
+let h=`<div class="report-container"><div class="report-header"><h2>🧬 归元AI · 体检解读报告</h2><p>固本归元 · 科学抗衰</p></div>
+<div class="report-patient"><div><span>姓名：</span><strong>${esc(rec.patient_name)}</strong></div><div><span>性别：</span><strong>${esc(rec.patient_gender)}</strong></div><div><span>年龄：</span><strong>${rec.patient_age}岁</strong></div><div><span>体检日期：</span><strong>${rec.checkup_date}</strong></div><div><span>体检套餐：</span><strong>${esc(rec.package_name||'—')}</strong></div><div><span>解读时间：</span><strong>${new Date(ip.interpreted_at).toLocaleString('zh-CN')}</strong></div></div>
+<div class="overall-score"><div class="big-score" style="color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:13px;color:#999">综合健康评分</div><div class="big-level" style="color:${ovl.c}">${ovl.e} ${ovl.t}</div></div>`;
+h+='<h3 style="font-size:16px;color:var(--cpd);margin:20px 0 12px">📊 各维度评分</h3>';
+DIMS.forEach(dim=>{const sc=ip.dim_scores[dim.id];if(sc==null)return;const hv=dim.fields.some(f=>rec.indicators[f.k]&&rec.indicators[f.k]!=='');if(!hv)return;const r=lr(sc),abn=ip.dim_abnormals[dim.id]||[];
+h+=`<div class="dim-card ${r.cls}"><div class="dim-header"><span class="dim-name">${dim.icon} ${dim.name}</span><span class="dim-score" style="color:${r.c}">${sc} ${r.e}</span></div>`;
+if(abn.length){h+='<div class="dim-abnormal">⚠️ 异常指标：<br>';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:13px;color:#27AE60">✅ 各项指标正常</div>';
+h+='</div>'});
+if(ip.recommendations&&ip.recommendations.length){h+='<div class="rec-section"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+h+=`<div class="qr-section"><h4>📱 扫码进入归元AI评估</h4><div id="qrcode"></div><p>获取个性化健康管理方案</p></div>
+<div class="report-footer">归元AI · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考，不作为临床诊断依据</div></div>`;
+document.getElementById('reportContent').innerHTML=h;
+setTimeout(()=>{const qe=document.getElementById('qrcode');if(qe){qe.innerHTML='';try{new QRCode(qe,{text:'https://judy-pm.github.io/mama-scale/',width:128,height:128,colorDark:'#5B4A8A',colorLight:'#ffffff'})}catch(e){qe.innerHTML='<p style="font-size:11px;color:#999">二维码生成失败</p>'}}},100);
+}
+
+function closeReport(){document.getElementById('reportModal').classList.remove('show')}
+function printReport(){const c=document.getElementById('reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.report-container{max-width:700px;margin:0 auto}.report-header{text-align:center;margin-bottom:20px;border-bottom:2px solid #7B68AE;padding-bottom:12px}.report-header h2{color:#5B4A8A;font-size:20px}.report-header p{color:#999;font-size:12px}.report-patient{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:16px;background:#F5F3FA;padding:10px;border-radius:6px}.report-patient span{color:#666}.report-patient strong{color:#333}.overall-score{text-align:center;margin:20px 0}.big-score{font-size:42px;font-weight:700}.big-level{font-size:16px;margin-top:4px}.dim-card{border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid #ccc}.dim-card.excellent{border-left-color:#27AE60}.dim-card.good{border-left-color:#2ECC71}.dim-card.mild{border-left-color:#F39C12}.dim-card.moderate{border-left-color:#E67E22}.dim-card.severe{border-left-color:#E74C3C}.dim-header{display:flex;justify-content:space-between;align-items:center}.dim-name{font-weight:600;font-size:14px}.dim-score{font-size:18px;font-weight:700}.dim-abnormal{font-size:12px;color:#E74C3C;margin-top:4px;line-height:1.6}.rec-section{border-radius:8px;padding:12px;margin-top:16px;border:1px solid #e0e0e0}.rec-section h3{color:#5B4A8A;margin-bottom:8px;font-size:14px}.rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.rec-item:last-child{border-bottom:none}.qr-section{text-align:center;margin:20px 0;padding:16px;border:1px solid #e0e0e0;border-radius:8px}.report-footer{text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px}</style></head><body>'+c+'</body></html>');w.document.close();setTimeout(()=>w.print(),500)}
+</script>
+</body>
+</html>
