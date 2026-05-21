@@ -12926,17 +12926,24 @@ const AdminApp = {
           <h4>🤖 AI配置</h4>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
             <div>
-              <div style="font-weight:600;">DeepSeek API Key</div>
-              <div style="font-size:13px;color:var(--color-gray);">用于问诊AI智能总结</div>
+              <div style="font-weight:600;">扣子Bot ID</div>
+              <div style="font-size:13px;color:var(--color-gray);">在扣子平台创建Bot后获取</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="AdminApp.configDeepSeekKey()">配置</button>
+            <button class="btn btn-outline btn-sm" onclick="AdminApp.configCozeSettings()">配置</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
+            <div>
+              <div style="font-weight:600;">扣子Access Token</div>
+              <div style="font-size:13px;color:var(--color-gray);">Personal Access Token</div>
+            </div>
+            <span style="font-size:13px;" id="coze-token-badge">—</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
             <div>
               <div style="font-weight:600;">API状态</div>
-              <div style="font-size:13px;color:var(--color-gray);" id="deepseek-status">未配置</div>
+              <div style="font-size:13px;color:var(--color-gray);" id="coze-status">未配置</div>
             </div>
-            <span style="font-size:13px;" id="deepseek-badge">—</span>
+            <span style="font-size:13px;" id="coze-badge">—</span>
           </div>
         </div>
         
@@ -13609,7 +13616,7 @@ async renderConsultation() {
   }
   document.getElementById('consultation-content').innerHTML = patientSelHtml + tabHtml + contentHtml;
   this.tcmLoadPatientSelect();
-  this.updateDeepSeekStatus();
+  this.updateCozeStatus();
 },
 
 switchTCMTab(tab) {
@@ -13916,29 +13923,17 @@ previewTonguePhoto(input) {
 async tcmAISummarizeTranscript() {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
-  const apiKey = localStorage.getItem('deepseek_api_key');
-  if (!apiKey) { alert('请先在设置中配置DeepSeek API Key'); return; }
+  const botId = localStorage.getItem('coze_bot_id');
+  const token = localStorage.getItem('coze_access_token');
+  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
   
   const btn = event.target.closest('button');
   const orig = btn.innerHTML;
   btn.innerHTML = '⏳ 归纳中...'; btn.disabled = true;
   
   try {
-    const resp = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: '你是中医+功能医学AI助手。将患者的口述问诊内容，按以下维度整理归纳：主诉、现病史、就医史、用药史、检验结果、既往史、手术史、过敏史、家族史、婚育月经史、情绪状态、饮食习惯、睡眠质量、生活环境、工作压力、运动习惯。用JSON返回，key: chief_complaint, present_illness, medical_history, medication_history, lab_results, past_history, surgical_history, allergy_history, family_history, menstrual_history, emotional_status, dietary_habits, sleep_quality, living_environment, work_stress, exercise_habits。如果某维度信息不足，填空字符串。' },
-          { role: 'user', content: '请归纳以下口述内容：\n' + transcript.value }
-        ],
-        temperature: 0.2
-      })
-    });
-    if (!resp.ok) throw new Error('API调用失败: ' + resp.status);
-    const result = await resp.json();
-    const content = result.choices[0].message.content;
+    const prompt = '你是中医+功能医学AI助手。将患者的口述问诊内容，按以下维度整理归纳：主诉、现病史、就医史、用药史、检验结果、既往史、手术史、过敏史、家族史、婚育月经史、情绪状态、饮食习惯、睡眠质量、生活环境、工作压力、运动习惯。用JSON返回，key: chief_complaint, present_illness, medical_history, medication_history, lab_results, past_history, surgical_history, allergy_history, family_history, menstrual_history, emotional_status, dietary_habits, sleep_quality, living_environment, work_stress, exercise_habits。如果某维度信息不足，填空字符串。\n\n请归纳以下口述内容：\n' + transcript.value;
+    const content = await this.callCozeBot(prompt);
     let summary;
     try { const m = content.match(/\{[\s\S]*\}/); summary = m ? JSON.parse(m[0]) : {}; } catch(e) { summary = {}; }
     
@@ -14099,8 +14094,9 @@ tcmAutoDifferentiate() {
 },
 
 async tcmAIDiagnosis() {
-  const apiKey = localStorage.getItem('deepseek_api_key');
-  if (!apiKey) { alert('请先在设置中配置DeepSeek API Key'); return; }
+  const botId = localStorage.getItem('coze_bot_id');
+  const token = localStorage.getItem('coze_access_token');
+  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
   if (!chief) { alert('请先填写主诉'); return; }
   
@@ -14124,21 +14120,8 @@ async tcmAIDiagnosis() {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const resp = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: '你是资深中医师+功能医学专家。根据患者完整的问诊信息和舌象脉象，进行辨证论治。用JSON返回以下字段：syndrome（证型）、pathogenesis（病机分析）、treatment_principle（治法）、main_formula（主方名称及组成）、modification（加减变化）、acupuncture（针灸建议）、lifestyle（生活调护建议）、prognosis（预后判断）。每个字段用专业但易懂的语言。' },
-          { role: 'user', content: '请辨证论治：\n' + consultData }
-        ],
-        temperature: 0.3
-      })
-    });
-    if (!resp.ok) throw new Error('API调用失败: ' + resp.status);
-    const result = await resp.json();
-    const content = result.choices[0].message.content;
+    const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用JSON格式返回以下字段：syndrome（证型）、pathogenesis（病机分析）、treatment_principle（治法）、main_formula（主方名称及组成）、modification（加减变化）、acupuncture（针灸建议）、lifestyle（生活调护建议）、prognosis（预后判断）。每个字段用专业但易懂的语言。\n\n患者四诊数据：\n' + consultData;
+    const content = await this.callCozeBot(prompt);
     let diagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); diagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { diagnosis = { syndrome: content }; }
     
@@ -14160,7 +14143,7 @@ async tcmAIDiagnosis() {
         { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
-      let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:11px;color:var(--color-gray);margin-bottom:12px;">由DeepSeek AI生成，仅供医生参考</p>';
+      let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:11px;color:var(--color-gray);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
       sections.forEach(s => {
         if(diagnosis[s.key]) {
           h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${diagnosis[s.key]}</div></div>`;
@@ -14365,8 +14348,9 @@ async tcmSaveFollowup() {
 },
 
 async tcmAIFollowupAnalysis() {
-  const apiKey = localStorage.getItem('deepseek_api_key');
-  if (!apiKey) { alert('请先在设置中配置DeepSeek API Key'); return; }
+  const botId = localStorage.getItem('coze_bot_id');
+  const token = localStorage.getItem('coze_access_token');
+  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
   const p = this.tcmCurrentPatient;
   if (!p) return;
   
@@ -14389,21 +14373,8 @@ async tcmAIFollowupAnalysis() {
 服药情况：${document.getElementById('fu_medication_compliance').value.trim()}
 副作用：${document.getElementById('fu_side_effects').value.trim()}`;
 
-    const resp = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: '你是中医+功能医学AI助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.3
-      })
-    });
-    if (!resp.ok) throw new Error('API调用失败');
-    const result = await resp.json();
-    const content = result.choices[0].message.content;
+    const cozePrompt = '你是归元AI的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
+    const content = await this.callCozeBot(cozePrompt);
     let analysis;
     try { const m = content.match(/\{[\s\S]*\}/); analysis = m ? JSON.parse(m[0]) : { treatment_summary: content }; } catch(e) { analysis = { treatment_summary: content }; }
     
@@ -14541,30 +14512,103 @@ async tcmViewArchiveRecord(id) {
 },
 
 // ========== DeepSeek配置 ==========
-configDeepSeekKey() {
-  const currentKey = localStorage.getItem('deepseek_api_key')||'';
-  const key = prompt('请输入DeepSeek API Key：', currentKey);
-  if(key===null) return;
-  if(key.trim()){
-    localStorage.setItem('deepseek_api_key', key.trim());
-    alert('API Key已保存');
-    this.updateDeepSeekStatus();
-  } else {
-    localStorage.removeItem('deepseek_api_key');
-    alert('API Key已清除');
-    this.updateDeepSeekStatus();
+// ========== 扣子Bot配置 ==========
+async callCozeBot(prompt) {
+  const botId = localStorage.getItem('coze_bot_id');
+  const token = localStorage.getItem('coze_access_token');
+  if (!botId || !token) throw new Error('请先在设置中配置扣子Bot ID和Access Token');
+  
+  // 创建对话
+  const createResp = await fetch('https://api.coze.cn/v3/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({
+      bot_id: botId,
+      user_id: 'guiyuan_admin_' + Date.now(),
+      stream: false,
+      auto_save_history: false,
+      additional_messages: [{
+        role: 'user',
+        content: prompt,
+        content_type: 'text'
+      }]
+    })
+  });
+  
+  const createResult = await createResp.json();
+  if (createResult.code !== 0) throw new Error(createResult.msg || '扣子API调用失败');
+  
+  const chatId = createResult.data.id;
+  const conversationId = createResult.data.conversation_id;
+  
+  // 轮询结果（最多60秒）
+  let attempts = 0;
+  while (attempts < 60) {
+    await new Promise(r => setTimeout(r, 1000));
+    const checkResp = await fetch(
+      `https://api.coze.cn/v3/chat/retrieve?chat_id=${chatId}&conversation_id=${conversationId}`,
+      { headers: { 'Authorization': 'Bearer ' + token } }
+    );
+    const checkResult = await checkResp.json();
+    
+    if (checkResult.data && checkResult.data.status === 'completed') {
+      const msgResp = await fetch(
+        `https://api.coze.cn/v3/chat/message/list?chat_id=${chatId}&conversation_id=${conversationId}`,
+        { headers: { 'Authorization': 'Bearer ' + token } }
+      );
+      const msgResult = await msgResp.json();
+      const answer = (msgResult.data || []).find(m => m.role === 'assistant' && m.type === 'answer');
+      return answer ? answer.content : '';
+    }
+    if (checkResult.data && ['failed', 'requires_action'].includes(checkResult.data.status)) {
+      throw new Error('AI处理失败: ' + (checkResult.data.last_error?.msg || '未知错误'));
+    }
+    attempts++;
   }
+  throw new Error('AI响应超时');
 },
 
-updateDeepSeekStatus() {
-  const key = localStorage.getItem('deepseek_api_key');
-  const statusEl = document.getElementById('deepseek-status');
-  const badgeEl = document.getElementById('deepseek-badge');
-  if(statusEl) statusEl.textContent = key ? '已配置 ('+key.substring(0,8)+'...)' : '未配置';
-  if(badgeEl){
-    badgeEl.textContent = key ? '✅ 已就绪' : '—';
-    badgeEl.style.color = key ? 'var(--color-green)' : 'var(--color-gray)';
+configCozeSettings() {
+  const currentBotId = localStorage.getItem('coze_bot_id')||'';
+  const currentToken = localStorage.getItem('coze_access_token')||'';
+  const botId = prompt('请输入扣子Bot ID：', currentBotId);
+  if(botId===null) return;
+  const token = prompt('请输入扣子Access Token（Personal Access Token）：', currentToken);
+  if(token===null) return;
+  if(botId.trim()){
+    localStorage.setItem('coze_bot_id', botId.trim());
+  } else {
+    localStorage.removeItem('coze_bot_id');
   }
+  if(token.trim()){
+    localStorage.setItem('coze_access_token', token.trim());
+  } else {
+    localStorage.removeItem('coze_access_token');
+  }
+  alert('扣子配置已保存');
+  this.updateCozeStatus();
+},
+
+updateCozeStatus() {
+  const botId = localStorage.getItem('coze_bot_id');
+  const token = localStorage.getItem('coze_access_token');
+  const statusEl = document.getElementById('coze-status');
+  const badgeEl = document.getElementById('coze-badge');
+  const tokenBadgeEl = document.getElementById('coze-token-badge');
+  const configured = botId && token;
+  if(statusEl) statusEl.textContent = configured ? '已配置' : '未配置';
+  if(badgeEl){
+    badgeEl.textContent = configured ? '✅ 已就绪' : '—';
+    badgeEl.style.color = configured ? 'var(--color-green)' : 'var(--color-gray)';
+  }
+  if(tokenBadgeEl){
+    tokenBadgeEl.textContent = token ? '✅ 已配置' : '—';
+    tokenBadgeEl.style.color = token ? 'var(--color-green)' : 'var(--color-gray)';
+  }
+}
 }
 
 };
