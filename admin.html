@@ -12338,17 +12338,17 @@ const AdminApp = {
     const ageDisplay = p.age || (assessmentPatient ? '' : '-');
     const genderDisplay = p.gender || '';
     
-    // 基本信息
+    // 基本信息 - 存储患者数据用于编辑
+    const editData = JSON.stringify({
+      id: p.id || '', name, phone, age: p.age || '', gender: genderDisplay,
+      id_number: p.id_number || '', chief_complaint: p.chief_complaint || '',
+      medical_history: p.medical_history || '', allergy_history: p.allergy_history || '',
+      family_history: p.family_history || '', notes: p.notes || ''
+    }).replace(/"/g, '&quot;');
     let infoHtml = `
       <div class="info-card">
         <h4>👤 基本信息 <button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:12px;" 
-          onclick="openEditPatientModal('${p.id || ''}','${name}','${phone}',
-            '${p.age || ''}','${genderDisplay}','${p.id_number || ''}',
-            '${(p.chief_complaint || '').replace(/'/g,"\\'")}',
-            '${(p.medical_history || '').replace(/'/g,"\\'")}',
-            '${(p.allergy_history || '').replace(/'/g,"\\'")}',
-            '${(p.family_history || '').replace(/'/g,"\\'")}',
-            '${(p.notes || '').replace(/'/g,"\\'")}')">✏️ 编辑</button></h4>
+          data-patient='${editData}' onclick="openEditPatientModalFromData(this)">✏️ 编辑</button></h4>
         <div class="info-row"><div class="info-label">姓名</div><div class="info-value">${name}</div></div>
         <div class="info-row"><div class="info-label">手机号</div><div class="info-value">${phone}</div></div>
         <div class="info-row"><div class="info-label">性别</div><div class="info-value">${genderDisplay || '-'}</div></div>
@@ -12991,18 +12991,19 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
 };
 
 // ========== 编辑患者信息辅助函数 ==========
-function openEditPatientModal(id, name, phone, age, gender, idNumber, chiefComplaint, medicalHistory, allergyHistory, familyHistory, notes) {
-  document.getElementById('ep-id').value = id;
-  document.getElementById('ep-name').value = name;
-  document.getElementById('ep-phone').value = phone;
-  document.getElementById('ep-age').value = age || '';
-  document.getElementById('ep-gender').value = gender || '';
-  document.getElementById('ep-id-number').value = idNumber || '';
-  document.getElementById('ep-chief-complaint').value = chiefComplaint || '';
-  document.getElementById('ep-medical-history').value = medicalHistory || '';
-  document.getElementById('ep-allergy-history').value = allergyHistory || '';
-  document.getElementById('ep-family-history').value = familyHistory || '';
-  document.getElementById('ep-notes').value = notes || '';
+function openEditPatientModalFromData(btn) {
+  const d = JSON.parse(btn.getAttribute('data-patient'));
+  document.getElementById('ep-id').value = d.id;
+  document.getElementById('ep-name').value = d.name;
+  document.getElementById('ep-phone').value = d.phone;
+  document.getElementById('ep-age').value = d.age || '';
+  document.getElementById('ep-gender').value = d.gender || '';
+  document.getElementById('ep-id-number').value = d.id_number || '';
+  document.getElementById('ep-chief-complaint').value = d.chief_complaint || '';
+  document.getElementById('ep-medical-history').value = d.medical_history || '';
+  document.getElementById('ep-allergy-history').value = d.allergy_history || '';
+  document.getElementById('ep-family-history').value = d.family_history || '';
+  document.getElementById('ep-notes').value = d.notes || '';
   document.getElementById('edit-patient-modal').classList.add('show');
 }
   </script>
