@@ -32,6 +32,105 @@
   --font-size-xxl: 28px;
 }
 
+/* ========== 问诊单样式 ========== */
+.tcm-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(123,104,174,0.08);
+}
+.tcm-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-primary-bg);
+}
+.tcm-field {
+  margin-bottom: 16px;
+}
+.tcm-field label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+.tcm-field label .required {
+  color: var(--color-red);
+  font-size: 12px;
+}
+.tcm-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  resize: vertical;
+  font-family: inherit;
+}
+.tcm-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: white;
+}
+.tcm-select-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tcm-select-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tcm-select-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+.tcm-select-btn:active {
+  transform: scale(0.95);
+}
+.tcm-consultation-card {
+  background: linear-gradient(135deg, #F8F6FA, #F0E8FA);
+  border: 2px solid var(--color-primary-light);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tcm-consultation-card:active {
+  transform: scale(0.98);
+}
+.tcm-consultation-card .card-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+.tcm-consultation-card .card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+.tcm-consultation-card .card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -1119,6 +1218,11 @@ body {
     </div>
   </div>
   
+  <!-- 中医问诊单页 -->
+  <div class="page" id="page-tcmConsultation">
+    <div id="tcm-consultation-content"></div>
+  </div>
+
   <!-- 历史记录页 -->
   <div class="page" id="page-history">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
@@ -1146,6 +1250,9 @@ try {
 
 // Supabase 云数据库操作模块
 const CloudBaseManager = {
+  // 暴露supabaseClient供问诊模块使用
+  get sb() { return supabaseClient; },
+  
   // 保存评估记录到云数据库
   async saveAssessment(patientName, patientPhone, record) {
     if (!supabaseClient) return false;
@@ -12072,7 +12179,7 @@ const App = {
   },
   
   // ========== 页面路由 ==========
-  showPage(page, data) {
+  async showPage(page, data) {
     const pages = document.querySelectorAll('.page');
     pages.forEach(p => p.classList.remove('active'));
     
@@ -12085,9 +12192,10 @@ const App = {
     switch(page) {
       case 'home': this.renderHome(); break;
       case 'login': this.renderLogin(); break;
-      case 'scaleList': this.renderScaleList(); break;
+      case 'scaleList': await this.renderScaleList(); break;
       case 'scaleFill': this.renderScaleFill(data); break;
       case 'scaleResult': this.renderScaleResult(data); break;
+      case 'tcmConsultation': this.renderTCMConsultation(); break;
       case 'history': this.renderHistory(); break;
     }
   },
@@ -12163,7 +12271,7 @@ const App = {
   },
   
   // ========== 量表列表 ==========
-  renderScaleList() {
+  async renderScaleList() {
     const config = StorageManager.getScaleConfig();
     const enabledIds = config.enabledScales || SCALES.map(s => s.id);
     // 如果有医生开单，只显示开单的量表
@@ -12216,8 +12324,37 @@ const App = {
     
     html += '</div>';
     
-    // 如果没有可显示的量表
-    if (Object.keys(categories).length === 0) {
+    // 如果有中医问诊单开单，显示问诊入口
+    const showTCM = prescriptionIds && prescriptionIds.includes('tcm_consultation');
+    if (showTCM) {
+      // 检查是否已提交问诊单
+      let tcmSubmitted = false;
+      try {
+        const { data: tcmData } = await CloudBaseManager.sb.from('tcm_consultations')
+          .select('id')
+          .eq('patient_name', this.currentPatient.name)
+          .eq('patient_phone', this.currentPatient.phone)
+          .limit(1);
+        tcmSubmitted = tcmData && tcmData.length > 0;
+      } catch(e) {}
+      
+      if (!tcmSubmitted) {
+        html += `<div class="tcm-consultation-card" onclick="App.showPage('tcmConsultation')">
+          <div class="card-icon">🩺</div>
+          <div class="card-title">中医问诊单</div>
+          <div class="card-desc">请详细填写您的健康状况，帮助医生全面了解您的情况</div>
+        </div>`;
+      } else {
+        html += `<div class="tcm-consultation-card" style="opacity:0.6;cursor:default;">
+          <div class="card-icon">🩺</div>
+          <div class="card-title">中医问诊单</div>
+          <div class="card-desc" style="color:var(--color-green);">✅ 已提交</div>
+        </div>`;
+      }
+    }
+
+    // 如果没有可显示的量表且没有问诊单
+    if (Object.keys(categories).length === 0 && !showTCM) {
       html = '<div class="empty-state"><p>📋 暂无待评估量表</p><p style="color:var(--color-text-secondary);font-size:14px;">请咨询医生为您开具评估量表</p></div>';
     }
     
@@ -12898,6 +13035,260 @@ const App = {
     `;
     
     document.getElementById('history-content').innerHTML = html;
+  },
+
+  // ========== 中医问诊单 ==========
+  tcmSelectedOptions: {},
+
+  async renderTCMConsultation() {
+    const patient = this.currentPatient;
+    if (!patient) { this.showPage('login'); return; }
+
+    // Reset selections
+    this.tcmSelectedOptions = {
+      emotional_status: '',
+      dietary_regular: '',
+      dietary_preference: [],
+      sleep_quality: '',
+      work_stress: '',
+      exercise_habits: ''
+    };
+
+    let html = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <button class="btn-back" onclick="App.showPage('scaleList')">← 返回</button>
+        <h2 style="font-size:18px;color:var(--color-primary-dark);">🩺 中医问诊单</h2>
+        <div style="width:60px;"></div>
+      </div>
+      <div style="color:var(--color-text-secondary);font-size:13px;margin-bottom:16px;text-align:center;">
+        请详细填写以下信息，帮助医生全面了解您的健康状况
+      </div>
+      <form id="tcm-form" onsubmit="return false;">
+    `;
+
+    // Section 1: 主诉与病史
+    html += '<div class="tcm-section">';
+    html += '<div class="tcm-section-title">📋 主诉与病史</div>';
+    html += `<div class="tcm-field">
+      <label>主诉 <span class="required">*必填</span></label>
+      <textarea class="tcm-textarea" id="tcm-chief-complaint" placeholder="请描述您目前最不适的症状或就诊原因" required></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>现病史</label>
+      <textarea class="tcm-textarea" id="tcm-present-illness" placeholder="请描述本次发病的详细过程，包括起病时间、诱因、主要症状及演变等"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>就医史</label>
+      <textarea class="tcm-textarea" id="tcm-medical-history" placeholder="以往因本病或其他疾病的就诊经历"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>用药史</label>
+      <textarea class="tcm-textarea" id="tcm-medication-history" placeholder="当前正在使用的药物和既往用药情况"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>检验结果</label>
+      <textarea class="tcm-textarea" id="tcm-lab-results" placeholder="近期异常的检验指标"></textarea>
+    </div>`;
+    html += '</div>';
+
+    // Section 2: 既往史
+    html += '<div class="tcm-section">';
+    html += '<div class="tcm-section-title">📖 既往史</div>';
+    html += `<div class="tcm-field">
+      <label>既往病史</label>
+      <textarea class="tcm-textarea" id="tcm-past-history" placeholder="以往患过的重要疾病"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>手术史</label>
+      <textarea class="tcm-textarea" id="tcm-surgical-history" placeholder="以往手术经历"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>过敏史</label>
+      <textarea class="tcm-textarea" id="tcm-allergy-history" placeholder="药物过敏和食物过敏情况"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>家族史</label>
+      <textarea class="tcm-textarea" id="tcm-family-history" placeholder="家族中是否有遗传病或重要疾病史"></textarea>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>婚育及月经史</label>
+      <textarea class="tcm-textarea" id="tcm-menstrual-history" placeholder="婚育情况、月经周期/量/色/质/痛经等"></textarea>
+    </div>`;
+    html += '</div>';
+
+    // Section 3: 生活方式
+    html += '<div class="tcm-section">';
+    html += '<div class="tcm-section-title">🌿 生活方式</div>';
+
+    // 情绪状态
+    html += `<div class="tcm-field">
+      <label>情绪状态</label>
+      <div class="tcm-select-group" id="tcm-emotional-group">
+        ${['平和','偏焦虑','偏抑郁','焦虑+抑郁','易怒','其他'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmSelectOption('emotional_status','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+      <textarea class="tcm-textarea" id="tcm-emotional-detail" placeholder="补充说明（选填）" style="min-height:50px;"></textarea>
+    </div>`;
+
+    // 饮食习惯
+    html += `<div class="tcm-field">
+      <label>饮食规律</label>
+      <div class="tcm-select-group" id="tcm-dietary-regular-group">
+        ${['规律','不规律'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmSelectOption('dietary_regular','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+    </div>`;
+    html += `<div class="tcm-field">
+      <label>饮食偏好（可多选）</label>
+      <div class="tcm-select-group" id="tcm-dietary-pref-group">
+        ${['清淡','辛辣','油腻','甜食','生冷'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmToggleArrayOption('dietary_preference','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+      <textarea class="tcm-textarea" id="tcm-dietary-detail" placeholder="补充说明（选填）" style="min-height:50px;"></textarea>
+    </div>`;
+
+    // 睡眠质量
+    html += `<div class="tcm-field">
+      <label>睡眠质量</label>
+      <div class="tcm-select-group" id="tcm-sleep-group">
+        ${['良好','一般','入睡困难','易醒','多梦','失眠'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmSelectOption('sleep_quality','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+      <textarea class="tcm-textarea" id="tcm-sleep-detail" placeholder="补充说明（选填）" style="min-height:50px;"></textarea>
+    </div>`;
+
+    // 生活环境
+    html += `<div class="tcm-field">
+      <label>生活环境</label>
+      <textarea class="tcm-textarea" id="tcm-living-environment" placeholder="居住环境、工作环境等"></textarea>
+    </div>`;
+
+    // 工作压力
+    html += `<div class="tcm-field">
+      <label>工作压力</label>
+      <div class="tcm-select-group" id="tcm-stress-group">
+        ${['低','中','高','极高'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmSelectOption('work_stress','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+      <textarea class="tcm-textarea" id="tcm-stress-detail" placeholder="补充说明（选填）" style="min-height:50px;"></textarea>
+    </div>`;
+
+    // 运动习惯
+    html += `<div class="tcm-field">
+      <label>运动习惯</label>
+      <div class="tcm-select-group" id="tcm-exercise-group">
+        ${['无','偶尔','每周1-2次','每周3次以上'].map(v => 
+          `<div class="tcm-select-btn" onclick="App.tcmSelectOption('exercise_habits','${v}',this)">${v}</div>`
+        ).join('')}
+      </div>
+      <textarea class="tcm-textarea" id="tcm-exercise-detail" placeholder="补充说明（选填）" style="min-height:50px;"></textarea>
+    </div>`;
+
+    // 其他补充
+    html += `<div class="tcm-field">
+      <label>其他补充</label>
+      <textarea class="tcm-textarea" id="tcm-other-notes" placeholder="其他想告诉医生的信息"></textarea>
+    </div>`;
+    html += '</div>';
+
+    // Submit button
+    html += `
+      <button class="btn btn-primary btn-lg btn-block" onclick="App.submitTCMConsultation()" style="margin-top:20px;margin-bottom:40px;">提交问诊单</button>
+      </form>
+    `;
+
+    document.getElementById('tcm-consultation-content').innerHTML = html;
+  },
+
+  tcmSelectOption(field, value, el) {
+    // Single select - deactivate siblings, activate clicked
+    const group = el.parentElement;
+    group.querySelectorAll('.tcm-select-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    this.tcmSelectedOptions[field] = value;
+  },
+
+  tcmToggleArrayOption(field, value, el) {
+    // Multi select - toggle
+    if (!this.tcmSelectedOptions[field]) this.tcmSelectedOptions[field] = [];
+    const arr = this.tcmSelectedOptions[field];
+    const idx = arr.indexOf(value);
+    if (idx >= 0) {
+      arr.splice(idx, 1);
+      el.classList.remove('active');
+    } else {
+      arr.push(value);
+      el.classList.add('active');
+    }
+  },
+
+  async submitTCMConsultation() {
+    const patient = this.currentPatient;
+    if (!patient) return;
+
+    const chiefComplaint = document.getElementById('tcm-chief-complaint').value.trim();
+    if (!chiefComplaint) {
+      alert('请填写主诉');
+      return;
+    }
+
+    const data = {
+      patient_name: patient.name,
+      patient_phone: patient.phone,
+      chief_complaint: chiefComplaint,
+      present_illness: document.getElementById('tcm-present-illness').value.trim(),
+      medical_history: document.getElementById('tcm-medical-history').value.trim(),
+      medication_history: document.getElementById('tcm-medication-history').value.trim(),
+      lab_results: document.getElementById('tcm-lab-results').value.trim(),
+      past_history: document.getElementById('tcm-past-history').value.trim(),
+      surgical_history: document.getElementById('tcm-surgical-history').value.trim(),
+      allergy_history: document.getElementById('tcm-allergy-history').value.trim(),
+      family_history: document.getElementById('tcm-family-history').value.trim(),
+      menstrual_history: document.getElementById('tcm-menstrual-history').value.trim(),
+      emotional_status: {
+        main: this.tcmSelectedOptions.emotional_status || '',
+        detail: document.getElementById('tcm-emotional-detail').value.trim()
+      },
+      dietary_habits: {
+        regular: this.tcmSelectedOptions.dietary_regular || '',
+        preference: this.tcmSelectedOptions.dietary_preference || [],
+        detail: document.getElementById('tcm-dietary-detail').value.trim()
+      },
+      sleep_quality: {
+        main: this.tcmSelectedOptions.sleep_quality || '',
+        detail: document.getElementById('tcm-sleep-detail').value.trim()
+      },
+      living_environment: document.getElementById('tcm-living-environment').value.trim(),
+      work_stress: {
+        main: this.tcmSelectedOptions.work_stress || '',
+        detail: document.getElementById('tcm-stress-detail').value.trim()
+      },
+      exercise_habits: {
+        main: this.tcmSelectedOptions.exercise_habits || '',
+        detail: document.getElementById('tcm-exercise-detail').value.trim()
+      },
+      other_notes: document.getElementById('tcm-other-notes').value.trim(),
+      status: 'submitted'
+    };
+
+    try {
+      const { error } = await CloudBaseManager.sb.from('tcm_consultations').insert(data);
+      if (error) throw error;
+
+      // Mark tcm_consultation as completed in prescriptions
+      await CloudBaseManager.completePrescriptionScale(patient.name, patient.phone, 'tcm_consultation');
+
+      // Show success page
+      this.showPage('submitSuccess');
+    } catch (e) {
+      console.error('提交问诊单失败:', e);
+      alert('提交失败，请重试: ' + e.message);
+    }
   }
 };
 
