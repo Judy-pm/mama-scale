@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>归元AI - 管理后台</title>
   <style>
-/* 女性抗衰门诊H5量表评估系统 - 样式文件 */
+/* ========== 归元AI管理平台 - 主样式 ========== */
 
 :root {
   --color-primary: #7B68AE;
   --color-primary-light: #9B8DC4;
   --color-primary-dark: #5A4D7A;
+  --color-primary-bg: #F8F6FA;
   --color-bg: #F8F6FA;
   --color-white: #FFFFFF;
   --color-text: #333333;
@@ -28,6 +29,11 @@
   --font-size-lg: 18px;
   --font-size-xl: 22px;
   --font-size-xxl: 28px;
+  --sidebar-width: 220px;
+  --sidebar-bg: #5A4D7A;
+  --sidebar-text: #FFFFFF;
+  --sidebar-active: rgba(255,255,255,0.15);
+  --sidebar-hover: rgba(255,255,255,0.08);
 }
 
 * {
@@ -43,61 +49,11 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
   line-height: 1.6;
-  max-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* ========== 页面容器 ========== */
-.page {
-  display: none;
-  min-height: 100vh;
-  padding: 16px;
-  padding-bottom: 100px;
-}
-
-.page.active {
-  display: block;
-}
-
-/* ========== 首页 ========== */
-.home-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  text-align: center;
-}
-
-.welcome-text {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1.4;
-  margin-bottom: 32px;
-}
-
-.welcome-info {
-  font-size: var(--font-size-xl);
-  color: var(--color-text);
-  margin-bottom: 24px;
-}
-
-.home-logo {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  border-radius: 20px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: white;
-}
-
-/* ========== 按钮 ========== */
+/* ========== 通用按钮 ========== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -112,761 +68,551 @@ body {
   text-decoration: none;
   line-height: 1.4;
 }
-
-.btn:active {
-  transform: scale(0.97);
-}
-
+.btn:active { transform: scale(0.97); }
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   color: white;
 }
-
 .btn-secondary {
   background: var(--color-white);
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
-
 .btn-outline {
   background: transparent;
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
 }
-
-.btn-lg {
-  padding: 14px 48px;
-  font-size: var(--font-size-lg);
-  border-radius: 12px;
-}
-
-.btn-sm {
-  padding: 8px 16px;
-  font-size: 14px;
-}
-
-.btn-block {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+.btn-lg { padding: 14px 48px; font-size: var(--font-size-lg); border-radius: 12px; }
+.btn-sm { padding: 8px 16px; font-size: 14px; }
+.btn-block { width: 100%; margin-bottom: 10px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-back {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: var(--font-size-base);
-  padding: 8px 0;
-  cursor: pointer;
-  font-weight: 600;
+  background: none; border: none; color: var(--color-primary);
+  font-size: var(--font-size-base); padding: 8px 0; cursor: pointer; font-weight: 600;
 }
 
-/* ========== 表单 ========== */
-.form-group {
-  margin-bottom: 20px;
-}
-
+/* ========== 通用表单 ========== */
+.form-group { margin-bottom: 20px; }
 .form-group label {
-  display: block;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 8px;
+  display: block; font-size: var(--font-size-base); font-weight: 600;
+  color: var(--color-text); margin-bottom: 8px;
 }
-
 .form-input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 2px solid var(--color-border);
-  border-radius: 10px;
-  font-size: var(--font-size-lg);
-  color: var(--color-text);
-  background: var(--color-white);
-  transition: border-color 0.2s;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: var(--color-primary);
-}
-
-.form-input::placeholder {
-  color: var(--color-gray);
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.input-unit {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-/* ========== 量表列表 ========== */
-.scale-categories {
-  padding: 8px 0;
-}
-
-.category-section {
-  margin-bottom: 24px;
-}
-
-.category-title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  padding: 8px 0;
-  margin-bottom: 8px;
-  border-bottom: 2px solid var(--color-border);
-}
-
-.scale-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.scale-card {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  border-left: 4px solid var(--color-primary-light);
-}
-
-.scale-card:active {
-  transform: scale(0.98);
-}
-
-.scale-card.completed {
-  border-left-color: var(--color-green);
-  background: linear-gradient(135deg, #f0faf4, var(--color-white));
-}
-
-.scale-card-name {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 4px;
-}
-
-.scale-card-desc {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.scale-card-status {
-  font-size: 13px;
-  color: var(--color-green);
-  font-weight: 500;
-}
-
-.scale-card-status.pending {
-  color: var(--color-gray);
-}
-
-.scale-card-count {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  font-size: 12px;
-  color: var(--color-gray);
-  background: var(--color-bg);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-/* ========== 量表填写 ========== */
-.fill-header {
-  margin-bottom: 16px;
-}
-
-.fill-header h2 {
-  font-size: var(--font-size-xl);
-  color: var(--color-primary-dark);
-  margin: 8px 0;
-}
-
-.fill-desc {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.progress-bar-container {
-  position: relative;
-  height: 28px;
-  background: var(--color-border);
-  border-radius: 14px;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
-  border-radius: 14px;
-  transition: width 0.3s;
-}
-
-.progress-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.question-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.question-item {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s;
-  border-left: 4px solid var(--color-border);
-}
-
-.question-item.answered {
-  border-left-color: var(--color-primary);
-}
-
-.question-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--color-primary);
-  color: white;
-  border-radius: 50%;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.question-text {
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--color-text);
-  line-height: 1.5;
-  margin-bottom: 12px;
-}
-
-.question-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.option-label {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 14px;
-  border: 2px solid var(--color-border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  gap: 10px;
-}
-
-.option-label:active {
-  background: #f5f0fa;
-}
-
-.option-label.selected {
-  border-color: var(--color-primary);
-  background: linear-gradient(135deg, #f5f0fa, var(--color-white));
-}
-
-.option-label input[type="radio"] {
-  display: none;
-}
-
-.option-radio {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  border: 2px solid var(--color-border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  margin-top: 1px;
-}
-
-.option-label.selected .option-radio {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-}
-
-.option-label.selected .option-radio::after {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-}
-
-.option-text {
-  font-size: var(--font-size-base);
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-.fill-footer {
-  position: fixed;
-  bottom: 56px;
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
-  background: var(--color-white);
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
-  z-index: 100;
-}
-
-/* ========== 结果展示 ========== */
-.result-header {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.result-header h2 {
-  font-size: var(--font-size-xl);
-  color: var(--color-primary-dark);
-}
-
-.result-date {
-  font-size: 14px;
-  color: var(--color-gray);
-}
-
-.result-score-card {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 24px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  margin-bottom: 16px;
-}
-
-.result-score {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.result-score.green { color: var(--color-green); }
-.result-score.yellow { color: var(--color-yellow); }
-.result-score.orange { color: var(--color-orange); }
-.result-score.red { color: var(--color-red); }
-.result-score.darkred { color: var(--color-darkred); }
-
-.result-level {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
-
-.result-sub-card {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  margin-bottom: 10px;
-}
-
-.result-sub-card h3 {
-  font-size: 15px;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.result-sub-score {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.result-subscales {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  margin-bottom: 16px;
-}
-
-.result-subscales h3 {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-bottom: 12px;
-}
-
-.result-sub-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: var(--font-size-base);
-}
-
-.result-sub-item:last-child {
-  border-bottom: none;
-}
-
-.result-constitution {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  margin-bottom: 16px;
-}
-
-.result-constitution h3 {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-bottom: 12px;
-}
-
-.result-main-constitution {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.result-tendency {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.constitution-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.const-bar-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.const-name {
-  width: 60px;
-  font-size: 13px;
-  text-align: right;
-  color: var(--color-text-secondary);
-}
-
-.const-bar-bg {
-  flex: 1;
-  height: 16px;
-  background: var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.const-bar-fill {
-  height: 100%;
-  border-radius: 8px;
-  transition: width 0.5s;
-}
-
-.const-score {
-  width: 30px;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-}
-
-.result-advice {
-  background: linear-gradient(135deg, #f5f0fa, #fff5f0);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: var(--color-text);
-  border-left: 4px solid var(--color-primary);
-}
-
-.result-actions {
-  margin-top: 24px;
-}
-
-/* ========== 历史记录 ========== */
-.history-list {
-  margin-top: 8px;
-}
-
-.history-date {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-gray);
-  padding: 8px 0 4px;
-}
-
-.history-item {
-  background: var(--color-white);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 8px;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.history-item:active {
-  transform: scale(0.98);
-}
-
-.history-item-name {
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  flex: 1;
-}
-
-.history-item-score {
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  margin: 0 12px;
-}
-
-.history-item-level {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-/* ========== 空状态 ========== */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--color-gray);
-}
-
-.empty-state p {
-  font-size: var(--font-size-lg);
-  margin-bottom: 20px;
-}
-
-/* ========== 后台管理页样式 ========== */
-.admin-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.admin-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0;
-  border-bottom: 2px solid var(--color-border);
-  margin-bottom: 24px;
-}
-
-.admin-header h1 {
-  font-size: var(--font-size-xl);
-  color: var(--color-primary-dark);
-}
-
-.admin-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.admin-nav .btn {
-  padding: 8px 20px;
-}
-
-.admin-nav .btn.active {
-  background: var(--color-primary);
-  color: white;
-}
-
-.admin-login {
-  max-width: 400px;
-  margin: 60px auto;
-  background: var(--color-white);
-  padding: 40px 32px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.admin-login h2 {
-  text-align: center;
-  margin-bottom: 24px;
-  color: var(--color-primary-dark);
-}
-
-.patient-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--color-white);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  font-size: 14px;
-}
-
-.patient-table th {
-  background: var(--color-primary);
-  color: white;
-  padding: 12px 10px;
-  text-align: left;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.patient-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.patient-table tr:last-child td {
-  border-bottom: none;
-}
-
-.patient-table tr:hover td {
-  background: #f5f0fa;
-}
-
-.patient-table .score-cell {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.scale-config-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-}
-
-.scale-config-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: var(--color-white);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-}
-
-.scale-config-item label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: var(--font-size-base);
-}
-
-.scale-config-item input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--color-primary);
-}
-
-.admin-detail-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.admin-detail-content {
-  background: var(--color-white);
-  border-radius: var(--radius);
-  padding: 24px;
-  max-width: 700px;
-  width: 100%;
-  max-height: 80vh;
+  width: 100%; padding: 14px 16px; border: 2px solid var(--color-border);
+  border-radius: 10px; font-size: var(--font-size-lg); color: var(--color-text);
+  background: var(--color-white); transition: border-color 0.2s; outline: none;
+}
+.form-input:focus { border-color: var(--color-primary); }
+.form-input::placeholder { color: var(--color-gray); }
+textarea.form-input { resize: vertical; min-height: 80px; }
+
+/* ========== 登录页 ========== */
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: var(--color-bg);
+}
+.login-box {
+  max-width: 420px; width: 100%; padding: 40px 32px;
+  background: white; border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(123, 104, 174, 0.15);
+}
+.login-logo {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  border-radius: 18px; margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: white;
+}
+.login-title {
+  text-align: center; font-size: 22px; font-weight: 700;
+  color: var(--color-primary-dark); margin-bottom: 8px;
+}
+.login-subtitle {
+  text-align: center; font-size: 14px; color: var(--color-gray); margin-bottom: 28px;
+}
+
+/* ========== 侧边栏布局 ========== */
+.app-layout {
+  display: flex; min-height: 100vh;
+}
+
+/* 侧边栏 */
+.sidebar {
+  width: var(--sidebar-width); background: var(--sidebar-bg);
+  color: var(--sidebar-text); display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  transition: transform 0.3s ease;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+.sidebar::-webkit-scrollbar { width: 0; }
+
+.sidebar-brand {
+  padding: 20px 16px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  min-height: 68px;
+}
+.sidebar-brand-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.sidebar-brand-name {
+  font-size: 18px; font-weight: 700; letter-spacing: 1px;
+}
+.sidebar-brand-sub {
+  font-size: 11px; opacity: 0.6; margin-top: 2px;
 }
 
-.admin-detail-content h3 {
-  margin-bottom: 16px;
-  color: var(--color-primary-dark);
+.sidebar-nav { flex: 1; padding: 12px 0; }
+
+.sidebar-section-label {
+  padding: 16px 20px 6px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 1px; opacity: 0.4; font-weight: 600;
 }
 
-.detail-record {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 20px; cursor: pointer; transition: all 0.15s;
+  font-size: 14px; color: rgba(255,255,255,0.75);
+  border-left: 3px solid transparent; position: relative;
+  text-decoration: none; user-select: none;
 }
-
-.detail-record-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
+.nav-item:hover {
+  background: var(--sidebar-hover); color: rgba(255,255,255,0.95);
+}
+.nav-item.active {
+  background: var(--sidebar-active); color: #fff;
+  border-left-color: var(--color-primary-light);
   font-weight: 600;
 }
+.nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.nav-item .nav-badge {
+  position: absolute; right: 16px;
+  background: var(--color-red); color: #fff; font-size: 11px;
+  padding: 1px 7px; border-radius: 10px; font-weight: 600;
+}
 
-.detail-record-body {
+.sidebar-divider {
+  height: 1px; background: rgba(255,255,255,0.08); margin: 8px 16px;
+}
+
+.sidebar-footer {
+  padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* 主内容区 */
+.main-content {
+  flex: 1; margin-left: var(--sidebar-width);
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+.main-header {
+  background: white; padding: 16px 28px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.main-header-left {
+  display: flex; align-items: center; gap: 12px;
+}
+.main-header h2 {
+  font-size: 18px; font-weight: 700; color: var(--color-primary-dark);
+}
+.main-header .cloud-status {
+  font-size: 12px; color: var(--color-gray);
+}
+.hamburger-btn {
+  display: none; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--color-primary-dark);
+  padding: 4px 8px;
+}
+
+.main-body {
+  flex: 1; padding: 24px 28px; overflow-y: auto;
+}
+
+/* 页面容器 */
+.page-content { display: none; }
+.page-content.active { display: block; }
+
+/* ========== 首页/工作台 ========== */
+.dashboard-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.stat-card {
+  background: white; border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); text-align: center;
+  border-top: 3px solid var(--color-primary);
+  transition: transform 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card .stat-icon { font-size: 28px; margin-bottom: 8px; }
+.stat-card .stat-number {
+  font-size: 32px; font-weight: 700; color: var(--color-primary);
+}
+.stat-card .stat-label {
+  font-size: 13px; color: var(--color-text-secondary); margin-top: 4px;
+}
+.stat-card.green { border-top-color: var(--color-green); }
+.stat-card.green .stat-number { color: var(--color-green); }
+.stat-card.orange { border-top-color: var(--color-orange); }
+.stat-card.orange .stat-number { color: var(--color-orange); }
+.stat-card.red { border-top-color: var(--color-red); }
+.stat-card.red .stat-number { color: var(--color-red); }
+
+.quick-actions {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px; margin-bottom: 28px;
+}
+.quick-action-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; background: white; border-radius: var(--radius);
+  box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s;
+  border: 1px solid var(--color-border);
+}
+.quick-action-btn:hover {
+  border-color: var(--color-primary); transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(123,104,174,0.12);
+}
+.quick-action-btn .qa-icon { font-size: 24px; }
+.quick-action-btn .qa-text { font-weight: 600; font-size: 14px; }
+.quick-action-btn .qa-desc { font-size: 12px; color: var(--color-gray); margin-top: 2px; }
+
+.recent-activity { margin-top: 8px; }
+.activity-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--color-border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.activity-text { font-size: 14px; flex: 1; }
+.activity-time { font-size: 12px; color: var(--color-gray); }
+
+/* ========== 客户管理 ========== */
+.patient-toolbar {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.patient-search {
+  flex: 1; min-width: 200px; padding: 10px 16px;
+  border: 1px solid var(--color-border); border-radius: 8px;
+  font-size: 14px; outline: none; transition: border 0.2s;
+}
+.patient-search:focus { border-color: var(--color-primary); }
+
+.patient-list { display: flex; flex-direction: column; gap: 8px; }
+.patient-card {
+  display: flex; align-items: center; gap: 16px;
+  background: white; border-radius: var(--radius); padding: 16px 20px;
+  box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.patient-card:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 4px 16px rgba(123,104,174,0.12);
+}
+.patient-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 18px; font-weight: 700; flex-shrink: 0;
+}
+.patient-info { flex: 1; }
+.patient-name { font-weight: 600; font-size: 15px; }
+.patient-meta { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+.patient-tags { display: flex; gap: 6px; margin-top: 6px; }
+.patient-tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: var(--color-primary-bg); color: var(--color-primary);
+  font-weight: 500;
+}
+.patient-tag.new { background: #E8F5E9; color: var(--color-green); }
+.patient-tag.followup { background: #FFF3E0; color: var(--color-orange); }
+.patient-visit {
+  font-size: 12px; color: var(--color-gray); text-align: right;
+  white-space: nowrap;
+}
+
+/* 患者详情 */
+.patient-detail-header {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+}
+.patient-detail-avatar {
+  width: 64px; height: 64px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 28px; font-weight: 700;
+}
+.patient-detail-info h3 { font-size: 20px; color: var(--color-primary-dark); }
+.patient-detail-meta { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+
+.info-card {
+  background: white; border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.info-card h4 {
+  font-size: 15px; font-weight: 600; color: var(--color-primary-dark);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.info-row {
+  display: flex; padding: 8px 0; border-bottom: 1px solid var(--color-border);
   font-size: 14px;
-  color: var(--color-text-secondary);
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--color-text-secondary); min-width: 100px; }
+.info-value { flex: 1; font-weight: 500; }
+
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+  content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px;
+  width: 2px; background: var(--color-border);
+}
+.timeline-item {
+  position: relative; padding: 12px 0; font-size: 14px;
+}
+.timeline-item::before {
+  content: ''; position: absolute; left: -20px; top: 18px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-primary); border: 2px solid white;
+}
+.timeline-date { color: var(--color-gray); font-size: 12px; }
+.timeline-content { margin-top: 4px; }
+
+/* 新建患者弹窗 */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 200;
+  justify-content: center; align-items: center; padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: white; border-radius: 16px; padding: 28px;
+  max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+}
+.modal-box h3 {
+  font-size: 18px; font-weight: 700; color: var(--color-primary-dark);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+}
+.modal-box .form-input { font-size: 14px; padding: 10px 14px; }
+.modal-box .form-group { margin-bottom: 14px; }
+.modal-box .form-group label { font-size: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions {
+  display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;
 }
 
-.detail-record-body .qna {
-  padding: 4px 0;
-  border-bottom: 1px dashed var(--color-border);
+/* ========== AI工作台 ========== */
+.ai-chat-container {
+  max-width: 800px; margin: 0 auto;
+}
+.ai-welcome {
+  text-align: center; padding: 40px 20px;
+}
+.ai-welcome-icon {
+  font-size: 48px; margin-bottom: 16px;
+}
+.ai-welcome h3 {
+  font-size: 20px; color: var(--color-primary-dark); margin-bottom: 8px;
+}
+.ai-welcome p { color: var(--color-text-secondary); font-size: 14px; }
+.ai-templates {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px; margin-top: 24px;
+}
+.ai-template-btn {
+  background: white; border: 1px solid var(--color-border); border-radius: var(--radius);
+  padding: 16px; cursor: pointer; transition: all 0.2s; text-align: left;
+}
+.ai-template-btn:hover {
+  border-color: var(--color-primary); box-shadow: 0 2px 12px rgba(123,104,174,0.1);
+}
+.ai-template-btn .at-icon { font-size: 20px; margin-bottom: 6px; }
+.ai-template-btn .at-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.ai-template-btn .at-desc { font-size: 12px; color: var(--color-gray); }
+
+.ai-chat-input {
+  display: flex; gap: 8px; margin-top: 24px;
+  padding: 16px; background: white; border-radius: 12px;
+  box-shadow: var(--shadow); border: 1px solid var(--color-border);
+}
+.ai-chat-input input {
+  flex: 1; border: none; outline: none; font-size: 14px; padding: 8px;
+}
+.ai-chat-input button {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white; border: none; border-radius: 8px;
+  padding: 8px 20px; font-weight: 600; cursor: pointer;
 }
 
-.detail-record-body .qna:last-child {
-  border-bottom: none;
+/* ========== 占位页面 ========== */
+.placeholder-page {
+  text-align: center; padding: 80px 20px;
 }
+.placeholder-icon { font-size: 64px; margin-bottom: 20px; }
+.placeholder-title {
+  font-size: 22px; font-weight: 700; color: var(--color-primary-dark); margin-bottom: 12px;
+}
+.placeholder-desc {
+  font-size: 15px; color: var(--color-text-secondary); margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto;
+}
+.placeholder-features {
+  text-align: left; max-width: 400px; margin: 0 auto;
+  background: white; border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow);
+}
+.placeholder-features h4 {
+  font-size: 15px; color: var(--color-primary-dark); margin-bottom: 12px;
+}
+.placeholder-features li {
+  font-size: 14px; color: var(--color-text-secondary);
+  padding: 6px 0; list-style: none;
+}
+.placeholder-features li::before {
+  content: '◦'; color: var(--color-primary); margin-right: 8px; font-size: 16px;
+}
+.placeholder-badge {
+  display: inline-block; padding: 4px 16px; border-radius: 20px;
+  background: var(--color-primary-bg); color: var(--color-primary);
+  font-size: 13px; font-weight: 600; margin-top: 20px;
+}
+
+/* ========== 开单页面 ========== */
+.prescribe-form {
+  background: white; border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.prescribe-form h3 {
+  color: var(--color-primary-dark); margin-bottom: 16px;
+  font-size: 17px;
+}
+.scale-category { margin-top: 12px; }
+.scale-category-title {
+  font-weight: 600; color: var(--color-primary-dark); margin-bottom: 6px; font-size: 14px;
+}
+.scale-check-item {
+  display: block; padding: 4px 0; cursor: pointer; font-size: 14px;
+}
+.prescription-card {
+  background: white; border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow); margin: 8px 0;
+}
+.prescription-card .rx-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.prescription-card .rx-meta {
+  color: var(--color-text-secondary); font-size: 13px; margin-top: 4px;
+}
+.prescription-card .rx-actions {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+
+/* ========== 数据导出 ========== */
+.export-section {
+  background: white; border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+/* ========== 体检解读 ========== */
+.ck-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.ck-title{font-size:15px;font-weight:600;color:var(--color-primary-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.ck-title .arrow{transition:transform .2s;font-size:12px}
+.ck-body{overflow:hidden;transition:max-height .3s}
+.ck-body.collapsed{max-height:0!important;overflow:hidden}
+.ck-fg{margin-bottom:10px}
+.ck-fg label{display:block;font-size:12px;font-weight:500;color:#666;margin-bottom:3px}
+.ck-fg label .ref{font-weight:400;color:#999;font-size:11px;margin-left:4px}
+.ck-fg input,.ck-fg select{width:100%;padding:8px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;outline:none;transition:border .2s,background .2s}
+.ck-fg input:focus,.ck-fg select:focus{border-color:var(--color-primary)}
+.ck-fg input.abnormal{border-color:var(--color-red);background:#FFF5F5}
+.ck-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ck-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ck-dim{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid #ccc}
+.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}
+.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}
+.ck-rec{background:linear-gradient(135deg,var(--color-primary-bg),#fff);border-radius:8px;padding:14px;margin-top:16px;border:1px solid rgba(123,104,174,.2)}
+.ck-rec h3{color:var(--color-primary-dark);margin-bottom:10px;font-size:15px}
+.ck-rec-item{padding:8px 0;border-bottom:1px dashed #e0e0e0;font-size:13px;line-height:1.6}
+.ck-rec-item:last-child{border-bottom:none}
+.ck-qr{text-align:center;margin:20px 0;padding:16px;background:var(--color-primary-bg);border-radius:8px}
+.ck-rpt{background:#fff;border-radius:12px;padding:20px;max-width:700px;margin:0 auto}
+.ck-rpt-header{text-align:center;margin-bottom:20px;border-bottom:2px solid var(--color-primary);padding-bottom:12px}
+.ck-rpt-header h2{color:var(--color-primary-dark);font-size:20px}
+.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:16px;background:var(--color-primary-bg);padding:10px;border-radius:6px}
+.ck-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.ck-modal.show{display:flex}
+.ck-modal-box{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto}
+
+/* 密码弹窗 */
+.change-pwd-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 10000;
+  justify-content: center; align-items: center;
+}
+.change-pwd-overlay.show { display: flex; }
+.change-pwd-box {
+  background: white; border-radius: 16px; padding: 32px 24px;
+  max-width: 360px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.change-pwd-box h3 { color: var(--color-primary-dark); margin-bottom: 16px; }
+.change-pwd-box input {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--color-border);
+  border-radius: 8px; font-size: 16px; text-align: center;
+  letter-spacing: 2px; margin-bottom: 10px; outline: none;
+}
+.change-pwd-box input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(123,104,174,0.15);
+}
+.change-pwd-box label {
+  display: block; font-size: 13px; color: var(--color-text-secondary);
+  text-align: left; margin-bottom: 2px; margin-top: 4px;
+}
+.change-pwd-box .pwd-btns { display: flex; gap: 10px; margin-top: 16px; }
+.change-pwd-box .pwd-btns button { flex: 1; }
 
 /* ========== 响应式 ========== */
-@media (min-width: 768px) {
-  body {
-    max-width: 480px;
-    margin: 0 auto;
-    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.2);
   }
-  
-  .admin-container {
-    max-width: 100%;
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .hamburger-btn { display: block; }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3); z-index: 99;
   }
-  
-  .patient-table {
-    font-size: 14px;
-  }
+  .sidebar-overlay.show { display: block; }
+  .main-body { padding: 16px; }
+  .main-header { padding: 12px 16px; }
+  .dashboard-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .quick-actions { grid-template-columns: 1fr; }
+  .stat-card { padding: 16px; }
+  .stat-card .stat-number { font-size: 24px; }
+  .patient-toolbar { flex-direction: column; }
+  .patient-search { min-width: auto; }
+  .form-row { grid-template-columns: 1fr; }
+  .modal-box { max-width: 100%; padding: 20px; }
+  .ck-g2,.ck-g3 { grid-template-columns: 1fr; }
 }
 
-/* ========== 微信兼容 ========== */
+@media (max-width: 480px) {
+  .dashboard-stats { grid-template-columns: 1fr 1fr; }
+  .patient-card { padding: 12px 14px; }
+  .patient-avatar { width: 36px; height: 36px; font-size: 14px; border-radius: 10px; }
+}
+
+/* 微信兼容 */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #1a1a2e;
@@ -878,319 +624,352 @@ body {
 }
 
 /* 滚动条美化 */
-::-webkit-scrollbar {
-  width: 4px;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-primary-light); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@media print {
+  .sidebar, .main-header, .hamburger-btn { display: none !important; }
+  .main-content { margin-left: 0 !important; }
+  .ck-modal-box { max-width: 100%; padding: 0; box-shadow: none; }
 }
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-primary-light);
-  border-radius: 2px;
-}
-
-
-  </style>
-  <style>
-    /* 顶部装饰条 */
-    .top-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light), #E8B4D8);
-      z-index: 999;
-    }
-
-    /* 管理端页面路由 */
-    .admin-page { display: none; }
-    .admin-page.active { display: block; }
-    .stat-card {
-      background: var(--color-white);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
-    .stat-number {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--color-primary);
-    }
-    .stat-label {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-      margin-top: 4px;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    /* ========== 模式切换栏 ========== */
-    .mode-switcher {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--color-border);
-      z-index: 998;
-      padding: 6px 0;
-      padding-bottom: calc(6px + env(safe-area-inset-bottom));
-    }
-    .mode-switcher .mode-btn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 0 4px;
-      border: none;
-      background: transparent;
-      color: var(--color-gray);
-      font-size: 12px;
-      cursor: pointer;
-      transition: color 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .mode-switcher .mode-btn .mode-icon {
-      font-size: 18px;
-      margin-bottom: 2px;
-    }
-    .mode-switcher .mode-btn.active {
-      color: var(--color-primary);
-    }
-    /* 管理按钮在评估模式下保持低调 */
-    .mode-switcher .mode-btn.admin-btn {
-      opacity: 0.3;
-      font-size: 11px;
-    }
-    .mode-switcher .mode-btn.admin-btn:hover,
-    .mode-switcher .mode-btn.admin-btn.active {
-      opacity: 1;
-    }
-
-    /* 模式容器 */
-    .mode-container {
-      display: none;
-      padding-bottom: 70px; /* 为底部切换栏留空间 */
-    }
-    .mode-container.active {
-      display: block;
-    }
-
-    /* 密码弹窗 */
-    .admin-password-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-    }
-    .admin-password-overlay.show {
-      display: flex;
-    }
-    .admin-password-box {
-      background: white;
-      border-radius: 16px;
-      padding: 32px 24px;
-      max-width: 340px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-    .admin-password-box h3 {
-      color: var(--color-primary-dark);
-      margin-bottom: 16px;
-    }
-    .admin-password-box input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      font-size: 16px;
-      text-align: center;
-      letter-spacing: 4px;
-      margin-bottom: 16px;
-      outline: none;
-    }
-    .admin-password-box input:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px rgba(123,104,174,0.15);
-    }
-    .admin-password-box .pwd-btns {
-      display: flex;
-      gap: 10px;
-    }
-    .admin-password-box .pwd-btns button {
-      flex: 1;
-    }
-
-    /* 修改密码弹窗 */
-    .change-pwd-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
-    }
-    .change-pwd-overlay.show {
-      display: flex;
-    }
-    .change-pwd-box {
-      background: white;
-      border-radius: 16px;
-      padding: 32px 24px;
-      max-width: 360px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-    .change-pwd-box h3 {
-      color: var(--color-primary-dark);
-      margin-bottom: 16px;
-    }
-    .change-pwd-box input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      font-size: 16px;
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-      outline: none;
-    }
-    .change-pwd-box input:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px rgba(123,104,174,0.15);
-    }
-    .change-pwd-box label {
-      display: block;
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      text-align: left;
-      margin-bottom: 2px;
-      margin-top: 4px;
-    }
-    .change-pwd-box .pwd-btns {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-    .change-pwd-box .pwd-btns button {
-      flex: 1;
-    }
-    
-    /* ========== 体检解读 ========== */
-    .ck-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    .ck-title{font-size:15px;font-weight:600;color:var(--color-primary-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
-    .ck-title .arrow{transition:transform .2s;font-size:12px}
-    .ck-body{overflow:hidden;transition:max-height .3s}
-    .ck-body.collapsed{max-height:0!important;overflow:hidden}
-    .ck-fg{margin-bottom:10px}
-    .ck-fg label{display:block;font-size:12px;font-weight:500;color:#666;margin-bottom:3px}
-    .ck-fg label .ref{font-weight:400;color:#999;font-size:11px;margin-left:4px}
-    .ck-fg input,.ck-fg select{width:100%;padding:8px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;outline:none;transition:border .2s,background .2s}
-    .ck-fg input:focus,.ck-fg select:focus{border-color:var(--color-primary)}
-    .ck-fg input.abnormal{border-color:var(--color-red);background:#FFF5F5}
-    .ck-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .ck-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .ck-dim{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;border-left:4px solid #ccc}
-    .ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}
-    .ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}
-    .ck-rec{background:linear-gradient(135deg,var(--color-primary-bg),#fff);border-radius:8px;padding:14px;margin-top:16px;border:1px solid rgba(123,104,174,.2)}
-    .ck-rec h3{color:var(--color-primary-dark);margin-bottom:10px;font-size:15px}
-    .ck-rec-item{padding:8px 0;border-bottom:1px dashed #e0e0e0;font-size:13px;line-height:1.6}
-    .ck-rec-item:last-child{border-bottom:none}
-    .ck-qr{text-align:center;margin:20px 0;padding:16px;background:var(--color-primary-bg);border-radius:8px}
-    .ck-rpt{background:#fff;border-radius:12px;padding:20px;max-width:700px;margin:0 auto}
-    .ck-rpt-header{text-align:center;margin-bottom:20px;border-bottom:2px solid var(--color-primary);padding-bottom:12px}
-    .ck-rpt-header h2{color:var(--color-primary-dark);font-size:20px}
-    .ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:16px;background:var(--color-primary-bg);padding:10px;border-radius:6px}
-    .ck-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
-    .ck-modal.show{display:flex}
-    .ck-modal-box{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto}
-    @media(max-width:600px){.ck-g2,.ck-g3{grid-template-columns:1fr}}
-    @media print{.ck-modal-box{max-width:100%;padding:0;box-shadow:none}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-  <div class="top-bar"></div>
-  
-  <!-- 管理登录页 -->
-  <div id="admin-login-page" class="page active" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px;">
-    <div style="max-width:400px; width:100%; padding:32px; background:white; border-radius:12px; box-shadow:0 2px 12px rgba(123,104,174,0.1);">
-      <div style="text-align:center; margin-bottom:24px;">
-        <div style="width:60px; height:60px; background:linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:28px; color:white;">📊</div>
-        <h2 style="color:var(--color-primary-dark);">归元AI 管理后台</h2>
-      </div>
+
+  <!-- ========== 登录页 ========== -->
+  <div id="login-page" class="login-page">
+    <div class="login-box">
+      <div class="login-logo">🧬</div>
+      <div class="login-title">归元AI</div>
+      <div class="login-subtitle">功能医学健康管理平台</div>
       <div class="form-group">
         <label>管理密码</label>
         <input type="password" id="admin-login-pwd" class="form-input" placeholder="请输入管理密码" />
       </div>
-      <button class="btn btn-primary btn-lg btn-block" onclick="doAdminLogin()" style="margin-top:16px;">登录</button>
+      <button class="btn btn-primary btn-lg btn-block" onclick="doAdminLogin()" style="margin-top:12px;">登 录</button>
     </div>
   </div>
-  
-  <!-- 管理主页面 -->
-  <div id="admin-main-page" class="page" style="min-height:100vh; padding:16px; padding-bottom:40px;">
-    <div class="admin-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-      <h1 style="font-size:20px; color:var(--color-primary-dark);">📊 管理后台 <span id="cloud-status" style="font-size:12px; color:var(--color-gray); margin-left:8px;">⏳ 连接云端...</span></h1>
-      <button class="btn btn-outline btn-sm" onclick="adminLogout()">退出</button>
-    </div>
+
+  <!-- ========== 管理主界面 ========== -->
+  <div id="admin-app" class="app-layout" style="display:none;">
     
-    <div class="admin-nav" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
-      <button class="btn btn-secondary active" onclick="showAdminTab('dashboard', this)">数据概览</button>
-      <button class="btn btn-secondary" onclick="showAdminTab('prescribe', this)" style="background:#27AE60; color:white; border-color:#27AE60;">📋 开单</button>
-      <button class="btn btn-secondary" onclick="showAdminTab('checkup', this)" style="background:#E67E22; color:white; border-color:#E67E22;">🧬 体检解读</button>
-      <button class="btn btn-secondary" onclick="showAdminTab('patients', this)">患者列表</button>
-      <button class="btn btn-secondary" onclick="showAdminTab('export', this)">数据导出</button>
-      <button class="btn btn-secondary" onclick="showAdminTab('changepwd', this)" style="margin-left:auto;">🔑 密码</button>
-    </div>
+    <!-- 侧边栏遮罩（移动端） -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
     
-    <!-- 开单页面 -->
-    <div id="tab-prescribe" class="admin-page" style="display:none;">
-      <div id="prescribe-content"></div>
-    </div>
+    <!-- 侧边栏 -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🧬</div>
+        <div>
+          <div class="sidebar-brand-name">归元AI</div>
+          <div class="sidebar-brand-sub">健康管理平台</div>
+        </div>
+      </div>
+      
+      <div class="sidebar-nav">
+        <div class="nav-item active" onclick="switchPage('dashboard', this)" data-page="dashboard">
+          <span class="nav-icon">🏠</span> 首页
+        </div>
+        <div class="nav-item" onclick="switchPage('patients', this)" data-page="patients">
+          <span class="nav-icon">👥</span> 客户管理
+        </div>
+        <div class="nav-item" onclick="switchPage('health-plan', this)" data-page="health-plan">
+          <span class="nav-icon">📋</span> 健康计划
+        </div>
+        <div class="nav-item" onclick="switchPage('prescribe', this)" data-page="prescribe">
+          <span class="nav-icon">📝</span> 问卷管理
+        </div>
+        <div class="nav-item" onclick="switchPage('checkup', this)" data-page="checkup">
+          <span class="nav-icon">🧬</span> 体检解读
+        </div>
+        <div class="nav-item" onclick="switchPage('ai-workspace', this)" data-page="ai-workspace">
+          <span class="nav-icon">🤖</span> AI工作台
+        </div>
+        <div class="nav-item" onclick="switchPage('clinical-docs', this)" data-page="clinical-docs">
+          <span class="nav-icon">📄</span> 临床文档
+        </div>
+        <div class="nav-item" onclick="switchPage('knowledge', this)" data-page="knowledge">
+          <span class="nav-icon">📚</span> 知识库
+        </div>
+        
+        <div class="sidebar-divider"></div>
+        
+        <div class="nav-item" onclick="switchPage('settings', this)" data-page="settings">
+          <span class="nav-icon">⚙️</span> 设置
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="adminLogout()">
+          <span class="nav-icon">🚪</span> 退出登录
+        </div>
+      </div>
+    </nav>
     
-    <div id="tab-checkup" class="admin-page" style="display:none;">
-      <div id="checkup-content"></div>
-    </div>
-    
-    <!-- 数据概览 -->
-    <div id="tab-dashboard" class="admin-page">
-      <div id="dashboard-content"></div>
-    </div>
-    
-    <!-- 患者列表 -->
-    <div id="tab-patients" class="admin-page" style="display:none;">
-      <div id="patients-content"></div>
-    </div>
-    
-    <!-- 数据导出 -->
-    <div id="tab-export" class="admin-page" style="display:none;">
-      <div id="export-content"></div>
-    </div>
-    
-    <!-- 修改密码 -->
-    <div id="tab-changepwd" class="admin-page" style="display:none;">
-      <div id="changepwd-content"></div>
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <header class="main-header">
+        <div class="main-header-left">
+          <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+          <h2 id="page-title">🏠 首页</h2>
+          <span id="cloud-status" class="cloud-status">⏳ 连接云端...</span>
+        </div>
+        <div>
+          <span style="font-size:13px;color:var(--color-gray);" id="admin-user-info"></span>
+        </div>
+      </header>
+      
+      <div class="main-body">
+        <!-- ===== 首页/工作台 ===== -->
+        <div id="page-dashboard" class="page-content active">
+          <div id="dashboard-content"></div>
+        </div>
+        
+        <!-- ===== 客户管理 ===== -->
+        <div id="page-patients" class="page-content">
+          <div id="patients-content"></div>
+        </div>
+        
+        <!-- ===== 健康计划（占位） ===== -->
+        <div id="page-health-plan" class="page-content">
+          <div class="placeholder-page">
+            <div class="placeholder-icon">📋</div>
+            <div class="placeholder-title">健康计划</div>
+            <div class="placeholder-desc">基于评估结果和体检数据，为每位客户生成个性化健康管理方案，追踪执行进度与效果评估。</div>
+            <div class="placeholder-features">
+              <h4>预期功能</h4>
+              <ul>
+                <li>基于评估结果自动生成健康建议</li>
+                <li>个性化营养与运动方案制定</li>
+                <li>随访计划与提醒设置</li>
+                <li>方案执行进度追踪</li>
+                <li>效果评估与方案调整</li>
+                <li>计划模板库</li>
+              </ul>
+            </div>
+            <div class="placeholder-badge">即将上线</div>
+          </div>
+        </div>
+        
+        <!-- ===== 问卷管理（开单） ===== -->
+        <div id="page-prescribe" class="page-content">
+          <div id="prescribe-content"></div>
+        </div>
+        
+        <!-- ===== 体检解读 ===== -->
+        <div id="page-checkup" class="page-content">
+          <div id="checkup-content"></div>
+        </div>
+        
+        <!-- ===== AI工作台 ===== -->
+        <div id="page-ai-workspace" class="page-content">
+          <div id="ai-workspace-content"></div>
+        </div>
+        
+        <!-- ===== 临床文档（占位） ===== -->
+        <div id="page-clinical-docs" class="page-content">
+          <div class="placeholder-page">
+            <div class="placeholder-icon">📄</div>
+            <div class="placeholder-title">临床文档</div>
+            <div class="placeholder-desc">管理临床报告、解读文档和随访记录，支持文档模板和智能生成。</div>
+            <div class="placeholder-features">
+              <h4>预期功能</h4>
+              <ul>
+                <li>临床报告自动生成</li>
+                <li>文档模板管理</li>
+                <li>随访记录管理</li>
+                <li>报告导出与打印</li>
+                <li>文档版本控制</li>
+                <li>智能摘要生成</li>
+              </ul>
+            </div>
+            <div class="placeholder-badge">即将上线</div>
+          </div>
+        </div>
+        
+        <!-- ===== 知识库（占位） ===== -->
+        <div id="page-knowledge" class="page-content">
+          <div class="placeholder-page">
+            <div class="placeholder-icon">📚</div>
+            <div class="placeholder-title">知识库</div>
+            <div class="placeholder-desc">功能医学知识体系，量表解读参考，健康方案模板库。</div>
+            <div class="placeholder-features">
+              <h4>预期功能</h4>
+              <ul>
+                <li>功能医学知识体系管理</li>
+                <li>量表解读参考库</li>
+                <li>健康方案模板</li>
+                <li>常见问题与解答</li>
+                <li>文献资料库</li>
+                <li>智能检索与推荐</li>
+              </ul>
+            </div>
+            <div class="placeholder-badge">即将上线</div>
+          </div>
+        </div>
+        
+        <!-- ===== 设置 ===== -->
+        <div id="page-settings" class="page-content">
+          <div id="settings-content"></div>
+        </div>
+      </div>
     </div>
   </div>
-  
+
+  <!-- ========== 新建患者弹窗 ========== -->
+  <div id="new-patient-modal" class="modal-overlay" onclick="if(event.target===this)closeNewPatientModal()">
+    <div class="modal-box">
+      <h3>👤 新建客户</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>姓名 *</label>
+          <input type="text" id="np-name" class="form-input" placeholder="客户姓名" />
+        </div>
+        <div class="form-group">
+          <label>手机号 *</label>
+          <input type="tel" id="np-phone" class="form-input" placeholder="手机号" maxlength="11" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>年龄</label>
+          <input type="number" id="np-age" class="form-input" placeholder="年龄" min="0" max="150" />
+        </div>
+        <div class="form-group">
+          <label>性别</label>
+          <select id="np-gender" class="form-input">
+            <option value="">请选择</option>
+            <option value="女">女</option>
+            <option value="男">男</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>身份证号（选填）</label>
+        <input type="text" id="np-id-number" class="form-input" placeholder="身份证号" maxlength="18" />
+      </div>
+      <div class="form-group">
+        <label>主诉/就诊原因</label>
+        <input type="text" id="np-chief-complaint" class="form-input" placeholder="如：抗衰评估、失眠、更年期综合征" />
+      </div>
+      <div class="form-group">
+        <label>既往病史</label>
+        <textarea id="np-medical-history" class="form-input" placeholder="既往重要疾病史"></textarea>
+      </div>
+      <div class="form-group">
+        <label>过敏史</label>
+        <input type="text" id="np-allergy-history" class="form-input" placeholder="如无填写"无"" />
+      </div>
+      <div class="form-group">
+        <label>家族史</label>
+        <input type="text" id="np-family-history" class="form-input" placeholder="家族遗传病史" />
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="np-notes" class="form-input" placeholder="其他备注信息"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeNewPatientModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveNewPatient()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 编辑患者信息弹窗 ========== -->
+  <div id="edit-patient-modal" class="modal-overlay" onclick="if(event.target===this)closeEditPatientModal()">
+    <div class="modal-box">
+      <h3>✏️ 编辑客户信息</h3>
+      <input type="hidden" id="ep-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>姓名 *</label>
+          <input type="text" id="ep-name" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>手机号 *</label>
+          <input type="tel" id="ep-phone" class="form-input" maxlength="11" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>年龄</label>
+          <input type="number" id="ep-age" class="form-input" min="0" max="150" />
+        </div>
+        <div class="form-group">
+          <label>性别</label>
+          <select id="ep-gender" class="form-input">
+            <option value="">请选择</option>
+            <option value="女">女</option>
+            <option value="男">男</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>身份证号</label>
+        <input type="text" id="ep-id-number" class="form-input" maxlength="18" />
+      </div>
+      <div class="form-group">
+        <label>主诉/就诊原因</label>
+        <input type="text" id="ep-chief-complaint" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label>既往病史</label>
+        <textarea id="ep-medical-history" class="form-input"></textarea>
+      </div>
+      <div class="form-group">
+        <label>过敏史</label>
+        <input type="text" id="ep-allergy-history" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label>家族史</label>
+        <input type="text" id="ep-family-history" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="ep-notes" class="form-input"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeEditPatientModal()">取消</button>
+        <button class="btn btn-primary" onclick="updatePatient()">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 修改密码弹窗 ========== -->
+  <div id="change-pwd-overlay" class="change-pwd-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="change-pwd-box">
+      <h3>🔑 修改管理密码</h3>
+      <label>旧密码</label>
+      <input type="password" id="old-pwd" placeholder="输入旧密码" />
+      <label>新密码</label>
+      <input type="password" id="new-pwd" placeholder="输入新密码" />
+      <label>确认新密码</label>
+      <input type="password" id="confirm-pwd" placeholder="再次输入新密码" />
+      <label>验证手机号</label>
+      <input type="tel" id="verify-phone" placeholder="输入绑定的手机号" />
+      <div class="pwd-btns">
+        <button class="btn btn-outline" onclick="document.getElementById('change-pwd-overlay').classList.remove('show')">取消</button>
+        <button class="btn btn-primary" onclick="doChangePwd()">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 体检解读报告弹窗 ========== -->
+  <div id="ck-reportModal" class="ck-modal" onclick="if(event.target===this)AdminApp.ckCloseRpt()">
+    <div class="ck-modal-box">
+      <div style="text-align:right;margin-bottom:8px">
+        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckPrintRpt()">🖨️ 打印</button>
+        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckCloseRpt()">✕ 关闭</button>
+      </div>
+      <div id="ck-reportContent"></div>
+    </div>
+  </div>
+
   <script>
+// ========== Supabase 初始化 ==========
 // ========== Supabase 初始化 ==========
 const SUPABASE_URL = 'https://excwsowelxxkboljyobw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Y3dzb3dlbHh4a2JvbGp5b2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODU1NzEsImV4cCI6MjA5NDg2MTU3MX0.sNSkYXgme1M352IHvj_mDl7BY_OxZA3OLH2mMTvPblY';
@@ -11855,6 +11634,7 @@ const SCALES = [
   }
 ];
 
+
 const StorageManager = {
   // 键名前缀
   PREFIX: 'ksmz_',
@@ -12026,23 +11806,25 @@ const StorageManager = {
   }
 };
 
+
 // ========== 管理端逻辑 ==========
+
 const DEFAULT_ADMIN_PASSWORD = 'ksmz';
 const DEFAULT_ADMIN_PHONE = '17354308030';
 
 function getAdminPassword() {
   return localStorage.getItem('admin_password') || DEFAULT_ADMIN_PASSWORD;
 }
-
 function getAdminPhone() {
   return localStorage.getItem('admin_phone') || DEFAULT_ADMIN_PHONE;
 }
 
+// ========== 登录/退出 ==========
 function doAdminLogin() {
   const pwd = document.getElementById('admin-login-pwd').value;
   if (pwd === getAdminPassword()) {
-    document.getElementById('admin-login-page').style.display = 'none';
-    document.getElementById('admin-main-page').style.display = 'block';
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'flex';
     AdminApp.init();
   } else {
     alert('密码错误');
@@ -12050,26 +11832,178 @@ function doAdminLogin() {
 }
 
 function adminLogout() {
-  document.getElementById('admin-main-page').style.display = 'none';
-  document.getElementById('admin-login-page').style.display = 'flex';
+  document.getElementById('admin-app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
   document.getElementById('admin-login-pwd').value = '';
 }
 
-function showAdminTab(tab, btn) {
-  document.querySelectorAll('.admin-nav .btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.querySelectorAll('.admin-page').forEach(p => p.style.display = 'none');
-  document.getElementById('tab-' + tab).style.display = 'block';
-  switch(tab) {
+// ========== 侧边栏控制 ==========
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ========== 页面切换 ==========
+const PAGE_TITLES = {
+  'dashboard': '🏠 首页',
+  'patients': '👥 客户管理',
+  'health-plan': '📋 健康计划',
+  'prescribe': '📝 问卷管理',
+  'checkup': '🧬 体检解读',
+  'ai-workspace': '🤖 AI工作台',
+  'clinical-docs': '📄 临床文档',
+  'knowledge': '📚 知识库',
+  'settings': '⚙️ 设置'
+};
+
+let currentPage = 'dashboard';
+
+function switchPage(page, navItem) {
+  // 更新导航高亮
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navItem) navItem.classList.add('active');
+  
+  // 切换页面内容
+  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  
+  // 更新标题
+  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  
+  // 关闭移动端侧边栏
+  closeSidebar();
+  
+  currentPage = page;
+  
+  // 触发页面渲染
+  switch(page) {
     case 'dashboard': AdminApp.renderDashboard(); break;
+    case 'patients': AdminApp.renderPatients(); break;
     case 'prescribe': AdminApp.renderPrescribe(); break;
     case 'checkup': AdminApp.renderCheckup(); break;
-    case 'patients': AdminApp.renderPatients(); break;
-    case 'export': AdminApp.renderExport(); break;
-    case 'changepwd': AdminApp.renderChangePwd(); break;
+    case 'ai-workspace': AdminApp.renderAIWorkspace(); break;
+    case 'settings': AdminApp.renderSettings(); break;
   }
 }
 
+// ========== 新建/编辑患者弹窗 ==========
+function openNewPatientModal() {
+  document.getElementById('new-patient-modal').classList.add('show');
+  // 清空表单
+  ['np-name','np-phone','np-age','np-id-number','np-chief-complaint',
+   'np-medical-history','np-allergy-history','np-family-history','np-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('np-gender').value = '';
+}
+function closeNewPatientModal() {
+  document.getElementById('new-patient-modal').classList.remove('show');
+}
+function closeEditPatientModal() {
+  document.getElementById('edit-patient-modal').classList.remove('show');
+}
+
+// ========== 保存新患者 ==========
+async function saveNewPatient() {
+  const name = document.getElementById('np-name').value.trim();
+  const phone = document.getElementById('np-phone').value.trim();
+  if (!name) { alert('请输入姓名'); return; }
+  if (!phone || phone.length < 11) { alert('请输入正确的手机号'); return; }
+  
+  const patient = {
+    name,
+    phone,
+    age: document.getElementById('np-age').value ? parseInt(document.getElementById('np-age').value) : null,
+    gender: document.getElementById('np-gender').value || null,
+    id_number: document.getElementById('np-id-number').value.trim() || null,
+    chief_complaint: document.getElementById('np-chief-complaint').value.trim() || null,
+    medical_history: document.getElementById('np-medical-history').value.trim() || null,
+    allergy_history: document.getElementById('np-allergy-history').value.trim() || null,
+    family_history: document.getElementById('np-family-history').value.trim() || null,
+    notes: document.getElementById('np-notes').value.trim() || null,
+  };
+  
+  // 保存到Supabase
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient.from('patients').insert(patient);
+      if (error) throw error;
+      alert('客户创建成功！');
+      closeNewPatientModal();
+      if (currentPage === 'patients') AdminApp.renderPatients();
+      if (currentPage === 'dashboard') AdminApp.renderDashboard();
+    } catch (e) {
+      console.warn('[Supabase] 创建患者失败:', e.message);
+      if (e.message && e.message.includes('does not exist')) {
+        alert('patients表尚未创建，请先在Supabase SQL编辑器中执行建表SQL。');
+      } else {
+        alert('创建失败：' + e.message);
+      }
+    }
+  } else {
+    alert('数据库未连接');
+  }
+}
+
+// ========== 更新患者信息 ==========
+async function updatePatient() {
+  const id = document.getElementById('ep-id').value;
+  const name = document.getElementById('ep-name').value.trim();
+  const phone = document.getElementById('ep-phone').value.trim();
+  if (!name) { alert('请输入姓名'); return; }
+  if (!phone || phone.length < 11) { alert('请输入正确的手机号'); return; }
+  
+  const updates = {
+    name,
+    phone,
+    age: document.getElementById('ep-age').value ? parseInt(document.getElementById('ep-age').value) : null,
+    gender: document.getElementById('ep-gender').value || null,
+    id_number: document.getElementById('ep-id-number').value.trim() || null,
+    chief_complaint: document.getElementById('ep-chief-complaint').value.trim() || null,
+    medical_history: document.getElementById('ep-medical-history').value.trim() || null,
+    allergy_history: document.getElementById('ep-allergy-history').value.trim() || null,
+    family_history: document.getElementById('ep-family-history').value.trim() || null,
+    notes: document.getElementById('ep-notes').value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+  
+  if (supabaseClient) {
+    try {
+      const { error } = await supabaseClient.from('patients').update(updates).eq('id', id);
+      if (error) throw error;
+      alert('更新成功！');
+      closeEditPatientModal();
+      AdminApp.renderPatients();
+    } catch (e) {
+      alert('更新失败：' + e.message);
+    }
+  }
+}
+
+// ========== 修改密码 ==========
+function doChangePwd() {
+  const oldPwd = document.getElementById('old-pwd').value;
+  const newPwd = document.getElementById('new-pwd').value;
+  const confirmPwd = document.getElementById('confirm-pwd').value;
+  const verifyPhone = document.getElementById('verify-phone').value;
+  
+  if (oldPwd !== getAdminPassword()) { alert('旧密码错误'); return; }
+  if (!newPwd || newPwd.length < 4) { alert('新密码至少4位'); return; }
+  if (newPwd !== confirmPwd) { alert('两次密码不一致'); return; }
+  if (verifyPhone !== getAdminPhone()) { alert('手机号验证失败'); return; }
+  
+  localStorage.setItem('admin_password', newPwd);
+  alert('密码修改成功！');
+  document.getElementById('change-pwd-overlay').classList.remove('show');
+}
+
+// ========== AdminApp 主应用 ==========
 const AdminApp = {
   async init() {
     const ok = await CloudBaseManager.init();
@@ -12085,49 +12019,440 @@ const AdminApp = {
     }
     this.renderDashboard();
   },
-  
+
+  // ========== 首页/工作台 ==========
   async renderDashboard() {
     const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
     const patients = cloudPatients || StorageManager.getPatients();
     const totalPatients = patients.length;
     const totalRecords = patients.reduce((sum, p) => sum + (p.records ? p.records.length : 0), 0);
     
-    // 统计量表使用
-    const scaleUsage = {};
-    patients.forEach(p => {
-      if (p.records) p.records.forEach(r => { scaleUsage[r.scaleId] = (scaleUsage[r.scaleId] || 0) + 1; });
-    });
+    const today = new Date().toISOString().slice(0,10);
+    const todayNew = patients.filter(p => {
+      const d = (p.created_at || p.createTime || '').slice(0,10);
+      return d === today;
+    }).length;
+    const todayAssess = patients.reduce((sum, p) => {
+      if (!p.records) return sum;
+      return sum + p.records.filter(r => r.date === today).length;
+    }, 0);
     
     // 近7天活跃
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
     const recentActive = patients.filter(p => new Date(p.lastVisit) > weekAgo).length;
     
+    // 待开单数
+    let pendingCount = 0;
+    try {
+      const prescriptions = await CloudBaseManager.getAllPrescriptions();
+      pendingCount = prescriptions.filter(p => p.status === 'pending').length;
+    } catch(e) {}
+    
+    // 最近活动
+    const recentPatients = patients
+      .filter(p => p.lastVisit)
+      .sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit))
+      .slice(0, 5);
+    
+    let activityHtml = '';
+    recentPatients.forEach(p => {
+      const dateStr = new Date(p.lastVisit).toLocaleDateString('zh-CN');
+      const recordCount = p.records ? p.records.length : 0;
+      activityHtml += `
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--color-primary)"></div>
+          <div class="activity-text"><strong>${p.name}</strong> 完成评估（共${recordCount}次）</div>
+          <div class="activity-time">${dateStr}</div>
+        </div>`;
+    });
+    
     document.getElementById('dashboard-content').innerHTML = `
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-        <div style="background:white; border-radius:12px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:28px; color:var(--color-primary);">${totalPatients}</div>
-          <div style="font-size:13px; color:var(--color-gray);">患者总数</div>
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-number">${totalPatients}</div>
+          <div class="stat-label">患者总数</div>
         </div>
-        <div style="background:white; border-radius:12px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:28px; color:var(--color-primary);">${totalRecords}</div>
-          <div style="font-size:13px; color:var(--color-gray);">评估总次数</div>
+        <div class="stat-card green">
+          <div class="stat-icon">📋</div>
+          <div class="stat-number">${totalRecords}</div>
+          <div class="stat-label">评估总次数</div>
         </div>
-        <div style="background:white; border-radius:12px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:28px; color:var(--color-green);">${recentActive}</div>
-          <div style="font-size:13px; color:var(--color-gray);">近7天活跃</div>
+        <div class="stat-card orange">
+          <div class="stat-icon">🆕</div>
+          <div class="stat-number">${todayNew}</div>
+          <div class="stat-label">今日新增</div>
         </div>
-        <div style="background:white; border-radius:12px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="font-size:28px; color:var(--color-primary);">${Object.keys(scaleUsage).length}</div>
-          <div style="font-size:13px; color:var(--color-gray);">使用量表数</div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-number">${todayAssess}</div>
+          <div class="stat-label">今日评估</div>
         </div>
+        <div class="stat-card green">
+          <div class="stat-icon">📊</div>
+          <div class="stat-number">${recentActive}</div>
+          <div class="stat-label">近7天活跃</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">📝</div>
+          <div class="stat-number">${pendingCount}</div>
+          <div class="stat-label">待完成开单</div>
+        </div>
+      </div>
+      
+      <h3 style="font-size:16px;font-weight:600;color:var(--color-primary-dark);margin-bottom:14px;">⚡ 快捷操作</h3>
+      <div class="quick-actions">
+        <div class="quick-action-btn" onclick="openNewPatientModal()">
+          <div class="qa-icon">👤</div>
+          <div><div class="qa-text">新建客户</div><div class="qa-desc">录入新客户信息</div></div>
+        </div>
+        <div class="quick-action-btn" onclick="switchPage('prescribe', document.querySelector('[data-page=prescribe]'))">
+          <div class="qa-icon">📋</div>
+          <div><div class="qa-text">快速开单</div><div class="qa-desc">为患者开具评估量表</div></div>
+        </div>
+        <div class="quick-action-btn" onclick="switchPage('checkup', document.querySelector('[data-page=checkup]'))">
+          <div class="qa-icon">🧬</div>
+          <div><div class="qa-text">体检解读</div><div class="qa-desc">录入体检数据分析</div></div>
+        </div>
+        <div class="quick-action-btn" onclick="switchPage('ai-workspace', document.querySelector('[data-page=ai-workspace]'))">
+          <div class="qa-icon">🤖</div>
+          <div><div class="qa-text">AI工作台</div><div class="qa-desc">智能分析与生成</div></div>
+        </div>
+      </div>
+      
+      <h3 style="font-size:16px;font-weight:600;color:var(--color-primary-dark);margin-bottom:14px;margin-top:28px;">🕐 最近活动</h3>
+      <div class="recent-activity" style="background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
+        ${activityHtml || '<div style="text-align:center;color:var(--color-gray);padding:20px;">暂无活动记录</div>'}
       </div>
     `;
   },
-  
+
+  // ========== 客户管理 ==========
+  _allPatients: null,
+  _patientSearchTimer: null,
+
+  async renderPatients(searchKeyword) {
+    // 从patients表和assessments表合并数据
+    let patientsTableData = [];
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('patients').select('*').order('created_at', { ascending: false });
+        if (!error && data) patientsTableData = data;
+      } catch(e) {
+        console.warn('[Patients] 读取patients表失败:', e.message);
+      }
+    }
+    
+    // 从assessments表获取患者
+    const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
+    const assessmentPatients = cloudPatients || StorageManager.getPatients();
+    
+    // 合并：patients表优先
+    const mergedMap = {};
+    // 先放assessment数据
+    assessmentPatients.forEach(p => {
+      const key = p.name + '_' + p.phone;
+      if (!mergedMap[key]) {
+        mergedMap[key] = {
+          source: 'assessment',
+          name: p.name,
+          phone: p.phone,
+          age: null,
+          gender: null,
+          id_number: null,
+          chief_complaint: null,
+          medical_history: null,
+          allergy_history: null,
+          family_history: null,
+          notes: null,
+          lastVisit: p.lastVisit,
+          createTime: p.createTime,
+          records: p.records || [],
+          created_at: p.createTime || p.lastVisit,
+        };
+      } else {
+        // 合并records
+        mergedMap[key].records = [...(mergedMap[key].records || []), ...(p.records || [])];
+        // 更新lastVisit
+        if (new Date(p.lastVisit) > new Date(mergedMap[key].lastVisit)) {
+          mergedMap[key].lastVisit = p.lastVisit;
+        }
+      }
+    });
+    
+    // 再放patients表数据（覆盖基本信息）
+    patientsTableData.forEach(p => {
+      const key = p.name + '_' + p.phone;
+      if (mergedMap[key]) {
+        // 合并：patients表的基本信息覆盖
+        Object.assign(mergedMap[key], {
+          source: 'both',
+          id: p.id,
+          age: p.age,
+          gender: p.gender,
+          id_number: p.id_number,
+          chief_complaint: p.chief_complaint,
+          medical_history: p.medical_history,
+          allergy_history: p.allergy_history,
+          family_history: p.family_history,
+          notes: p.notes,
+          created_at: p.created_at,
+        });
+      } else {
+        mergedMap[key] = {
+          source: 'patients_table',
+          id: p.id,
+          name: p.name,
+          phone: p.phone,
+          age: p.age,
+          gender: p.gender,
+          id_number: p.id_number,
+          chief_complaint: p.chief_complaint,
+          medical_history: p.medical_history,
+          allergy_history: p.allergy_history,
+          family_history: p.family_history,
+          notes: p.notes,
+          lastVisit: null,
+          createTime: p.created_at,
+          records: [],
+          created_at: p.created_at,
+        };
+      }
+    });
+    
+    let allPatients = Object.values(mergedMap);
+    this._allPatients = allPatients;
+    
+    // 搜索过滤
+    if (searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
+      allPatients = allPatients.filter(p => 
+        p.name.toLowerCase().includes(kw) || p.phone.includes(kw)
+      );
+    }
+    
+    // 按最近访问排序
+    allPatients.sort((a, b) => {
+      const la = a.lastVisit || a.created_at || '';
+      const lb = b.lastVisit || b.created_at || '';
+      return new Date(lb) - new Date(la);
+    });
+    
+    let html = `
+      <div class="patient-toolbar">
+        <input type="text" class="patient-search" id="patient-search" placeholder="🔍 搜索姓名/手机号" 
+          oninput="clearTimeout(AdminApp._patientSearchTimer);AdminApp._patientSearchTimer=setTimeout(()=>AdminApp.renderPatients(this.value),300)" 
+          value="${searchKeyword || ''}" />
+        <button class="btn btn-primary btn-sm" onclick="openNewPatientModal()">+ 新建客户</button>
+      </div>
+    `;
+    
+    if (allPatients.length === 0) {
+      html += `
+        <div style="text-align:center;padding:60px 20px;color:var(--color-gray);">
+          <div style="font-size:48px;margin-bottom:16px;">👥</div>
+          <div style="font-size:16px;margin-bottom:8px;">暂无客户数据</div>
+          <div style="font-size:14px;">点击"新建客户"添加第一位客户</div>
+        </div>`;
+    } else {
+      html += '<div class="patient-list">';
+      allPatients.forEach(p => {
+        const initial = p.name.charAt(0);
+        const recordCount = p.records ? p.records.length : 0;
+        const lastVisit = p.lastVisit ? new Date(p.lastVisit).toLocaleDateString('zh-CN') : '-';
+        const ageDisplay = p.age ? p.age + '岁' : '';
+        const genderDisplay = p.gender || '';
+        const metaParts = [genderDisplay, ageDisplay].filter(Boolean);
+        const metaStr = metaParts.length ? ' · ' + metaParts.join('') : '';
+        
+        // 标签
+        let tags = '';
+        const daysSinceCreation = p.created_at ? Math.floor((Date.now() - new Date(p.created_at)) / 86400000) : 999;
+        if (daysSinceCreation <= 7) tags += '<span class="patient-tag new">新患者</span>';
+        if (recordCount > 0) tags += '<span class="patient-tag followup">随访中</span>';
+        
+        html += `
+          <div class="patient-card" onclick="AdminApp.showPatientDetail('${p.name}', '${p.phone}')">
+            <div class="patient-avatar">${initial}</div>
+            <div class="patient-info">
+              <div class="patient-name">${p.name}</div>
+              <div class="patient-meta">${p.phone}${metaStr} · ${recordCount}次评估</div>
+              <div class="patient-tags">${tags}</div>
+            </div>
+            <div class="patient-visit">
+              <div>最近就诊</div>
+              <div>${lastVisit}</div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+    
+    document.getElementById('patients-content').innerHTML = html;
+  },
+
+  async showPatientDetail(name, phone) {
+    // 获取合并后的患者数据
+    let patientData = null;
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('patients')
+          .select('*')
+          .eq('name', name)
+          .eq('phone', phone)
+          .maybeSingle();
+        if (!error && data) patientData = data;
+      } catch(e) {}
+    }
+    
+    // 获取评估记录
+    const assessmentPatient = await CloudBaseManager.getPatientFromCloud(name, phone);
+    const records = assessmentPatient ? assessmentPatient.records : [];
+    
+    // 获取体检记录
+    let checkupRecords = [];
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('health_checkups')
+          .select('id,checkup_date,package_name,created_at')
+          .eq('patient_name', name)
+          .order('created_at', { ascending: false });
+        if (!error && data) checkupRecords = data;
+      } catch(e) {}
+    }
+    
+    // 获取开单记录
+    let prescriptions = [];
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('prescriptions')
+          .select('*')
+          .eq('patient_name', name)
+          .order('created_at', { ascending: false });
+        if (!error && data) prescriptions = data;
+      } catch(e) {}
+    }
+    
+    const initial = name.charAt(0);
+    const p = patientData || {};
+    const ageDisplay = p.age || (assessmentPatient ? '' : '-');
+    const genderDisplay = p.gender || '';
+    
+    // 基本信息
+    let infoHtml = `
+      <div class="info-card">
+        <h4>👤 基本信息 <button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:12px;" 
+          onclick="openEditPatientModal('${p.id || ''}','${name}','${phone}',
+            '${p.age || ''}','${genderDisplay}','${p.id_number || ''}',
+            '${(p.chief_complaint || '').replace(/'/g,"\\'")}',
+            '${(p.medical_history || '').replace(/'/g,"\\'")}',
+            '${(p.allergy_history || '').replace(/'/g,"\\'")}',
+            '${(p.family_history || '').replace(/'/g,"\\'")}',
+            '${(p.notes || '').replace(/'/g,"\\'")}')">✏️ 编辑</button></h4>
+        <div class="info-row"><div class="info-label">姓名</div><div class="info-value">${name}</div></div>
+        <div class="info-row"><div class="info-label">手机号</div><div class="info-value">${phone}</div></div>
+        <div class="info-row"><div class="info-label">性别</div><div class="info-value">${genderDisplay || '-'}</div></div>
+        <div class="info-row"><div class="info-label">年龄</div><div class="info-value">${p.age ? p.age + '岁' : '-'}</div></div>
+        ${p.id_number ? `<div class="info-row"><div class="info-label">身份证号</div><div class="info-value">${p.id_number}</div></div>` : ''}
+        ${p.chief_complaint ? `<div class="info-row"><div class="info-label">主诉</div><div class="info-value">${p.chief_complaint}</div></div>` : ''}
+        ${p.medical_history ? `<div class="info-row"><div class="info-label">既往病史</div><div class="info-value">${p.medical_history}</div></div>` : ''}
+        ${p.allergy_history ? `<div class="info-row"><div class="info-label">过敏史</div><div class="info-value">${p.allergy_history}</div></div>` : ''}
+        ${p.family_history ? `<div class="info-row"><div class="info-label">家族史</div><div class="info-value">${p.family_history}</div></div>` : ''}
+        ${p.notes ? `<div class="info-row"><div class="info-label">备注</div><div class="info-value">${p.notes}</div></div>` : ''}
+      </div>
+    `;
+    
+    // 评估记录时间线
+    let assessmentHtml = '';
+    if (records.length > 0) {
+      const dateGroups = {};
+      records.forEach(r => {
+        if (!dateGroups[r.date]) dateGroups[r.date] = [];
+        dateGroups[r.date].push(r);
+      });
+      
+      assessmentHtml += '<div class="info-card"><h4>📋 评估记录</h4><div class="timeline">';
+      Object.keys(dateGroups).sort().reverse().forEach(date => {
+        dateGroups[date].forEach(r => {
+          const levelColor = r.level ? r.level.color : 'gray';
+          assessmentHtml += `
+            <div class="timeline-item">
+              <div class="timeline-date">${date} ${r.time || ''}</div>
+              <div class="timeline-content">
+                <strong>${r.scaleName}</strong>
+                <span style="color:var(--color-${levelColor});font-weight:700;margin-left:8px;">${r.scoreDisplay}</span>
+                ${r.level ? `<span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>` : ''}
+                ${r.anxietyScore != null ? `<div style="font-size:13px;color:var(--color-text-secondary);">焦虑${r.anxietyScore}分(${r.anxietyLevel}) / 抑郁${r.depressionScore}分(${r.depressionLevel})</div>` : ''}
+                ${r.mainConstitution ? `<div style="font-size:13px;color:var(--color-text-secondary);">体质: ${r.mainConstitution}${r.tendencyConstitutions ? ' 倾向'+r.tendencyConstitutions.join('、') : ''}</div>` : ''}
+              </div>
+            </div>`;
+        });
+      });
+      assessmentHtml += '</div></div>';
+    }
+    
+    // 体检记录时间线
+    let checkupHtml = '';
+    if (checkupRecords.length > 0) {
+      checkupHtml += '<div class="info-card"><h4>🧬 体检记录</h4><div class="timeline">';
+      checkupRecords.forEach(r => {
+        checkupHtml += `
+          <div class="timeline-item">
+            <div class="timeline-date">${r.checkup_date}</div>
+            <div class="timeline-content">
+              <strong>${r.package_name || '体检'}</strong>
+              <div style="margin-top:4px;">
+                <button class="btn btn-outline btn-sm" style="font-size:12px;" 
+                  onclick="AdminApp.ckViewRpt('${r.id}')">查看报告</button>
+              </div>
+            </div>
+          </div>`;
+      });
+      checkupHtml += '</div></div>';
+    }
+    
+    // 开单记录
+    let prescriptionHtml = '';
+    if (prescriptions.length > 0) {
+      prescriptionHtml += '<div class="info-card"><h4>📝 开单记录</h4>';
+      prescriptions.forEach(rx => {
+        const scaleNames = (rx.scale_ids || []).map(id => {
+          const s = SCALES.find(sc => sc.id === id);
+          return s ? s.name : id;
+        });
+        const statusLabel = rx.status === 'completed' ? '<span style="color:var(--color-green);">已完成</span>' : '<span style="color:var(--color-orange);">待完成</span>';
+        prescriptionHtml += `
+          <div style="padding:10px 0;border-bottom:1px solid var(--color-border);font-size:14px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span>${scaleNames.join('、')}</span>
+              ${statusLabel}
+            </div>
+            <div style="font-size:12px;color:var(--color-gray);margin-top:2px;">${new Date(rx.created_at).toLocaleDateString('zh-CN')}</div>
+          </div>`;
+      });
+      prescriptionHtml += '</div>';
+    }
+    
+    document.getElementById('patients-content').innerHTML = `
+      <button class="btn btn-outline btn-sm" onclick="AdminApp.renderPatients()" style="margin-bottom:20px;">← 返回客户列表</button>
+      <div class="patient-detail-header">
+        <div class="patient-detail-avatar">${initial}</div>
+        <div class="patient-detail-info">
+          <h3>${name}</h3>
+          <div class="patient-detail-meta">${phone} ${genderDisplay} ${p.age ? p.age+'岁' : ''} · ${records.length}次评估 · ${checkupRecords.length}次体检</div>
+        </div>
+      </div>
+      ${infoHtml}
+      ${assessmentHtml}
+      ${checkupHtml}
+      ${prescriptionHtml}
+    `;
+  },
+
+  // ========== 开单 ==========
   async renderPrescribe() {
     const prescriptions = await CloudBaseManager.getAllPrescriptions();
     
-    // 按分类组织量表
     const categories = {};
     SCALES.forEach(s => {
       const cat = s.category || '其他';
@@ -12137,98 +12462,83 @@ const AdminApp = {
     
     let scaleCheckboxes = '';
     Object.keys(categories).forEach(cat => {
-      scaleCheckboxes += `<div style="margin-top:12px; font-weight:600; color:var(--color-primary-dark);">${cat}</div>`;
+      scaleCheckboxes += `<div class="scale-category"><div class="scale-category-title">${cat}</div>`;
       categories[cat].forEach(s => {
-        scaleCheckboxes += `<label style="display:block; padding:4px 0; cursor:pointer;"><input type="checkbox" class="scale-check" value="${s.id}" /> ${s.name}</label>`;
+        scaleCheckboxes += `<label class="scale-check-item"><input type="checkbox" class="scale-check" value="${s.id}" /> ${s.name}</label>`;
       });
+      scaleCheckboxes += '</div>';
     });
     
-    let prescriptionList = '';
     const pending = prescriptions.filter(p => p.status === 'pending');
     const completed = prescriptions.filter(p => p.status === 'completed');
     
+    let prescriptionList = '';
     if (pending.length > 0) {
-      prescriptionList += '<div style="margin-top:20px; font-weight:600; color:var(--color-primary-dark);">📋 待完成开单</div>';
+      prescriptionList += '<h3 style="color:var(--color-primary-dark);margin-bottom:12px;font-size:16px;">📋 待完成开单</h3>';
       pending.forEach(p => {
         const scaleNames = (p.scale_ids || []).map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
         prescriptionList += `
-          <div style="background:white; border-radius:8px; padding:12px; margin:8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong>${p.patient_name}</strong>
-              <span style="color:var(--color-gray); font-size:12px;">${p.patient_phone}</span>
-            </div>
-            <div style="color:var(--color-text-secondary); font-size:13px; margin-top:4px;">${scaleNames.join('、')}</div>
-            ${p.note ? `<div style="color:var(--color-gray); font-size:12px; margin-top:2px;">备注: ${p.note}</div>` : ''}
-            <div style="display:flex; gap:8px; margin-top:8px;">
-              <button class="btn btn-outline btn-sm" onclick="AdminApp.deletePrescription('${p.id}')" style="color:var(--color-red); border-color:var(--color-red);">删除</button>
+          <div class="prescription-card">
+            <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-gray);font-size:12px;">${p.patient_phone}</span></div>
+            <div class="rx-meta">${scaleNames.join('、')}</div>
+            ${p.note ? `<div style="color:var(--color-gray);font-size:12px;margin-top:2px;">备注: ${p.note}</div>` : ''}
+            <div class="rx-actions">
+              <button class="btn btn-outline btn-sm" onclick="AdminApp.deletePrescription('${p.id}')" style="color:var(--color-red);border-color:var(--color-red);">删除</button>
             </div>
           </div>`;
       });
     }
     
     if (completed.length > 0) {
-      prescriptionList += '<div style="margin-top:20px; font-weight:600; color:var(--color-green);">✅ 已完成开单</div>';
+      prescriptionList += '<h3 style="color:var(--color-green);margin-bottom:12px;margin-top:20px;font-size:16px;">✅ 已完成开单</h3>';
       completed.slice(0, 10).forEach(p => {
         const scaleNames = (p.scale_ids || []).map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
         prescriptionList += `
-          <div style="background:#f8f8f8; border-radius:8px; padding:12px; margin:8px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong>${p.patient_name}</strong>
-              <span style="color:var(--color-green); font-size:12px;">已完成</span>
-            </div>
-            <div style="color:var(--color-text-secondary); font-size:13px; margin-top:4px;">${scaleNames.join('、')}</div>
+          <div class="prescription-card" style="background:#f8f8f8;">
+            <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-green);font-size:12px;">已完成</span></div>
+            <div class="rx-meta">${scaleNames.join('、')}</div>
           </div>`;
       });
     }
     
     document.getElementById('prescribe-content').innerHTML = `
-      <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:16px;">
-        <h3 style="color:var(--color-primary-dark); margin-bottom:16px;">📋 新增开单</h3>
-        <div class="form-group">
-          <label>患者姓名</label>
-          <input type="text" id="rx-name" class="form-input" placeholder="请输入患者姓名" />
-        </div>
-        <div class="form-group">
-          <label>患者手机号</label>
-          <input type="tel" id="rx-phone" class="form-input" placeholder="请输入手机号" maxlength="11" />
+      <div class="prescribe-form">
+        <h3>📋 新增开单</h3>
+        <div class="form-row">
+          <div class="form-group"><label>患者姓名</label><input type="text" id="rx-name" class="form-input" placeholder="请输入患者姓名" /></div>
+          <div class="form-group"><label>患者手机号</label><input type="tel" id="rx-phone" class="form-input" placeholder="请输入手机号" maxlength="11" /></div>
         </div>
         <div class="form-group">
           <label>选择量表</label>
-          <div style="max-height:300px; overflow-y:auto; border:1px solid var(--color-border); border-radius:8px; padding:12px;">
+          <div style="max-height:300px;overflow-y:auto;border:1px solid var(--color-border);border-radius:8px;padding:12px;">
             ${scaleCheckboxes}
           </div>
-          <div style="margin-top:8px; display:flex; gap:8px;">
+          <div style="margin-top:8px;display:flex;gap:8px;">
             <button class="btn btn-outline btn-sm" onclick="document.querySelectorAll('.scale-check').forEach(c=>c.checked=true)">全选</button>
             <button class="btn btn-outline btn-sm" onclick="document.querySelectorAll('.scale-check').forEach(c=>c.checked=false)">清空</button>
           </div>
         </div>
-        <div class="form-group">
-          <label>备注（可选）</label>
-          <input type="text" id="rx-note" class="form-input" placeholder="如：初诊评估" />
-        </div>
+        <div class="form-group"><label>备注（可选）</label><input type="text" id="rx-note" class="form-input" placeholder="如：初诊评估" /></div>
         <button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.createPrescription()">确认开单</button>
       </div>
       ${prescriptionList}
     `;
   },
-  
+
   async createPrescription() {
     const name = document.getElementById('rx-name').value.trim();
     const phone = document.getElementById('rx-phone').value.trim();
     const note = document.getElementById('rx-note').value.trim();
-    
     if (!name) { alert('请输入患者姓名'); return; }
     if (!phone || phone.length < 11) { alert('请输入正确的手机号'); return; }
-    
     const checked = document.querySelectorAll('.scale-check:checked');
     if (checked.length === 0) { alert('请至少选择一个量表'); return; }
-    
     const scaleIds = Array.from(checked).map(c => c.value);
     const ok = await CloudBaseManager.createPrescription(name, phone, scaleIds, note);
     if (ok) {
@@ -12238,88 +12548,151 @@ const AdminApp = {
       alert('开单失败，请重试');
     }
   },
-  
+
   async deletePrescription(id) {
     if (!confirm('确定删除该开单？')) return;
     const ok = await CloudBaseManager.deletePrescription(id);
     if (ok) this.renderPrescribe();
   },
-  
-  async renderPatients() {
-    const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
-    const patients = cloudPatients || StorageManager.getPatients();
-    
-    if (patients.length === 0) {
-      document.getElementById('patients-content').innerHTML = '<div class="empty-state"><p>暂无患者数据</p></div>';
-      return;
-    }
-    
-    let html = '';
-    patients.forEach(p => {
-      const recordCount = p.records ? p.records.length : 0;
-      const lastVisit = p.lastVisit ? new Date(p.lastVisit).toLocaleDateString() : '-';
-      html += `
-        <div style="background:white; border-radius:8px; padding:16px; margin:8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.04); cursor:pointer;" onclick="AdminApp.showPatientDetail('${p.name}', '${p.phone}')">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong>${p.name}</strong>
-            <span style="color:var(--color-gray); font-size:12px;">${lastVisit}</span>
+
+  // ========== AI工作台 ==========
+  renderAIWorkspace() {
+    document.getElementById('ai-workspace-content').innerHTML = `
+      <div class="ai-chat-container">
+        <div class="ai-welcome">
+          <div class="ai-welcome-icon">🤖</div>
+          <h3>归元AI 智能助手</h3>
+          <p>基于功能医学知识，为您提供智能分析、报告生成和健康管理建议。<br/>AI助手即将接入，敬请期待。</p>
+        </div>
+        <div class="ai-templates">
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('分析患者报告')">
+            <div class="at-icon">📊</div>
+            <div class="at-title">分析患者报告</div>
+            <div class="at-desc">上传评估结果，AI自动生成综合分析</div>
           </div>
-          <div style="color:var(--color-text-secondary); font-size:13px; margin-top:4px;">${p.phone} · ${recordCount}次评估</div>
-        </div>`;
-    });
-    
-    document.getElementById('patients-content').innerHTML = html;
-  },
-  
-  async showPatientDetail(name, phone) {
-    const patient = await CloudBaseManager.getPatientFromCloud(name, phone);
-    if (!patient) {
-      alert('未找到患者数据');
-      return;
-    }
-    
-    let html = `<button class="btn btn-outline btn-sm" onclick="AdminApp.renderPatients()" style="margin-bottom:16px;">← 返回患者列表</button>`;
-    html += `<h3 style="color:var(--color-primary-dark);">${patient.name} <span style="font-size:14px; color:var(--color-gray);">${patient.phone}</span></h3>`;
-    
-    if (patient.records && patient.records.length > 0) {
-      const dateGroups = {};
-      patient.records.forEach(r => {
-        if (!dateGroups[r.date]) dateGroups[r.date] = [];
-        dateGroups[r.date].push(r);
-      });
-      
-      Object.keys(dateGroups).sort().reverse().forEach(date => {
-        html += `<div style="margin-top:16px; font-weight:600; color:var(--color-primary-dark);">${date}</div>`;
-        dateGroups[date].forEach(r => {
-          const levelColor = r.level ? r.level.color : 'gray';
-          html += `
-            <div style="background:white; border-radius:8px; padding:12px; margin:8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-              <div style="font-weight:600;">${r.scaleName}</div>
-              <div style="margin-top:4px;">
-                <span style="color:var(--color-${levelColor}); font-size:18px; font-weight:700;">${r.scoreDisplay}</span>
-                <span style="color:var(--color-${levelColor}); margin-left:8px;">${r.level ? r.level.label : ''}</span>
-              </div>
-              ${r.anxietyScore !== null && r.anxietyScore !== undefined ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:4px;">焦虑${r.anxietyScore}分(${r.anxietyLevel}) / 抑郁${r.depressionScore}分(${r.depressionLevel})</div>` : ''}
-              ${r.mainConstitution ? `<div style="font-size:13px; color:var(--color-text-secondary); margin-top:4px;">体质: ${r.mainConstitution}${r.tendencyConstitutions ? ' 倾向'+r.tendencyConstitutions.join('、') : ''}</div>` : ''}
-            </div>`;
-        });
-      });
-    } else {
-      html += '<p style="color:var(--color-gray);">暂无评估记录</p>';
-    }
-    
-    document.getElementById('patients-content').innerHTML = html;
-  },
-  
-  renderExport() {
-    document.getElementById('export-content').innerHTML = `
-      <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <h3 style="color:var(--color-primary-dark); margin-bottom:16px;">📤 数据导出</h3>
-        <button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.doExport()">导出CSV</button>
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('生成健康计划')">
+            <div class="at-icon">📋</div>
+            <div class="at-title">生成健康计划</div>
+            <div class="at-desc">基于评估数据，制定个性化方案</div>
+          </div>
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('解读体检指标')">
+            <div class="at-icon">🧬</div>
+            <div class="at-title">解读体检指标</div>
+            <div class="at-desc">智能解读异常指标与健康风险</div>
+          </div>
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('营养方案建议')">
+            <div class="at-icon">🥗</div>
+            <div class="at-title">营养方案建议</div>
+            <div class="at-desc">根据体质评估，定制营养干预方案</div>
+          </div>
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('随访话术生成')">
+            <div class="at-icon">💬</div>
+            <div class="at-title">随访话术生成</div>
+            <div class="at-desc">智能生成个性化随访沟通内容</div>
+          </div>
+          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('知识问答')">
+            <div class="at-icon">❓</div>
+            <div class="at-title">知识问答</div>
+            <div class="at-desc">功能医学专业知识问答</div>
+          </div>
+        </div>
+        <div class="ai-chat-input">
+          <input type="text" id="ai-input" placeholder="输入您的问题...（AI功能即将上线）" disabled />
+          <button disabled>发送</button>
+        </div>
+        <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--color-gray);">
+          AI助手基于Coze Bot构建，功能开发中
+        </div>
       </div>
     `;
   },
-  
+
+  aiTemplate(template) {
+    alert('🤖 AI功能即将上线\n\n模板：' + template + '\n\n该功能正在开发中，敬请期待！');
+  },
+
+  // ========== 设置 ==========
+  renderSettings() {
+    document.getElementById('settings-content').innerHTML = `
+      <div style="max-width:600px;">
+        <div class="info-card">
+          <h4>🔑 账户安全</h4>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
+            <div>
+              <div style="font-weight:600;">管理密码</div>
+              <div style="font-size:13px;color:var(--color-gray);">修改后台管理密码</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('change-pwd-overlay').classList.add('show')">修改密码</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+            <div>
+              <div style="font-weight:600;">绑定手机</div>
+              <div style="font-size:13px;color:var(--color-gray);">${getAdminPhone()}</div>
+            </div>
+            <span style="font-size:13px;color:var(--color-green);">已绑定</span>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <h4>☁️ 数据管理</h4>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
+            <div>
+              <div style="font-weight:600;">数据导出</div>
+              <div style="font-size:13px;color:var(--color-gray);">导出评估数据为CSV文件</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="AdminApp.doExport()">导出CSV</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+            <div>
+              <div style="font-weight:600;">patients表建表SQL</div>
+              <div style="font-size:13px;color:var(--color-gray);">复制SQL到Supabase执行</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="AdminApp.copyPatientSQL()">复制SQL</button>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <h4>ℹ️ 关于</h4>
+          <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">归元AI 健康管理平台</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">2.0.0 平台版</div></div>
+          <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
+          <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
+        </div>
+      </div>
+    `;
+  },
+
+  copyPatientSQL() {
+    const sql = `CREATE TABLE IF NOT EXISTS patients (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  age INTEGER,
+  gender TEXT,
+  id_number TEXT,
+  chief_complaint TEXT,
+  medical_history TEXT,
+  allergy_history TEXT,
+  family_history TEXT,
+  notes TEXT,
+  tags JSONB DEFAULT '[]',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(name);
+CREATE INDEX IF NOT EXISTS idx_patients_phone ON patients(phone);
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous select" ON patients FOR SELECT TO anon USING (true);
+CREATE POLICY "Allow anonymous insert" ON patients FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "Allow anonymous update" ON patients FOR UPDATE TO anon USING (true);
+CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (true);`;
+    navigator.clipboard.writeText(sql).then(() => alert('SQL已复制到剪贴板')).catch(() => {
+      const ta = document.createElement('textarea'); ta.value = sql; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('SQL已复制到剪贴板');
+    });
+  },
+
+  // ========== 数据导出 ==========
   async doExport() {
     const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
     const patients = cloudPatients || StorageManager.getPatients();
@@ -12366,48 +12739,8 @@ const AdminApp = {
     link.download = 'assessments_' + new Date().toISOString().slice(0,10) + '.csv';
     link.click();
   },
-  
-  renderChangePwd() {
-    document.getElementById('changepwd-content').innerHTML = `
-      <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <h3 style="color:var(--color-primary-dark); margin-bottom:16px;">🔑 修改管理密码</h3>
-        <div class="form-group">
-          <label>旧密码</label>
-          <input type="password" id="old-pwd" class="form-input" placeholder="输入旧密码" />
-        </div>
-        <div class="form-group">
-          <label>新密码</label>
-          <input type="password" id="new-pwd" class="form-input" placeholder="输入新密码" />
-        </div>
-        <div class="form-group">
-          <label>确认新密码</label>
-          <input type="password" id="confirm-pwd" class="form-input" placeholder="再次输入新密码" />
-        </div>
-        <div class="form-group">
-          <label>验证手机号（${getAdminPhone()}）</label>
-          <input type="tel" id="verify-phone" class="form-input" placeholder="输入绑定的手机号" />
-        </div>
-        <button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.doChangePwd()">确认修改</button>
-      </div>
-    `;
-  },
-  
-  doChangePwd() {
-    const oldPwd = document.getElementById('old-pwd').value;
-    const newPwd = document.getElementById('new-pwd').value;
-    const confirmPwd = document.getElementById('confirm-pwd').value;
-    const verifyPhone = document.getElementById('verify-phone').value;
-    
-    if (oldPwd !== getAdminPassword()) { alert('旧密码错误'); return; }
-    if (!newPwd || newPwd.length < 4) { alert('新密码至少4位'); return; }
-    if (newPwd !== confirmPwd) { alert('两次密码不一致'); return; }
-    if (verifyPhone !== getAdminPhone()) { alert('手机号验证失败'); return; }
-    
-    localStorage.setItem('admin_password', newPwd);
-    alert('密码修改成功！');
-    this.renderChangePwd();
-  },
 
+  // ========== 体检解读模块（保留原有） ==========
   // ========== 体检解读模块 ==========
   ckEditId: null,
   ckTab: 'input',
@@ -12654,19 +12987,25 @@ const AdminApp = {
 
   ckCloseRpt(){document.getElementById('ck-reportModal').classList.remove('show')},
   ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}</style></head><body>'+c+'</body></html>');w.document.close();setTimeout(()=>w.print(),500)}
-};
-  </script>
 
-  <!-- 体检解读报告弹窗 -->
-  <div id="ck-reportModal" class="ck-modal" onclick="if(event.target===this)AdminApp.ckCloseRpt()">
-    <div class="ck-modal-box">
-      <div style="text-align:right;margin-bottom:8px">
-        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckPrintRpt()">🖨️ 打印</button>
-        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckCloseRpt()">✕ 关闭</button>
-      </div>
-      <div id="ck-reportContent"></div>
-    </div>
-  </div>
+};
+
+// ========== 编辑患者信息辅助函数 ==========
+function openEditPatientModal(id, name, phone, age, gender, idNumber, chiefComplaint, medicalHistory, allergyHistory, familyHistory, notes) {
+  document.getElementById('ep-id').value = id;
+  document.getElementById('ep-name').value = name;
+  document.getElementById('ep-phone').value = phone;
+  document.getElementById('ep-age').value = age || '';
+  document.getElementById('ep-gender').value = gender || '';
+  document.getElementById('ep-id-number').value = idNumber || '';
+  document.getElementById('ep-chief-complaint').value = chiefComplaint || '';
+  document.getElementById('ep-medical-history').value = medicalHistory || '';
+  document.getElementById('ep-allergy-history').value = allergyHistory || '';
+  document.getElementById('ep-family-history').value = familyHistory || '';
+  document.getElementById('ep-notes').value = notes || '';
+  document.getElementById('edit-patient-modal').classList.add('show');
+}
+  </script>
 
 </body>
 </html>
