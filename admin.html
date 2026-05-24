@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>归元AI v2.2 - 管理后台</title>
+  <title>归元AI - 管理后台</title>
   <style>
 /* ========== 归元AI管理平台 - 主样式 ========== */
 
@@ -519,7 +519,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   box-shadow: var(--shadow);
 }
 
-/* ========== 体检管理 ========== */
+/* ========== 体检解读 ========== */
 .ck-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .ck-title{font-size:15px;font-weight:600;color:var(--color-primary-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .ck-title .arrow{transition:transform .2s;font-size:12px}
@@ -548,54 +548,6 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .ck-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
 .ck-modal.show{display:flex}
 .ck-modal-box{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto}
-/* ========== 体检管理增强样式 ========== */
-.ck-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
-.ck-stat-card{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.05)}
-.ck-stat-num{font-size:26px;font-weight:700;line-height:1.2}
-.ck-stat-label{font-size:12px;color:#999;margin-top:4px}
-.ck-funnel{display:flex;align-items:center;gap:0;margin:16px 0;justify-content:center;flex-wrap:wrap}
-.ck-funnel-step{text-align:center;padding:10px 8px;border-radius:8px;min-width:64px}
-.ck-funnel-step .fn-num{font-size:18px;font-weight:700;color:#fff}
-.ck-funnel-step .fn-label{font-size:10px;color:rgba(255,255,255,.9);margin-top:2px}
-.ck-funnel-arrow{font-size:20px;color:var(--color-primary-light);margin:0 2px}
-.ck-bar-chart{display:flex;flex-direction:column;gap:5px}
-.ck-bar-row{display:flex;align-items:center;gap:8px}
-.ck-bar-label{width:80px;text-align:right;font-size:12px;color:#666;flex-shrink:0}
-.ck-bar-track{flex:1;height:20px;background:#f0f0f0;border-radius:4px;overflow:hidden}
-.ck-bar-fill{height:100%;border-radius:4px;transition:width .5s}
-.ck-bar-val{font-size:11px;color:#666;width:32px;flex-shrink:0}
-.ck-top10-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;margin-bottom:4px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.03)}
-.ck-top10-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.ck-top10-info{flex:1;font-size:13px}.ck-top10-name{font-weight:600}.ck-top10-risk{font-size:11px;color:#E74C3C}
-.ck-top10-score{font-size:18px;font-weight:700;min-width:36px;text-align:right}
-.ck-mode-switch{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1.5px solid var(--color-border);margin-bottom:12px;width:fit-content}
-.ck-mode-btn{padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#fff;color:var(--color-text-secondary);transition:all .2s}
-.ck-mode-btn.active{background:var(--color-primary);color:#fff}
-.ck-batch-area{width:100%;min-height:180px;border:1.5px solid #e0e0e0;border-radius:8px;padding:12px;font-size:13px;line-height:1.6;resize:vertical;font-family:inherit}
-.ck-batch-area:focus{border-color:var(--color-primary);outline:none}
-.ck-patient-dropdown{position:absolute;z-index:50;background:#fff;border:1.5px solid #e0e0e0;border-radius:6px;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);width:100%}
-.ck-patient-dropdown div{padding:8px 12px;font-size:13px;cursor:pointer}
-.ck-patient-dropdown div:hover{background:var(--color-primary-bg)}
-.ck-ai-badge{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
-.ck-pkg-card{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;border:1.5px solid #e0e0e0}
-.ck-pkg-card.recommended{border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(123,104,174,.15)}
-.ck-filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.ck-filter-bar select,.ck-filter-bar input{padding:6px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px}
-.ck-conv-row{display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.03);flex-wrap:wrap}
-.ck-conv-status{font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600;color:#fff}
-.ck-upload-zone{border:2px dashed #d0c4e8;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:all .2s;background:var(--color-primary-bg)}
-.ck-upload-zone:hover{border-color:var(--color-primary);background:#f0ecf5}
-.ck-risk-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
-.ck-risk-dot.red{background:#E74C3C}.ck-risk-dot.orange{background:#E67E22}.ck-risk-dot.yellow{background:#F39C12}.ck-risk-dot.green{background:#27AE60}
-.ck-share-link{background:var(--color-primary-bg);border-radius:6px;padding:10px;font-size:12px;word-break:break-all}
-@media print{
-  body *{visibility:hidden}
-  .ck-rpt,.ck-rpt *{visibility:visible}
-  .ck-rpt{position:absolute;left:0;top:0;width:100%}
-  .ck-modal{display:block!important;position:static!important;background:none!important}
-  .ck-modal-box{max-width:100%;padding:0;box-shadow:none;max-height:none}
-  .no-print{display:none!important}
-}
 
 /* 密码弹窗 */
 .change-pwd-overlay {
@@ -1356,7 +1308,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
           <span class="nav-icon">🏥</span> 中医诊疗
         </div>
         <div class="nav-item" onclick="switchPage('checkup', this)" data-page="checkup">
-          <span class="nav-icon">🔬</span> 体检管理
+          <span class="nav-icon">🧬</span> 体检解读
         </div>
         <div class="nav-item" onclick="switchPage('ai-workspace', this)" data-page="ai-workspace">
           <span class="nav-icon">🤖</span> AI工作台
@@ -1421,7 +1373,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
           <div id="consultation-content"></div>
         </div>
         
-        <!-- ===== 体检管理 ===== -->
+        <!-- ===== 体检解读 ===== -->
         <div id="page-checkup" class="page-content">
           <div id="checkup-content"></div>
         </div>
@@ -1619,20 +1571,19 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     </div>
   </div>
 
-  <!-- ========== 体检管理报告弹窗 ========== -->
+  <!-- ========== 体检解读报告弹窗 ========== -->
   <div id="ck-reportModal" class="ck-modal" onclick="if(event.target===this)AdminApp.ckCloseRpt()">
     <div class="ck-modal-box">
-      <div style="text-align:right;margin-bottom:8px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap" class="no-print">
-        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckExportPDF()">📄 导出PDF</button>
-        <button class="btn btn-outline btn-sm" onclick="AdminApp.ckShareReport()">🔗 分享</button>
+      <div style="text-align:right;margin-bottom:8px">
         <button class="btn btn-outline btn-sm" onclick="AdminApp.ckPrintRpt()">🖨️ 打印</button>
         <button class="btn btn-outline btn-sm" onclick="AdminApp.ckCloseRpt()">✕ 关闭</button>
       </div>
       <div id="ck-reportContent"></div>
-      <div id="ck-shareArea" style="display:none" class="no-print"></div>
     </div>
   </div>
-<script>
+
+  <script>
+// ========== Supabase 初始化 ==========
 // ========== Supabase 初始化 ==========
 const SUPABASE_URL = 'https://excwsowelxxkboljyobw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Y3dzb3dlbHh4a2JvbGp5b2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODU1NzEsImV4cCI6MjA5NDg2MTU3MX0.sNSkYXgme1M352IHvj_mDl7BY_OxZA3OLH2mMTvPblY';
@@ -12517,7 +12468,7 @@ const PAGE_TITLES = {
   'health-plan': '📋 健康计划',
   'prescribe': '📝 问卷管理',
   'consultation': '🏥 中医诊疗',
-  'checkup': '🔬 体检管理',
+  'checkup': '🧬 体检解读',
   'ai-workspace': '🤖 AI工作台',
   'clinical-docs': '📄 临床文档',
   'knowledge': '📚 知识库',
@@ -12550,7 +12501,7 @@ function switchPage(page, navItem) {
     case 'patients': AdminApp.renderPatients(); break;
     case 'prescribe': AdminApp.renderPrescribe(); break;
     case 'consultation': AdminApp.renderConsultation(); break;
-    case 'checkup': AdminApp.renderCheckup(); AdminApp.ckCheckShareParam(); break;
+    case 'checkup': AdminApp.renderCheckup(); break;
     case 'ai-workspace': AdminApp.renderAIWorkspace(); break;
     case 'health-plan': AdminApp.renderHealthPlan(); break;
     case 'settings': AdminApp.renderSettings(); break;
@@ -12778,7 +12729,7 @@ const AdminApp = {
         </div>
         <div class="quick-action-btn" onclick="switchPage('checkup', document.querySelector('[data-page=checkup]'))">
           <div class="qa-icon">🧬</div>
-          <div><div class="qa-text">体检管理</div><div class="qa-desc">录入体检数据分析</div></div>
+          <div><div class="qa-text">体检解读</div><div class="qa-desc">录入体检数据分析</div></div>
         </div>
         <div class="quick-action-btn" onclick="switchPage('ai-workspace', document.querySelector('[data-page=ai-workspace]'))">
           <div class="qa-icon">🤖</div>
@@ -13192,22 +13143,15 @@ const AdminApp = {
       html += '</div></div>';
     }
     
-    // 体检记录（该抗衰客户的个体体检数据）
+    // 体检记录
     if (checkupRecords.length > 0) {
-      html += '<div class="info-card"><h4>🔬 体检记录</h4><div class="timeline">';
+      html += '<div class="info-card"><h4>🧬 体检记录</h4><div class="timeline">';
       checkupRecords.forEach(r => {
-        const ip = r.interpretation;
-        let scoreDisplay = '';
-        if (ip && ip.overall_score != null) {
-          const sc = Math.round(ip.overall_score);
-          const lr = AdminApp.ckLR(sc);
-          scoreDisplay = ` <span style="font-weight:700;color:${lr.c};margin-left:6px">${sc}分 ${lr.t}</span>`;
-        }
         html += `<div class="timeline-item">
           <div class="timeline-date">${r.checkup_date}</div>
           <div class="timeline-content">
-            <strong>${r.package_name || '体检'}</strong>${scoreDisplay}
-            <div style="margin-top:4px;"><button class="btn btn-outline btn-sm" style="font-size:12px;" onclick="AdminApp.ckViewRpt('${r.id}')">查看完整报告</button></div>
+            <strong>${r.package_name || '体检'}</strong>
+            <div style="margin-top:4px;"><button class="btn btn-outline btn-sm" style="font-size:12px;" onclick="AdminApp.ckViewRpt('${r.id}')">查看报告</button></div>
           </div>
         </div>`;
       });
@@ -14276,11 +14220,9 @@ const AdminApp = {
     try {
       let planId;
       if (supabaseClient) {
-        console.log('[hpCreatePlan] 插入health_plans:', JSON.stringify(plan));
         const { data, error } = await supabaseClient.from('health_plans').insert(plan).select('id').single();
-        if (error) { console.error('[hpCreatePlan] insert error:', error); throw new Error(error.message || JSON.stringify(error)); }
+        if (error) throw error;
         planId = data.id;
-        console.log('[hpCreatePlan] planId:', planId);
       } else {
         planId = 'plan_' + Date.now();
         plan.id = planId;
@@ -14301,8 +14243,7 @@ const AdminApp = {
         }));
         
         if (supabaseClient) {
-          const { error: tErr } = await supabaseClient.from('health_tasks').insert(tasks);
-          if (tErr) console.warn('[hpCreatePlan] tasks insert warning:', tErr);
+          await supabaseClient.from('health_tasks').insert(tasks);
         }
       }
       
@@ -14318,8 +14259,11 @@ const AdminApp = {
       await this._loadHealthPlans();
       this._renderHealthPlanList();
     } catch(e) {
-      console.error('[hpCreatePlan] 完整错误:', e);
-      alert('创建失败：' + (e.message || e));
+      if (e.message && e.message.includes('does not exist')) {
+        alert('数据库表尚未创建，请先在Supabase SQL编辑器中执行建表SQL（create_v2_tables.sql）');
+      } else {
+        alert('创建失败：' + e.message);
+      }
     }
   },
 
@@ -14665,8 +14609,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     link.click();
   },
 
-  // ========== 体检管理模块 ==========
-  // ========== 体检管理模块 ==========
+  // ========== 体检解读模块（保留原有） ==========
+  // ========== 体检解读模块 ==========
   ckEditId: null,
   ckTab: 'input',
   
@@ -14739,179 +14683,101 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
 
   renderCheckup() {
     const tabs = [
-      {id:'ck-dashboard',label:'📊 汇总看板'},
-      {id:'ck-upload',label:'📤 报告上传'},
-      {id:'ck-query',label:'🔍 报告查询'},
-      {id:'ck-convert',label:'🔄 转化管理'}
+      {id:'ck-input',label:'📋 体检录入'},
+      {id:'ck-interp',label:'🧠 智能解读'},
+      {id:'ck-records',label:'📊 体检记录'}
     ];
     let nav = '<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">';
     tabs.forEach((t,i) => {
       nav += `<button class="btn btn-secondary ${i===0?'active':''}" onclick="AdminApp.ckSwitchTab('${t.id}',this)">${t.label}</button>`;
     });
     nav += '</div>';
+
     let content = nav;
-    content += '<div id="ck-dashboard"><div id="ck_dashboardContent"></div></div>';
-    content += '<div id="ck-upload" style="display:none">';
-    content += '<div class="ck-card"><div class="ck-title">👤 体检人员</div>';
-    content += '<div class="ck-g2"><div class="ck-fg" style="position:relative"><label>姓名 *</label><input id="ck_name" placeholder="输入姓名搜索或新建" oninput="AdminApp.ckSearchPerson()" autocomplete="off"><div id="ck_personDropdown" class="ck-patient-dropdown" style="display:none"></div></div><div class="ck-fg"><label>手机号</label><input id="ck_phone" placeholder="手机号" maxlength="11"></div></div>';
-    content += '<div class="ck-g3"><div class="ck-fg"><label>年龄</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期</label><input id="ck_date" type="date"></div></div>';
+    content += '<div id="ck-input">';
+    content += '<div class="ck-card"><div class="ck-title">👤 患者基本信息</div>';
+    content += '<div class="ck-g2"><div class="ck-fg"><label>姓名 *</label><input id="ck_name" placeholder="患者姓名"></div><div class="ck-fg"><label>手机号</label><input id="ck_phone" placeholder="手机号" maxlength="11"></div></div>';
+    content += '<div class="ck-g3"><div class="ck-fg"><label>年龄 *</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期 *</label><input id="ck_date" type="date"></div></div>';
     content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_package" placeholder="如：女性甄选套餐"></div>';
-    content += '<input type="hidden" id="ck_personId" value=""></div>';
-    content += '<div class="ck-card"><div class="ck-title">📋 指标录入</div>';
-    content += '<div class="ck-mode-switch"><button class="ck-mode-btn active" onclick="AdminApp.ckSwitchInputMode(\'manual\',this)">逐项录入</button><button class="ck-mode-btn" onclick="AdminApp.ckSwitchInputMode(\'batch\',this)">批量粘贴</button><button class="ck-mode-btn" onclick="AdminApp.ckSwitchInputMode(\'photo\',this)">📷 拍照</button></div>';
-    content += '<div id="ck-inputManual"></div>';
-    content += '<div id="ck-inputBatch" style="display:none"><div class="ck-fg"><label>粘贴体检报告文本 <span class="ck-ai-badge">✨ AI提取</span></label><textarea id="ck_batchText" class="ck-batch-area" placeholder="将体检报告文字粘贴到此处..."></textarea></div><button class="btn btn-primary btn-block" onclick="AdminApp.ckAIBatchExtract()" id="ck_batchBtn" style="margin-top:8px"><span class="ck-ai-badge" style="background:rgba(255,255,255,.2);margin-right:4px">AI</span> 智能提取指标</button></div>';
-    content += '<div id="ck-inputPhoto" style="display:none"><div class="ck-fg"><label>拍照/上传体检报告 <span class="ck-ai-badge">✨ OCR</span></label><input type="file" id="ck_photoInput" accept="image/*" onchange="AdminApp.ckPhotoUpload(this)" style="margin-top:4px"><div id="ck_photoPreview" style="margin-top:8px"></div></div></div>';
-    content += '</div><div id="ck_indicatorCards"></div>';
-    content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSaveReport()" style="margin-top:8px">💾 保存并自动解读</button>';
-    content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckResetUpload()" style="margin-top:8px">🔄 重置</button></div>';
-    content += '<div id="ck-query" style="display:none">';
-    content += '<div class="ck-filter-bar"><select id="ckq_risk" onchange="AdminApp.ckQueryReports()"><option value="">全部风险</option><option value="red">🔴 高风险</option><option value="orange">🟠 中风险</option><option value="yellow">🟡 轻度风险</option><option value="green">🟢 正常</option></select><select id="ckq_pkg" onchange="AdminApp.ckQueryReports()"><option value="">全部套餐</option></select><input id="ckq_dateFrom" type="date" onchange="AdminApp.ckQueryReports()" style="width:130px"> ~ <input id="ckq_dateTo" type="date" onchange="AdminApp.ckQueryReports()" style="width:130px"><input id="ckq_kw" placeholder="搜索姓名/手机" oninput="AdminApp.ckQueryReports()" style="width:140px"><button class="btn btn-outline btn-sm" onclick="AdminApp.ckExportCSV()">📥 导出CSV</button></div>';
-    content += '<div id="ck_queryList"></div></div>';
-    content += '<div id="ck-convert" style="display:none"><div id="ck_convertContent"></div></div>';
+    content += '</div>';
+    content += '<div id="ck_indicatorCards"></div>';
+    content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存体检数据</button>';
+    content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckReset()" style="margin-top:8px">🔄 重置表单</button>';
+    content += '</div>';
+
+    content += '<div id="ck-interp" style="display:none">';
+    content += '<div class="ck-card"><div class="ck-title">🔍 选择体检记录</div><select style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:12px" id="ck_interpSel" onchange="AdminApp.ckOnInterpSel()"><option value="">-- 请选择 --</option></select><button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.ckRunInterp()" id="ck_interpBtn" disabled>🧠 生成解读报告</button></div>';
+    content += '<div id="ck_interpResult"></div>';
+    content += '</div>';
+
+    content += '<div id="ck-records" style="display:none"><div id="ck_recordsList"></div></div>';
+
     document.getElementById('checkup-content').innerHTML = content;
     document.getElementById('ck_date').value = new Date().toISOString().split('T')[0];
     this.ckBuildCards();
-    this.ckLoadDashboard();
   },
+
   ckSwitchTab(id, btn) {
     document.querySelectorAll('#checkup-content .btn-secondary').forEach(b=>b.classList.remove('active'));
     if(btn) btn.classList.add('active');
-    ['ck-dashboard','ck-upload','ck-query','ck-convert'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none'});
-    if(id==='ck-dashboard') this.ckLoadDashboard();
-    if(id==='ck-query') this.ckQueryReports();
-    if(id==='ck-convert') this.ckLoadConversion();
+    ['ck-input','ck-interp','ck-records'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none'});
+    if(id==='ck-records') this.ckLoadRecs();
+    if(id==='ck-interp') this.ckLoadInterp();
   },
-  async ckSearchPerson(){
-    const name=document.getElementById('ck_name').value.trim();
-    const dd=document.getElementById('ck_personDropdown');
-    if(!name||name.length<1){dd.style.display='none';return}
-    try{
-      const{data,error}=await CloudBaseManager.sb.from('checkup_persons').select('*').ilike('name','%'+name+'%').limit(8);
-      if(error)throw error;
-      if(!data||!data.length){
-        const cp=await CloudBaseManager.getAllPatientsFromCloud();
-        const ms=(cp||[]).filter(p=>p.name.includes(name)).slice(0,5);
-        if(!ms.length){dd.innerHTML='<div style="padding:8px 12px;font-size:12px;color:#999">无匹配，将新建体检人员</div>';dd.style.display='block';return}
-        dd.innerHTML=ms.map(p=>'<div onclick="AdminApp.ckSelectPersonFromPt(\''+p.name.replace(/'/g,"\\'")+'\',\''+(p.phone||'')+'\')">'+p.name+(p.phone?' · '+p.phone:'')+' <span style="font-size:11px;color:var(--color-primary)">[客户]</span></div>').join('');
-        dd.style.display='block';return;
-      }
-      dd.innerHTML=data.map(p=>'<div onclick="AdminApp.ckSelectPerson(\''+p.id+'\',\''+p.name.replace(/'/g,"\\'")+'\',\''+(p.phone||'')+'\',\''+(p.gender||'女')+'\',\''+(p.age||'')+'\',\''+(p.checkup_package||'')+'\')">'+p.name+' <span style="font-size:11px;color:#999">[体检人员]</span></div>').join('');
-      dd.style.display='block';
-    }catch(e){dd.style.display='none'}
+
+  ckBuildCards() {
+    let h='';
+    this.CK_DIMS.forEach(d=>{
+      h+=`<div class="ck-card"><div class="ck-title" onclick="AdminApp.ckTogCard(this)">${d.icon} ${d.name}<span class="arrow">▼</span></div><div class="ck-body"><div class="ck-g2">`;
+      d.fields.forEach(f=>{
+        const rl=this.ckRefStr(f),uid='cki_'+f.k;
+        if(f.t==='s') h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><select id="${uid}" data-k="${f.k}"><option value="">--</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+        else h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="number" step="any" data-k="${f.k}" placeholder="${f.auto?'自动计算':'输入值'}" ${f.auto?'readonly':''} oninput="AdminApp.ckOnIn('${f.k}')"></div>`;
+      });
+      h+='</div></div></div>';
+    });
+    document.getElementById('ck_indicatorCards').innerHTML=h;
   },
-  ckSelectPerson(id,nm,ph,gd,ag,pk){document.getElementById('ck_personId').value=id;document.getElementById('ck_name').value=nm;document.getElementById('ck_phone').value=ph;document.getElementById('ck_gender').value=gd;document.getElementById('ck_age').value=ag;document.getElementById('ck_package').value=pk;document.getElementById('ck_personDropdown').style.display='none'},
-  ckSelectPersonFromPt(nm,ph){document.getElementById('ck_personId').value='';document.getElementById('ck_name').value=nm;document.getElementById('ck_phone').value=ph;document.getElementById('ck_personDropdown').style.display='none'},
-  ckSwitchInputMode(mode,btn){const p=btn.parentElement;p.querySelectorAll('.ck-mode-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const m=document.getElementById('ck-inputManual'),b=document.getElementById('ck-inputBatch'),ph=document.getElementById('ck-inputPhoto');if(m)m.style.display=mode==='manual'?'block':'none';if(b)b.style.display=mode==='batch'?'block':'none';if(ph)ph.style.display=mode==='photo'?'block':'none'},
-  ckBuildCards(){let h='';this.CK_DIMS.forEach(d=>{h+=`<div class="ck-card"><div class="ck-title" onclick="AdminApp.ckTogCard(this)">${d.icon} ${d.name}<span class="arrow">▼</span></div><div class="ck-body"><div class="ck-g2">`;d.fields.forEach(f=>{const rl=this.ckRefStr(f),uid='cki_'+f.k;if(f.t==='s')h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><select id="${uid}" data-k="${f.k}"><option value="">--</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;else h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="number" step="any" data-k="${f.k}" placeholder="${f.auto?'自动计算':'输入值'}" ${f.auto?'readonly':''} oninput="AdminApp.ckOnIn('${f.k}')"></div>`});h+='</div></div></div>'});const el=document.getElementById('ck-inputManual');if(el)el.innerHTML=h},
+
   ckTogCard(el){const b=el.nextElementSibling,a=el.querySelector('.arrow');b.classList.toggle('collapsed');a.classList.toggle('collapsed')},
   ckGenderChange(){this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const re=document.getElementById('ckrf_'+f.k);if(re)re.textContent='参考: '+this.ckRefStr(f);const el=document.getElementById('cki_'+f.k);if(el&&el.type==='number')this.ckChkAbn(f.k)})})},
   ckOnIn(k){if(k==='height'||k==='weight'){const h=parseFloat(document.getElementById('cki_height')?.value),w=parseFloat(document.getElementById('cki_weight')?.value);if(h>0&&w>0){document.getElementById('cki_bmi').value=(w/((h/100)**2)).toFixed(1);this.ckChkAbn('bmi')}}this.ckChkAbn(k)},
   ckChkAbn(k){const el=document.getElementById('cki_'+k);if(!el||el.type!=='number')return;const v=parseFloat(el.value);if(isNaN(v)){el.classList.remove('abnormal');return}const g=this.ckG(),f=this.CK_DIMS.flatMap(d=>d.fields).find(x=>x.k===k);if(!f||f.t!=='n')return;const rv=f.r(g);let ab=false;if(f.sp==='bmd')ab=v<-1;else if(rv[0]===0)ab=v>rv[1];else ab=v<rv[0]||v>rv[1];el.classList.toggle('abnormal',ab)},
-  async ckSaveReport(){
-    const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,dt=document.getElementById('ck_date').value,pk=document.getElementById('ck_package').value.trim(),pid=document.getElementById('ck_personId').value;
-    if(!nm){alert('请输入姓名');return}if(!dt){alert('请选择体检日期');return}
+
+  async ckSave(){
+    const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,dt=document.getElementById('ck_date').value,pk=document.getElementById('ck_package').value.trim();
+    if(!nm){alert('请输入患者姓名');return}if(!ag){alert('请输入年龄');return}if(!dt){alert('请选择体检日期');return}
     const ind={};this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el)ind[f.k]=el.value})});
     const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
     try{
-      let personId=pid;
-      if(!personId){const{data:np,error:ne}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,gender:gd,age:ag,checkup_date:dt,checkup_package:pk,risk_level:'green',conversion_status:'none'}).select().single();if(ne)throw ne;personId=np.id;document.getElementById('ck_personId').value=personId}
-      const rec={patient_name:nm,patient_phone:ph,patient_gender:gd,patient_age:ag,indicators:ind};
-      const ip=this.ckInterpRec(rec);
-      const riskLvl=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';
-      await CloudBaseManager.sb.from('checkup_reports').insert({person_id:personId,report_date:dt,package_name:pk,ai_extracted:ind,dimension_scores:ip.dim_scores,ai_conclusion:JSON.stringify({overall_score:ip.overall_score,dim_abnormals:ip.dim_abnormals,recommendations:ip.recommendations,interpreted_at:ip.interpreted_at}),risk_level:riskLvl});
-      await CloudBaseManager.sb.from('checkup_persons').update({risk_level:riskLvl,checkup_date:dt,checkup_package:pk}).eq('id',personId);
-      await CloudBaseManager.sb.from('health_checkups').insert({patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:ip,report_generated:true});
-      alert('✅ 保存成功！综合评分：'+Math.round(ip.overall_score)+'  风险：'+riskLvl);
-      this.ckResetUpload();
-    }catch(e){alert('保存失败: '+(e.message||''))}finally{btn.disabled=false;btn.textContent='💾 保存并自动解读'}
+      const data={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
+      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(data).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(data)}
+      alert('✅ 保存成功');this.ckReset();this.ckEditId=null;
+    }catch(e){alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存体检数据'}
   },
-  ckResetUpload(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];document.getElementById('ck_personId').value='';this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})})},
-  async ckAIBatchExtract(){
-    const text=document.getElementById('ck_batchText').value.trim();if(!text){alert('请先粘贴体检报告文本');return}
-    const btn=document.getElementById('ck_batchBtn');btn.disabled=true;btn.textContent='⏳ AI提取中...';
-    try{const fl=this.CK_DIMS.flatMap(d=>d.fields);const pl=fl.map(f=>f.k+':'+f.n+(f.u?'('+f.u+')':'')).join(', ');const pr='你是体检报告数据提取助手。从以下文本中提取指标数值，返回JSON，只包含能提取到的键值对。\n可识别指标：'+pl+'\n\n文本：\n'+text+'\n\n直接返回JSON如：{"fbg":"5.8","tc":"4.2"}，不返回其他内容。';const r=await this.callCozeBot(pr);let j=r.trim();const m=j.match(/\{[\s\S]*\}/);if(m)j=m[0];const ex=JSON.parse(j);let n=0;Object.keys(ex).forEach(k=>{const el=document.getElementById('cki_'+k);if(el&&ex[k]){el.value=ex[k];n++;if(el.type==='number')this.ckChkAbn(k)}});alert('✅ AI提取完成，填入'+n+'项')}catch(e){alert('AI提取失败: '+(e.message||''))}finally{btn.disabled=false;btn.innerHTML='<span class="ck-ai-badge" style="background:rgba(255,255,255,.2);margin-right:4px">AI</span> 智能提取指标'}
+
+  ckReset(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});this.ckEditId=null},
+
+  async ckLoadRecs(){
+    const c=document.getElementById('ck_recordsList');c.innerHTML='<div style="text-align:center;padding:20px;color:#999">加载中...</div>';
+    try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;if(!data||!data.length){c.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">暂无体检记录</div>';return}
+    let h='';data.forEach(rec=>{const ip=rec.interpretation;let sc='--',lv='--',co='#999',em='⚪';if(ip&&ip.overall_score!=null){sc=Math.round(ip.overall_score);const r=this.ckLR(sc);lv=r.t;co=r.c;em=r.e}
+    h+=`<div style="background:#fff;border-radius:8px;padding:12px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><strong>${rec.patient_name}</strong> · ${rec.patient_gender} · ${rec.patient_age}岁<br><span style="font-size:12px;color:#999">${rec.package_name||'未填写'} | ${rec.checkup_date}</span></div><div style="text-align:center"><div style="font-size:20px;font-weight:700;color:${co}">${sc}</div><div style="font-size:11px;color:${co}">${em} ${lv}</div></div><div style="display:flex;gap:6px">${ip?`<button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewRpt('${rec.id}')">📄</button>`:''}<button class="btn btn-outline btn-sm" onclick="AdminApp.ckEditRec('${rec.id}')">✏️</button><button class="btn btn-outline btn-sm" style="color:var(--color-red);border-color:var(--color-red)" onclick="AdminApp.ckDelRec('${rec.id}')">🗑️</button></div></div>`});
+    c.innerHTML=h}catch(e){c.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">加载失败</div>'}
   },
-  async ckPhotoUpload(input){if(!input.files||!input.files[0])return;const file=input.files[0];const pv=document.getElementById('ck_photoPreview');const r=new FileReader();r.onload=(e)=>{pv.innerHTML='<img src="'+e.target.result+'" style="max-width:100%;max-height:250px;border-radius:8px;margin-top:4px">'};r.readAsDataURL(file);pv.innerHTML+='<div style="margin-top:8px;padding:8px;background:#FFF3E0;border-radius:6px;font-size:12px;color:#E65100">⚠️ 图片OCR需视觉AI支持，建议使用"批量粘贴"模式</div>'},
-  async ckLoadDashboard(){
-    const dc=document.getElementById('ck_dashboardContent');dc.innerHTML='<div style="text-align:center;padding:30px;color:#999">⏳ 加载中...</div>';
-    try{
-      const[persons,reports]=await Promise.all([CloudBaseManager.sb.from('checkup_persons').select('*').order('created_at',{ascending:false}),CloudBaseManager.sb.from('checkup_reports').select('*').order('created_at',{ascending:false})]);
-      if(persons.error)throw persons.error;const pData=persons.data||[],rData=reports.data||[];
-      const dist={red:0,orange:0,yellow:0,green:0};pData.forEach(p=>{if(dist[p.risk_level]!=null)dist[p.risk_level]++});
-      const total=pData.length;
-      const convS={none:0,flagged:0,contacting:0,converted:0};pData.forEach(p=>{if(convS[p.conversion_status]!=null)convS[p.conversion_status]++});
-      const dimAbn={};this.CK_DIMS.forEach(d=>dimAbn[d.id]={name:d.icon+' '+d.name,count:0});
-      rData.forEach(r=>{if(r.dimension_scores){const ds=typeof r.dimension_scores==='string'?JSON.parse(r.dimension_scores):r.dimension_scores;Object.keys(ds).forEach(did=>{if(ds[did]<70&&dimAbn[did])dimAbn[did].count++})}});
-      const indAbn={};this.CK_DIMS.forEach(d=>d.fields.forEach(f=>indAbn[f.k]={name:f.n+(f.u?' ('+f.u+')':''),count:0}));
-      rData.forEach(r=>{const c=r.ai_conclusion?JSON.parse(r.ai_conclusion):null;if(c&&c.dim_abnormals)Object.values(c.dim_abnormals).forEach(al=>{if(Array.isArray(al))al.forEach(a=>{if(indAbn[a.k])indAbn[a.k].count++})})});
-      const topInd=Object.entries(indAbn).filter(([k,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
-      let h='<div class="ck-stat-grid">';
-      h+='<div class="ck-stat-card"><div class="ck-stat-num" style="color:var(--color-primary)">'+total+'</div><div class="ck-stat-label">体检总人数</div></div>';
-      h+='<div class="ck-stat-card"><div class="ck-stat-num" style="color:#E74C3C">'+dist.red+'</div><div class="ck-stat-label">🔴 高风险</div></div>';
-      h+='<div class="ck-stat-card"><div class="ck-stat-num" style="color:#E67E22">'+dist.orange+'</div><div class="ck-stat-label">🟠 中风险</div></div>';
-      h+='<div class="ck-stat-card"><div class="ck-stat-num" style="color:#F39C12">'+dist.yellow+'</div><div class="ck-stat-label">🟡 轻度</div></div>';
-      h+='<div class="ck-stat-card"><div class="ck-stat-num" style="color:#27AE60">'+dist.green+'</div><div class="ck-stat-label">🟢 正常</div></div></div>';
-      h+='<div class="ck-card"><div class="ck-title">📊 风险等级分布</div><div class="ck-bar-chart">';
-      const maxD=Math.max(dist.red,dist.orange,dist.yellow,dist.green,1);
-      [{l:'🔴 高风险',c:dist.red,co:'#E74C3C'},{l:'🟠 中风险',c:dist.orange,co:'#E67E22'},{l:'🟡 轻度风险',c:dist.yellow,co:'#F39C12'},{l:'🟢 正常',c:dist.green,co:'#27AE60'}].forEach(d=>{h+='<div class="ck-bar-row"><div class="ck-bar-label">'+d.l+'</div><div class="ck-bar-track"><div class="ck-bar-fill" style="width:'+Math.max(2,d.c/maxD*100)+'%;background:'+d.co+'"></div></div><div class="ck-bar-val">'+d.c+'人</div></div>'});
-      h+='</div></div>';
-      h+='<div class="ck-card"><div class="ck-title">🔄 抗衰转化漏斗</div><div class="ck-funnel">';
-      [{l:'体检总人数',n:total,c:'#9B8DC4'},{l:'高+中风险',n:dist.red+dist.orange,c:'#E67E22'},{l:'已标记跟进',n:convS.flagged+convS.contacting,c:'#7B68AE'},{l:'已转化抗衰',n:convS.converted,c:'#27AE60'}].forEach((f,i)=>{if(i>0)h+='<div class="ck-funnel-arrow">→</div>';h+='<div class="ck-funnel-step" style="background:'+f.c+'"><div class="fn-num">'+f.n+'</div><div class="fn-label">'+f.l+'</div></div>'});
-      h+='</div>';if(total>0){const ar=dist.red+dist.orange;h+='<div style="text-align:center;font-size:12px;color:#999;margin-top:8px">高风险占比 '+(ar/total*100).toFixed(1)+'%';if(ar>0)h+=' | 跟进率 '+((convS.flagged+convS.contacting)/ar*100).toFixed(1)+'%';if(convS.flagged+convS.contacting>0)h+=' | 转化率 '+(convS.converted/(convS.flagged+convS.contacting)*100).toFixed(1)+'%';h+='</div>'}h+='</div>';
-      if(topInd.length){h+='<div class="ck-card"><div class="ck-title">⚠️ TOP10 异常指标</div><div class="ck-bar-chart">';const mi=topInd[0][1].count;topInd.forEach(([k,v])=>{h+='<div class="ck-bar-row"><div class="ck-bar-label">'+v.name+'</div><div class="ck-bar-track"><div class="ck-bar-fill" style="width:'+(v.count/mi*100)+'%;background:#E74C3C"></div></div><div class="ck-bar-val">'+v.count+'</div></div>'});h+='</div></div>'}
-      h+='<div class="ck-card"><div class="ck-title">📐 各维度异常人数</div><div class="ck-bar-chart">';const dArr=Object.values(dimAbn).sort((a,b)=>b.count-a.count);const maxDim=Math.max(...dArr.map(d=>d.count),1);dArr.forEach(d=>{const co=d.count>0?'var(--color-orange)':'var(--color-green)';h+='<div class="ck-bar-row"><div class="ck-bar-label">'+d.name+'</div><div class="ck-bar-track"><div class="ck-bar-fill" style="width:'+Math.max(2,d.count/maxDim*100)+'%;background:'+co+'"></div></div><div class="ck-bar-val">'+d.count+'</div></div>'});h+='</div></div>';
-      dc.innerHTML=h;
-    }catch(e){dc.innerHTML='<div style="text-align:center;padding:40px;color:#E74C3C">加载失败: '+(e.message||'')+'</div>'}
+
+  async ckEditRec(id){try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;this.ckEditId=id;document.getElementById('ck_name').value=data.patient_name||'';document.getElementById('ck_phone').value=data.patient_phone||'';document.getElementById('ck_age').value=data.patient_age||'';document.getElementById('ck_gender').value=data.patient_gender||'女';document.getElementById('ck_date').value=data.checkup_date||'';document.getElementById('ck_package').value=data.package_name||'';if(data.indicators){this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el&&data.indicators[f.k]!=null)el.value=data.indicators[f.k]})})}this.ckSwitchTab('ck-input',document.querySelector('#checkup-content .btn-secondary'));alert('已加载记录，可编辑后保存')}catch(e){alert('加载失败')}},
+
+  async ckDelRec(id){if(!confirm('确定删除？'))return;try{await CloudBaseManager.sb.from('health_checkups').delete().eq('id',id);alert('已删除');this.ckLoadRecs()}catch(e){alert('删除失败')}},
+
+  async ckLoadInterp(){const sel=document.getElementById('ck_interpSel');sel.innerHTML='<option value="">-- 请选择 --</option>';try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').order('created_at',{ascending:false});if(error)throw error;data.forEach(rec=>{const o=document.createElement('option');o.value=rec.id;o.textContent=rec.patient_name+' · '+rec.checkup_date+(rec.package_name?' · '+rec.package_name:'');sel.appendChild(o)})}catch(e){}},
+  ckOnInterpSel(){document.getElementById('ck_interpBtn').disabled=!document.getElementById('ck_interpSel').value;document.getElementById('ck_interpResult').innerHTML=''},
+
+  async ckRunInterp(){
+    const sid=document.getElementById('ck_interpSel').value;if(!sid)return;const btn=document.getElementById('ck_interpBtn');btn.disabled=true;btn.textContent='⏳ 解读中...';const rd=document.getElementById('ck_interpResult');rd.innerHTML='<div style="text-align:center;padding:20px;color:#999">解读中...</div>';
+    try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',sid).single();if(error)throw error;const ip=this.ckInterpRec(rec);await CloudBaseManager.sb.from('health_checkups').update({interpretation:ip,report_generated:true}).eq('id',rec.id);this.ckRenderInterp({...rec,interpretation:ip});alert('✅ 解读完成')}catch(e){rd.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">解读失败</div>';alert('解读失败')}finally{btn.disabled=false;btn.textContent='🧠 生成解读报告'}
   },
-  async ckQueryReports(){
-    const list=document.getElementById('ck_queryList');list.innerHTML='<div style="text-align:center;padding:20px;color:#999">加载中...</div>';
-    try{const risk=document.getElementById('ckq_risk').value,pkg=document.getElementById('ckq_pkg').value,df=document.getElementById('ckq_dateFrom').value,dt=document.getElementById('ckq_dateTo').value,kw=document.getElementById('ckq_kw').value.trim();
-    let q=CloudBaseManager.sb.from('checkup_persons').select('*').order('created_at',{ascending:false});if(risk)q=q.eq('risk_level',risk);if(pkg)q=q.eq('checkup_package',pkg);if(df)q=q.gte('checkup_date',df);if(dt)q=q.lte('checkup_date',dt);
-    const{data:pData,error}=await q;if(error)throw error;let filtered=pData||[];if(kw)filtered=filtered.filter(p=>(p.name||'').includes(kw)||(p.phone||'').includes(kw));
-    if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">无匹配记录</div>';return}
-    const rc={red:'#E74C3C',orange:'#E67E22',yellow:'#F39C12',green:'#27AE60'};const rl={red:'高风险',orange:'中风险',yellow:'轻度风险',green:'正常'};const cl={none:'',flagged:'已标记',contacting:'跟进中',converted:'已转化'};const cc={none:'',flagged:'#F39C12',contacting:'#7B68AE',converted:'#27AE60'};
-    let h='';filtered.forEach(p=>{h+='<div style="background:#fff;border-radius:8px;padding:12px;margin:8px 0;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';h+='<div style="display:flex;align-items:center;gap:8px"><span class="ck-risk-dot '+(p.risk_level||'green')+'"></span><div><strong>'+p.name+'</strong> · '+(p.gender||'')+' '+(p.age?p.age+'岁':'')+'<br><span style="font-size:12px;color:#999">'+(p.checkup_package||'')+' | '+(p.checkup_date||'')+'</span></div></div>';h+='<div style="display:flex;align-items:center;gap:8px">';const cvl=cl[p.conversion_status]||'';if(cvl)h+='<span class="ck-conv-status" style="background:'+(cc[p.conversion_status]||'#999')+'">'+cvl+'</span>';h+='<span style="font-size:14px;font-weight:700;color:'+(rc[p.risk_level]||'#999')+'">'+(rl[p.risk_level]||'')+'</span></div>';h+='<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewPersonReport(\''+p.id+'\')">📄</button>';if(p.conversion_status!=='converted')h+='<button class="btn btn-outline btn-sm" style="color:var(--color-green);border-color:var(--color-green)" onclick="AdminApp.ckFlagPerson(\''+p.id+'\')">🚩</button>';h+='<button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewPersonDetail(\''+p.id+'\')">📋</button></div></div>'});
-    list.innerHTML=h}catch(e){list.innerHTML='<div style="text-align:center;padding:40px;color:#E74C3C">查询失败</div>'}
-  },
-  async ckViewPersonReport(pid){try{const{data:rpts}=await CloudBaseManager.sb.from('checkup_reports').select('*').eq('person_id',pid).order('created_at',{ascending:false});if(!rpts||!rpts.length){alert('暂无报告');return}const{data:person}=await CloudBaseManager.sb.from('checkup_persons').select('*').eq('id',pid).single();const{data:hc}=await CloudBaseManager.sb.from('health_checkups').select('id').eq('patient_name',person?.name||'').eq('checkup_date',rpts[0].report_date).limit(1);if(hc&&hc.length){this._currentReportRecId=hc[0].id;this.ckViewRpt(hc[0].id)}else{alert('暂无完整报告，请通过报告上传Tab查看')}}catch(e){alert('查看失败')}},
-  async ckViewPersonDetail(pid){
-    try{const{data:p,error}=await CloudBaseManager.sb.from('checkup_persons').select('*').eq('id',pid).single();if(error)throw error;const{data:rpts}=await CloudBaseManager.sb.from('checkup_reports').select('*').eq('person_id',pid).order('created_at',{ascending:false});const{data:convs}=await CloudBaseManager.sb.from('conversion_records').select('*').eq('person_id',pid).order('created_at',{ascending:false});
-    const rl={red:'🔴 高风险',orange:'🟠 中风险',yellow:'🟡 轻度',green:'🟢 正常'};const cl={none:'未跟进',flagged:'已标记',contacting:'跟进中',converted:'已转化'};
-    let h='<div class="ck-card"><div class="ck-title">👤 人员信息</div><div class="ck-g2"><div><strong>'+p.name+'</strong></div><div>'+(p.phone||'—')+'</div></div><div class="ck-g3"><div>'+(p.gender||'—')+'</div><div>'+(p.age?p.age+'岁':'—')+'</div><div>'+(p.checkup_date||'—')+'</div></div><div>套餐：'+(p.checkup_package||'—')+'</div><div>风险：<strong>'+(rl[p.risk_level]||'')+'</strong> · 状态：<strong>'+(cl[p.conversion_status]||'')+'</strong></div></div>';
-    if(rpts&&rpts.length){h+='<div class="ck-card"><div class="ck-title">📋 体检报告 ('+rpts.length+'份)</div>';rpts.forEach(r=>{const c=r.ai_conclusion?JSON.parse(r.ai_conclusion):null;h+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'+r.report_date+' · '+(r.package_name||'—')+' · 评分:'+(c?Math.round(c.overall_score):'--')+'</div>'});h+='</div>'}
-    if(convs&&convs.length){h+='<div class="ck-card"><div class="ck-title">📝 跟进记录</div>';convs.forEach(c=>{h+='<div style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px">'+new Date(c.created_at).toLocaleString('zh-CN')+' · '+c.action+(c.notes?' · '+c.notes:'')+'</div>'});h+='</div>'}
-    h+='<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">';if(p.conversion_status==='none')h+='<button class="btn btn-primary btn-sm" onclick="AdminApp.ckFlagPerson(\''+p.id+'\')">🚩 标记跟进</button>';if(p.conversion_status==='flagged')h+='<button class="btn btn-primary btn-sm" onclick="AdminApp.ckUpdateConv(\''+p.id+'\',\'contacting\')">📞 开始跟进</button>';if(p.conversion_status!=='converted')h+='<button class="btn btn-sm" style="background:var(--color-green);color:#fff" onclick="AdminApp.ckConvertToPatient(\''+p.id+'\')">✅ 一键转为抗衰客户</button>';h+='<button class="btn btn-outline btn-sm" onclick="AdminApp.ckAddConvNote(\''+p.id+'\')">📝 添加跟进</button></div>';
-    const ov=document.createElement('div');ov.className='ck-modal show';ov.onclick=(e)=>{if(e.target===ov)ov.remove()};ov.innerHTML='<div class="ck-modal-box"><div style="text-align:right"><button class="btn btn-outline btn-sm" onclick="this.closest(\'.ck-modal\').remove()">✕</button></div>'+h+'</div>';document.body.appendChild(ov);
-    }catch(e){alert('查看失败')}
-  },
-  async ckLoadConversion(){
-    const cc=document.getElementById('ck_convertContent');cc.innerHTML='<div style="text-align:center;padding:30px;color:#999">⏳ 加载中...</div>';
-    try{const{data:persons,error}=await CloudBaseManager.sb.from('checkup_persons').select('*').neq('risk_level','green').order('created_at',{ascending:false});if(error)throw error;const pData=persons||[];
-    const fg=pData.filter(p=>p.conversion_status==='flagged').length,ct=pData.filter(p=>p.conversion_status==='contacting').length,cv=pData.filter(p=>p.conversion_status==='converted').length;
-    let h='<div class="ck-stat-grid"><div class="ck-stat-card"><div class="ck-stat-num" style="color:var(--color-red)">'+pData.length+'</div><div class="ck-stat-label">需关注</div></div><div class="ck-stat-card"><div class="ck-stat-num" style="color:var(--color-orange)">'+fg+'</div><div class="ck-stat-label">已标记</div></div><div class="ck-stat-card"><div class="ck-stat-num" style="color:var(--color-primary)">'+ct+'</div><div class="ck-stat-label">跟进中</div></div><div class="ck-stat-card"><div class="ck-stat-num" style="color:var(--color-green)">'+cv+'</div><div class="ck-stat-label">已转化</div></div></div>';
-    h+='<div class="ck-filter-bar"><select id="ckc_status" onchange="AdminApp.ckFilterConv()"><option value="">全部状态</option><option value="none">未跟进</option><option value="flagged">已标记</option><option value="contacting">跟进中</option><option value="converted">已转化</option></select><select id="ckc_risk" onchange="AdminApp.ckFilterConv()"><option value="">全部风险</option><option value="red">高风险</option><option value="orange">中风险</option><option value="yellow">轻度风险</option></select></div>';
-    h+='<div id="ck_convertList"></div>';cc.innerHTML=h;this._convData=pData;this.ckFilterConv();
-    }catch(e){cc.innerHTML='<div style="text-align:center;padding:40px;color:#E74C3C">加载失败</div>'}
-  },
-  ckFilterConv(){const st=document.getElementById('ckc_status')?.value||'',rk=document.getElementById('ckc_risk')?.value||'';let f=this._convData||[];if(st)f=f.filter(p=>p.conversion_status===st);if(rk)f=f.filter(p=>p.risk_level===rk);const list=document.getElementById('ck_convertList');if(!f.length){list.innerHTML='<div style="text-align:center;padding:30px;color:#ccc">无匹配人员</div>';return}const rl={red:'🔴 高风险',orange:'🟠 中风险',yellow:'🟡 轻度'};const cl={none:'未跟进',flagged:'已标记',contacting:'跟进中',converted:'已转化'};const cc={none:'#999',flagged:'#F39C12',contacting:'#7B68AE',converted:'#27AE60'};let h='';f.forEach(p=>{h+='<div class="ck-conv-row"><span class="ck-risk-dot '+(p.risk_level||'green')+'"></span><div style="flex:1"><strong>'+p.name+'</strong> · '+(p.gender||'')+' '+(p.age?p.age+'岁':'')+'<br><span style="font-size:12px;color:#999">'+(p.checkup_package||'')+' | '+(p.checkup_date||'')+'</span></div><span class="ck-conv-status" style="background:'+(cc[p.conversion_status]||'#999')+'">'+(cl[p.conversion_status]||'')+'</span><div style="display:flex;gap:4px">';if(p.conversion_status==='none')h+='<button class="btn btn-outline btn-sm" onclick="AdminApp.ckFlagPerson(\''+p.id+'\')">🚩</button>';if(p.conversion_status==='flagged')h+='<button class="btn btn-outline btn-sm" onclick="AdminApp.ckUpdateConv(\''+p.id+'\',\'contacting\')">📞</button>';if(p.conversion_status!=='converted')h+='<button class="btn btn-sm" style="background:var(--color-green);color:#fff;border:none" onclick="AdminApp.ckConvertToPatient(\''+p.id+'\')">✅ 转化</button>';h+='<button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewPersonDetail(\''+p.id+'\')">📋</button></div></div>'});list.innerHTML=h},
-  async ckFlagPerson(id){try{await CloudBaseManager.sb.from('checkup_persons').update({conversion_status:'flagged'}).eq('id',id);await CloudBaseManager.sb.from('conversion_records').insert({person_id:id,action:'flagged',notes:'标记为需跟进'});this.ckRefreshTab();alert('✅ 已标记')}catch(e){alert('操作失败')}},
-  async ckUpdateConv(id,st){try{await CloudBaseManager.sb.from('checkup_persons').update({conversion_status:st}).eq('id',id);await CloudBaseManager.sb.from('conversion_records').insert({person_id:id,action:st,notes:''});this.ckRefreshTab()}catch(e){alert('操作失败')}},
-  async ckAddConvNote(id){const note=prompt('请输入跟进记录：');if(!note)return;try{await CloudBaseManager.sb.from('conversion_records').insert({person_id:id,action:'note',notes:note});alert('✅ 已添加')}catch(e){alert('失败')}},
-  async ckConvertToPatient(pid){
-    if(!confirm('确认将该体检人员转化为抗衰客户？'))return;
-    try{const{data:p,error}=await CloudBaseManager.sb.from('checkup_persons').select('*').eq('id',pid).single();if(error)throw error;
-    const{data:np,error:pe}=await CloudBaseManager.sb.from('patients').insert({name:p.name,phone:p.phone||'',gender:p.gender||'',age:p.age||null,chief_complaint:'体检转化客户',notes:'来源于体检管理，风险等级：'+p.risk_level}).select().single();if(pe)throw pe;
-    await CloudBaseManager.sb.from('checkup_persons').update({conversion_status:'converted',converted_patient_id:np.id}).eq('id',pid);
-    await CloudBaseManager.sb.from('conversion_records').insert({person_id:pid,action:'converted',notes:'已转化为抗衰客户'});
-    alert('✅ 已转化！跳转客户详情...');this.ckRefreshTab();
-    switchPage('patients',document.querySelector('[data-page=patients]'));setTimeout(()=>AdminApp.showPatientDetail(p.name,p.phone||''),300);
-    }catch(e){alert('转化失败: '+(e.message||''))}
-  },
-  ckRefreshTab(){const a=document.querySelector('#checkup-content .btn-secondary.active');if(a)a.click()},
-  async ckLoadRecs(){this.ckSwitchTab('ck-query',document.querySelector('#checkup-content .btn-secondary:nth-child(3)'))},
-  async ckEditRec(id){try{const{data,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;this.ckEditId=id;document.getElementById('ck_name').value=data.patient_name||'';document.getElementById('ck_phone').value=data.patient_phone||'';document.getElementById('ck_age').value=data.patient_age||'';document.getElementById('ck_gender').value=data.patient_gender||'女';document.getElementById('ck_date').value=data.checkup_date||'';document.getElementById('ck_package').value=data.package_name||'';if(data.indicators){this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el&&data.indicators[f.k]!=null)el.value=data.indicators[f.k]})})}this.ckSwitchTab('ck-upload',document.querySelector('#checkup-content .btn-secondary:nth-child(2)'));alert('已加载记录')}catch(e){alert('加载失败')}},
-  async ckDelRec(id){if(!confirm('确定删除？'))return;try{await CloudBaseManager.sb.from('health_checkups').delete().eq('id',id);alert('已删除');this.ckQueryReports()}catch(e){alert('删除失败')}},
+
   ckInterpRec(rec){
     const ind=rec.indicators||{},g=rec.patient_gender||'女';
     const dScores={},dAbn={},recs=[];
@@ -14922,8 +14788,13 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(f.sp==='bmd'){if(val<-1){out=true;dev=Math.abs(val+1)}}else if(ref[0]===0){if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}else{if(val<ref[0]){out=true;dev=(ref[0]-val)/Math.max(ref[0],0.01)}else if(val>ref[1]){out=true;dev=(val-ref[1])/Math.max(ref[1],0.01)}}
     if(out){let d=dev<0.1?10+dev*100:dev<0.3?20+(dev-0.1)*100:40+Math.min((dev-0.3)*100,20);d=Math.min(d,60);sc-=d;abn.push({k:f.k,n:f.n,v:val,ref,dev,d})}}
     });dScores[dim.id]=Math.max(0,Math.min(100,Math.round(sc)));dAbn[dim.id]=abn});
+
     const v=k=>parseFloat(ind[k])||0,s=k=>ind[k]||'';
-    if(g==='女'){if(v('amh')>0&&v('amh')<2)recs.push({dim:'hormone',title:'卵巢储备功能下降',detail:'AMH < 2',suggest:'推荐Kupperman量表+卵巢抗衰管理'});if(v('fsh')>10&&v('fsh')<=25)recs.push({dim:'hormone',title:'卵巢功能减退趋势',detail:'FSH 10~25',suggest:'推荐更年期评估+中医体质辨识'});if(v('fsh')>25)recs.push({dim:'hormone',title:'卵巢功能衰退',detail:'FSH > 25',suggest:'推荐性激素动态评估+中西医结合抗衰'})};
+    if(g==='女'){
+      if(v('amh')>0&&v('amh')<2)recs.push({dim:'hormone',title:'卵巢储备功能下降',detail:'AMH < 2',suggest:'推荐Kupperman量表+卵巢抗衰管理'});
+      if(v('fsh')>10&&v('fsh')<=25)recs.push({dim:'hormone',title:'卵巢功能减退趋势',detail:'FSH 10~25',suggest:'推荐更年期评估+中医体质辨识'});
+      if(v('fsh')>25)recs.push({dim:'hormone',title:'卵巢功能衰退',detail:'FSH > 25',suggest:'推荐性激素动态评估+中西医结合抗衰'});
+    }
     if(v('ldl')>3.4)recs.push({dim:'lipid',title:'血脂异常',detail:'LDL '+v('ldl'),suggest:'推荐营养评估+代谢管理'});
     if(v('fbg')>=5.6&&v('fbg')<7)recs.push({dim:'glucose',title:'空腹血糖受损',detail:'FBG '+v('fbg'),suggest:'推荐代谢综合征筛查'});
     if(v('fbg')>=7)recs.push({dim:'glucose',title:'疑似糖尿病',detail:'FBG '+v('fbg'),suggest:'建议内分泌科就诊'});
@@ -14943,16 +14814,32 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(s('tct')&&s('tct')!=='正常')recs.push({dim:'gyno',title:'宫颈细胞学异常',detail:'TCT: '+s('tct'),suggest:'建议阴道镜检查'});
     if(s('hpv')==='阳性')recs.push({dim:'gyno',title:'HPV感染',detail:'HPV阳性',suggest:'推荐免疫调节评估+定期随访'});
     if(s('ecg')==='ST-T改变')recs.push({dim:'cardio',title:'心肌缺血可能',detail:'心电图ST-T改变',suggest:'建议心内科就诊'});
+
     const wt={general:1.5,blood:1,urine:.8,liver:1.2,kidney:1.2,glucose:1.5,lipid:1.3,thyroid:1,hormone:1.2,bone:1,tumor:1.5,gyno:1,cardio:1.5};
     let tw=0,ws=0;Object.keys(dScores).forEach(did=>{const dim=this.CK_DIMS.find(x=>x.id===did);const hv=dim.fields.some(f=>ind[f.k]&&ind[f.k]!=='');if(hv){ws+=dScores[did]*(wt[did]||1);tw+=(wt[did]||1)}});
     const overall=tw>0?ws/tw:0;
     return{overall_score:Math.round(overall*10)/10,dim_scores:dScores,dim_abnormals:dAbn,recommendations:recs,interpreted_at:new Date().toISOString()}
   },
-  ckRecommendPackage(ip,gender){const sc=ip.overall_score;let pkg='',pr='',ai=[];if(sc>=90){pkg='基础体检';pr='¥488'}else if(sc>=70){pkg='健康基础套餐';pr='¥562-1493'}else if(sc>=50){pkg='甄选/VIP套餐';pr='¥2126-4110'}else{pkg='至尊/VIP+专项加项';pr='¥3541-4110+'}if(gender==='女'){if(ip.recommendations&&ip.recommendations.some(r=>r.dim==='hormone'&&r.title.includes('卵巢')))ai.push('性激素六项+AMH复查');if(ip.recommendations&&ip.recommendations.some(r=>r.dim==='thyroid'))ai.push('甲状腺全套(含TPOAb/TGAb)')}return{package:pkg,price:pr,addItems:ai}},
-  async ckViewRpt(id){try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;if(!rec.interpretation){alert('尚未解读');return}this._currentReportRecId=id;this.ckRenderRpt(rec);document.getElementById('ck-reportModal').classList.add('show');document.getElementById('ck-shareArea').style.display='none'}catch(e){alert('加载失败')}},
+
+  ckRenderInterp(rec){
+    const ip=rec.interpretation,ovl=this.ckLR(ip.overall_score);
+    let h=`<div class="ck-card" style="text-align:center"><div style="font-size:48px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:16px;color:${ovl.c}">${ovl.e} ${ovl.t}</div></div>`;
+    this.CK_DIMS.forEach(dim=>{const sc=ip.dim_scores[dim.id];if(sc==null)return;const hv=dim.fields.some(f=>rec.indicators[f.k]&&rec.indicators[f.k]!=='');if(!hv)return;const r=this.ckLR(sc),abn=ip.dim_abnormals[dim.id]||[];
+    h+=`<div class="ck-dim ${r.cls}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">${dim.icon} ${dim.name}</span><span style="font-size:20px;font-weight:700;color:${r.c}">${sc} ${r.e}</span></div>`;
+    if(abn.length){h+='<div style="font-size:13px;color:#E74C3C;margin-top:6px;line-height:1.7">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:13px;color:#27AE60">✅ 各项正常</div>';
+    h+='</div>'});
+    if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+    h+=`<div style="text-align:center;margin-top:16px"><button class="btn btn-primary btn-lg" onclick="AdminApp.ckViewRpt('${rec.id}')" style="max-width:300px">📄 查看完整报告</button></div>`;
+    document.getElementById('ck_interpResult').innerHTML=h;
+  },
+
+  async ckViewRpt(id){
+    try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;if(!rec.interpretation){alert('尚未解读');return}this.ckRenderRpt(rec);document.getElementById('ck-reportModal').classList.add('show')}catch(e){alert('加载失败')}
+  },
+
   ckRenderRpt(rec){
     const ip=rec.interpretation,ovl=this.ckLR(ip.overall_score);
-    let h=`<div class="ck-rpt"><div class="ck-rpt-header"><h2>🧬 归元AI · 体检管理报告</h2><p style="color:#999;font-size:12px;margin-top:4px">固本归元 · 科学抗衰</p></div>`;
+    let h=`<div class="ck-rpt"><div class="ck-rpt-header"><h2>🧬 归元AI · 体检解读报告</h2><p style="color:#999;font-size:12px;margin-top:4px">固本归元 · 科学抗衰</p></div>`;
     h+=`<div class="ck-rpt-patient"><div><span style="color:#666">姓名：</span><strong>${rec.patient_name}</strong></div><div><span style="color:#666">性别：</span><strong>${rec.patient_gender}</strong></div><div><span style="color:#666">年龄：</span><strong>${rec.patient_age}岁</strong></div><div><span style="color:#666">日期：</span><strong>${rec.checkup_date}</strong></div><div><span style="color:#666">套餐：</span><strong>${rec.package_name||'—'}</strong></div><div><span style="color:#666">解读：</span><strong>${new Date(ip.interpreted_at).toLocaleString('zh-CN')}</strong></div></div>`;
     h+=`<div style="text-align:center;margin:20px 0"><div style="font-size:56px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:12px;color:#999">综合健康评分</div><div style="font-size:18px;color:${ovl.c};margin-top:4px">${ovl.e} ${ovl.t}</div></div>`;
     h+='<h3 style="font-size:15px;color:var(--color-primary-dark);margin:16px 0 10px">📊 各维度评分</h3>';
@@ -14961,18 +14848,14 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(abn.length){h+='<div style="font-size:12px;color:#E74C3C;margin-top:4px;line-height:1.6">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:12px;color:#27AE60">✅ 各项正常</div>';
     h+='</div>'});
     if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
-    const pkgR=this.ckRecommendPackage(ip,rec.patient_gender);h+='<div style="margin-top:14px;padding:12px;border:1.5px solid #7B68AE;border-radius:8px;background:#F8F6FA"><h4 style="color:#5A4D7A;margin-bottom:8px">🎁 推荐下次体检套餐</h4><div><strong>'+pkgR.package+'</strong> <span style="color:#7B68AE">'+pkgR.price+'</span></div>';if(pkgR.addItems.length)h+='<div style="margin-top:4px;font-size:12px;color:#E67E22">➕ 建议加项：'+pkgR.addItems.join('、')+'</div>';h+='</div>';
     h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入归元AI评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
     h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">归元AI · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
     document.getElementById('ck-reportContent').innerHTML=h;
     setTimeout(()=>{const qe=document.getElementById('ck-qrcode');if(qe){qe.innerHTML='';try{new QRCode(qe,{text:'https://judy-pm.github.io/mama-scale/',width:128,height:128,colorDark:'#5B4A8A',colorLight:'#ffffff'})}catch(e){qe.innerHTML='<p style="font-size:11px;color:#999">二维码生成失败</p>'}}},100);
   },
+
   ckCloseRpt(){document.getElementById('ck-reportModal').classList.remove('show')},
-  ckExportPDF(){window.print()},
-  ckShareReport(){const area=document.getElementById('ck-shareArea');const rid=this._currentReportRecId;if(!rid){alert('无法生成分享链接');return}const url=location.origin+location.pathname+'?share_checkup='+rid;area.style.display='block';area.innerHTML='<div class="ck-share-link" style="margin-top:12px"><strong>📋 分享链接：</strong><br><a href="'+url+'" target="_blank" style="color:var(--color-primary);word-break:break-all">'+url+'</a><br><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(\''+url+'\');alert(\'已复制\')">📋 复制</button></div>'},
-  ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检管理报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}</style></head><body>'+c+'</body></html>');w.document.close();w.print()},
-  async ckExportCSV(){try{const{data,error}=await CloudBaseManager.sb.from('checkup_persons').select('*').order('created_at',{ascending:false});if(error)throw error;if(!data||!data.length){alert('无数据可导出');return}const rm={red:'高风险',orange:'中风险',yellow:'轻度风险',green:'正常'};const cm={none:'未跟进',flagged:'已标记',contacting:'跟进中',converted:'已转化'};const hd='姓名,手机号,性别,年龄,体检日期,套餐,风险等级,转化状态';const rows=data.map(r=>[r.name,r.phone||'',r.gender||'',r.age||'',r.checkup_date||'',r.checkup_package||'',rm[r.risk_level]||'',cm[r.conversion_status]||'']);let csv='\uFEFF'+hd+'\n';rows.forEach(r=>{csv+=r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')+'\n'});const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='体检汇总_'+new Date().toISOString().split('T')[0]+'.csv';a.click();URL.revokeObjectURL(url)}catch(e){alert('导出失败: '+(e.message||''))}},
-  ckCheckShareParam(){const p=new URLSearchParams(window.location.search);const id=p.get('share_checkup');if(id){this.ckViewRpt(id);window.history.replaceState({},'',location.pathname)}},
+  ckPrintRpt(){const c=document.getElementById('ck-reportContent').innerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体检解读报告</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333}.ck-rpt{max-width:700px;margin:0 auto}.ck-rpt-header{text-align:center;margin-bottom:16px;border-bottom:2px solid #7B68AE;padding-bottom:10px}.ck-rpt-header h2{color:#5B4A8A;font-size:20px}.ck-rpt-patient{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px;background:#F5F3FA;padding:8px;border-radius:6px}.ck-dim{border-radius:6px;padding:10px;margin-bottom:6px;border-left:4px solid #ccc}.ck-dim.excellent{border-left-color:#27AE60}.ck-dim.good{border-left-color:#2ECC71}.ck-dim.mild{border-left-color:#F39C12}.ck-dim.moderate{border-left-color:#E67E22}.ck-dim.severe{border-left-color:#E74C3C}.ck-rec{border-radius:6px;padding:10px;margin-top:12px;border:1px solid #e0e0e0}.ck-rec-item{padding:6px 0;border-bottom:1px dashed #e0e0e0;font-size:12px;line-height:1.5}.ck-rec-item:last-child{border-bottom:none}.ck-qr{text-align:center;margin:16px 0;padding:12px;border:1px solid #e0e0e0;border-radius:6px}/* ========== 中医诊疗模块样式 ========== */
 .tcm-tabs {
   display: flex;
   gap: 0;
