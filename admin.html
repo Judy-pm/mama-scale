@@ -910,7 +910,352 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .tcm-patient-selector .form-group { margin-bottom: 0; flex: 1; }
 
-  </style>
+  
+
+/* ========== AI工作台 v2.1 ========== */
+.ai-workspace-layout {
+  display: flex; gap: 0; height: calc(100vh - 140px); min-height: 500px;
+  background: white; border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow); border: 1px solid var(--color-border);
+}
+.ai-sidebar {
+  width: 240px; border-right: 1px solid var(--color-border);
+  display: flex; flex-direction: column; background: #FAFAFC;
+  flex-shrink: 0;
+}
+.ai-sidebar-header {
+  padding: 16px; border-bottom: 1px solid var(--color-border);
+}
+.ai-sidebar-header h4 { font-size: 14px; color: var(--color-primary-dark); margin-bottom: 10px; }
+.ai-new-chat-btn {
+  width: 100%; padding: 10px; border-radius: 8px; font-size: 13px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white; border: none; cursor: pointer; font-weight: 600;
+  transition: all 0.2s;
+}
+.ai-new-chat-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.ai-conversation-list {
+  flex: 1; overflow-y: auto; padding: 8px;
+}
+.ai-conv-item {
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; color: var(--color-text-secondary);
+  transition: all 0.15s; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ai-conv-item:hover { background: var(--color-primary-bg); color: var(--color-primary); }
+.ai-conv-item.active { background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
+.ai-conv-item .ai-conv-del {
+  float: right; display: none; color: var(--color-red); font-weight: normal;
+}
+.ai-conv-item:hover .ai-conv-del { display: inline; }
+
+.ai-main {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+.ai-main-header {
+  padding: 12px 20px; border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: white;
+}
+.ai-main-header h4 { font-size: 15px; color: var(--color-primary-dark); }
+
+/* 提示库 */
+.ai-prompt-tabs {
+  display: flex; gap: 0; margin-bottom: 16px;
+  border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden;
+}
+.ai-prompt-tab {
+  flex: 1; padding: 8px 12px; text-align: center; font-size: 13px;
+  cursor: pointer; background: white; color: var(--color-text-secondary);
+  transition: all 0.2s; border: none; font-weight: 500;
+}
+.ai-prompt-tab.active {
+  background: var(--color-primary); color: white; font-weight: 600;
+}
+.ai-prompt-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px; margin-bottom: 16px;
+}
+.ai-prompt-btn {
+  padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; background: white; text-align: left;
+}
+.ai-prompt-btn:hover {
+  border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(123,104,174,0.1);
+}
+.ai-prompt-btn .ap-icon { font-size: 16px; }
+.ai-prompt-btn .ap-title { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.ai-prompt-btn .ap-desc { font-size: 11px; color: var(--color-gray); margin-top: 2px; }
+
+/* 快捷操作 */
+.ai-quick-actions {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px;
+}
+.ai-qa-card {
+  padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  cursor: pointer; text-align: center; transition: all 0.2s; background: white;
+}
+.ai-qa-card:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+.ai-qa-card .aq-icon { font-size: 20px; }
+.ai-qa-card .aq-text { font-size: 12px; font-weight: 600; margin-top: 4px; color: var(--color-text); }
+
+/* 对话气泡 */
+.ai-chat-messages {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+}
+.ai-msg {
+  display: flex; gap: 10px; margin-bottom: 16px;
+  animation: aiMsgIn 0.3s ease;
+}
+@keyframes aiMsgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ai-msg.user { flex-direction: row-reverse; }
+.ai-msg-avatar {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.ai-msg.assistant .ai-msg-avatar {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white;
+}
+.ai-msg.user .ai-msg-avatar {
+  background: var(--color-primary-bg); color: var(--color-primary);
+}
+.ai-msg-bubble {
+  max-width: 70%; padding: 10px 14px; border-radius: 12px;
+  font-size: 14px; line-height: 1.6; word-break: break-word;
+}
+.ai-msg.assistant .ai-msg-bubble {
+  background: #F0ECF5; color: var(--color-text);
+  border-top-left-radius: 4px;
+}
+.ai-msg.user .ai-msg-bubble {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white; border-top-right-radius: 4px;
+}
+.ai-msg-bubble pre {
+  background: rgba(0,0,0,0.06); padding: 8px; border-radius: 6px;
+  overflow-x: auto; margin: 8px 0; font-size: 13px;
+}
+.ai-msg-bubble code {
+  background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px; font-size: 13px;
+}
+.ai-msg-bubble p { margin: 4px 0; }
+.ai-msg-bubble ul, .ai-msg-bubble ol { padding-left: 20px; margin: 4px 0; }
+
+.ai-typing {
+  display: flex; gap: 4px; padding: 4px 0;
+}
+.ai-typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-primary-light);
+  animation: aiTypeDot 1.2s infinite;
+}
+.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aiTypeDot {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1.2); }
+}
+
+/* 输入区 */
+.ai-chat-input-bar {
+  padding: 12px 20px; border-top: 1px solid var(--color-border);
+  display: flex; gap: 8px; background: white;
+}
+.ai-chat-input-bar textarea {
+  flex: 1; border: 1px solid var(--color-border); border-radius: 8px;
+  padding: 10px 14px; font-size: 14px; resize: none; outline: none;
+  min-height: 40px; max-height: 120px; font-family: inherit;
+  transition: border-color 0.2s;
+}
+.ai-chat-input-bar textarea:focus { border-color: var(--color-primary); }
+.ai-send-btn {
+  width: 44px; height: 44px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white; font-size: 18px; cursor: pointer; transition: all 0.2s;
+  flex-shrink: 0;
+}
+.ai-send-btn:hover { opacity: 0.9; }
+.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 欢迎页 */
+.ai-welcome-page { padding: 40px 20px; }
+
+/* ========== 健康计划 v2.1 ========== */
+.hp-layout {}
+.hp-toolbar {
+  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.hp-filter-btn {
+  padding: 8px 16px; border-radius: 20px; font-size: 13px;
+  border: 1px solid var(--color-border); background: white; cursor: pointer;
+  transition: all 0.2s; font-weight: 500;
+}
+.hp-filter-btn.active, .hp-filter-btn:hover {
+  background: var(--color-primary); color: white; border-color: var(--color-primary);
+}
+.hp-plan-card {
+  background: white; border-radius: var(--radius); padding: 16px 20px;
+  box-shadow: var(--shadow); margin-bottom: 12px;
+  border-left: 4px solid var(--color-primary); cursor: pointer;
+  transition: all 0.2s;
+}
+.hp-plan-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(123,104,174,0.15); }
+.hp-plan-card.status-completed { border-left-color: var(--color-green); }
+.hp-plan-card.status-expired { border-left-color: var(--color-gray); }
+.hp-plan-card.status-paused { border-left-color: var(--color-orange); }
+.hp-plan-header {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+}
+.hp-plan-title { font-weight: 600; font-size: 15px; }
+.hp-plan-status {
+  font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 600;
+}
+.hp-plan-status.active { background: #E8F5E9; color: var(--color-green); }
+.hp-plan-status.completed { background: #E3F2FD; color: #2196F3; }
+.hp-plan-status.expired { background: #F5F5F5; color: var(--color-gray); }
+.hp-plan-status.paused { background: #FFF3E0; color: var(--color-orange); }
+.hp-plan-meta { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.hp-progress-bar {
+  height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden;
+}
+.hp-progress-fill {
+  height: 100%; border-radius: 3px; transition: width 0.5s;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+}
+.hp-progress-fill.completed { background: var(--color-green); }
+.hp-progress-text { font-size: 12px; color: var(--color-gray); margin-top: 4px; }
+
+/* 创建计划弹窗 */
+.hp-create-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.hp-create-box {
+  background: white; border-radius: 16px; padding: 28px;
+  max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.hp-create-box h3 {
+  font-size: 18px; color: var(--color-primary-dark); margin-bottom: 20px;
+}
+.hp-task-list { margin: 12px 0; }
+.hp-task-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 0;
+  border-bottom: 1px solid var(--color-border); font-size: 14px;
+}
+.hp-task-item:last-child { border-bottom: none; }
+.hp-task-remove {
+  color: var(--color-red); cursor: pointer; font-size: 16px; flex-shrink: 0;
+  background: none; border: none;
+}
+.hp-template-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px; margin: 12px 0;
+}
+.hp-template-card {
+  padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; background: white; text-align: center;
+}
+.hp-template-card:hover, .hp-template-card.selected {
+  border-color: var(--color-primary); background: var(--color-primary-bg);
+}
+.hp-template-card .ht-icon { font-size: 24px; }
+.hp-template-card .ht-name { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.hp-template-card .ht-days { font-size: 11px; color: var(--color-gray); }
+
+/* 打卡 */
+.hp-checkin-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px; margin: 16px 0;
+}
+.hp-checkin-item {
+  padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  background: white; display: flex; align-items: center; gap: 10px;
+}
+.hp-checkin-item.checked { background: #F0FFF0; border-color: var(--color-green); }
+.hp-checkin-checkbox {
+  width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--color-border);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.hp-checkin-checkbox.checked {
+  background: var(--color-green); border-color: var(--color-green); color: white;
+}
+.hp-checkin-text { font-size: 13px; flex: 1; }
+.hp-checkin-freq { font-size: 11px; color: var(--color-gray); }
+
+/* ========== 客户详情增强 v2.1 ========== */
+.pd-tabs {
+  display: flex; gap: 0; border-bottom: 2px solid var(--color-border);
+  margin-bottom: 20px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pd-tab {
+  padding: 10px 16px; font-size: 13px; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; color: var(--color-text-secondary);
+  transition: all 0.2s; font-weight: 500;
+}
+.pd-tab:hover { color: var(--color-primary); }
+.pd-tab.active {
+  color: var(--color-primary); border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+.pd-tab-content { display: none; }
+.pd-tab-content.active { display: block; }
+
+/* 摘要指标卡片 */
+.pd-metric-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.pd-metric-card {
+  background: white; border-radius: 10px; padding: 14px; text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); border: 1px solid var(--color-border);
+}
+.pd-metric-icon { font-size: 20px; margin-bottom: 4px; }
+.pd-metric-value { font-size: 20px; font-weight: 700; color: var(--color-primary); }
+.pd-metric-label { font-size: 11px; color: var(--color-gray); margin-top: 2px; }
+
+/* 随访记录时间线增强 */
+.cr-timeline { position: relative; padding-left: 24px; }
+.cr-timeline::before {
+  content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px;
+  width: 2px; background: var(--color-border);
+}
+.cr-timeline-item {
+  position: relative; padding: 12px 0; font-size: 14px;
+}
+.cr-timeline-item::before {
+  content: ''; position: absolute; left: -20px; top: 18px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-primary); border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+.cr-timeline-date { font-size: 12px; color: var(--color-gray); margin-bottom: 4px; }
+.cr-timeline-type {
+  display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: var(--color-primary-bg); color: var(--color-primary); font-weight: 500;
+}
+.cr-timeline-content { margin-top: 6px; line-height: 1.6; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .ai-workspace-layout { flex-direction: column; height: auto; }
+  .ai-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--color-border); max-height: 200px; }
+  .ai-quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .ai-msg-bubble { max-width: 85%; }
+  .hp-template-grid { grid-template-columns: repeat(2, 1fr); }
+  .pd-metric-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -1013,25 +1358,9 @@ textarea.form-input { resize: vertical; min-height: 80px; }
           <div id="patients-content"></div>
         </div>
         
-        <!-- ===== 健康计划（占位） ===== -->
+        <!-- ===== 健康计划 v2.1 ===== -->
         <div id="page-health-plan" class="page-content">
-          <div class="placeholder-page">
-            <div class="placeholder-icon">📋</div>
-            <div class="placeholder-title">健康计划</div>
-            <div class="placeholder-desc">基于评估结果和体检数据，为每位客户生成个性化健康管理方案，追踪执行进度与效果评估。</div>
-            <div class="placeholder-features">
-              <h4>预期功能</h4>
-              <ul>
-                <li>基于评估结果自动生成健康建议</li>
-                <li>个性化营养与运动方案制定</li>
-                <li>随访计划与提醒设置</li>
-                <li>方案执行进度追踪</li>
-                <li>效果评估与方案调整</li>
-                <li>计划模板库</li>
-              </ul>
-            </div>
-            <div class="placeholder-badge">即将上线</div>
-          </div>
+          <div id="health-plan-content"></div>
         </div>
         
         <!-- ===== 问卷管理（开单） ===== -->
@@ -12174,6 +12503,7 @@ function switchPage(page, navItem) {
     case 'consultation': AdminApp.renderConsultation(); break;
     case 'checkup': AdminApp.renderCheckup(); break;
     case 'ai-workspace': AdminApp.renderAIWorkspace(); break;
+    case 'health-plan': AdminApp.renderHealthPlan(); break;
     case 'settings': AdminApp.renderSettings(); break;
   }
 }
@@ -12579,161 +12909,512 @@ const AdminApp = {
   },
 
   async showPatientDetail(name, phone) {
-    // 获取合并后的患者数据
+    // Store for tab switching
+    this._pdName = name;
+    this._pdPhone = phone;
+    this._pdTab = 'summary';
+    
+    // Fetch all data upfront
     let patientData = null;
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient.from('patients')
-          .select('*')
-          .eq('name', name)
-          .eq('phone', phone)
-          .maybeSingle();
+          .select('*').eq('name', name).eq('phone', phone).maybeSingle();
         if (!error && data) patientData = data;
       } catch(e) {}
     }
     
-    // 获取评估记录
     const assessmentPatient = await CloudBaseManager.getPatientFromCloud(name, phone);
     const records = assessmentPatient ? assessmentPatient.records : [];
     
-    // 获取体检记录
     let checkupRecords = [];
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient.from('health_checkups')
           .select('id,checkup_date,package_name,created_at')
-          .eq('patient_name', name)
-          .order('created_at', { ascending: false });
+          .eq('patient_name', name).order('created_at', { ascending: false });
         if (!error && data) checkupRecords = data;
       } catch(e) {}
     }
     
-    // 获取开单记录
     let prescriptions = [];
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient.from('prescriptions')
-          .select('*')
-          .eq('patient_name', name)
-          .order('created_at', { ascending: false });
+          .select('*').eq('patient_name', name).order('created_at', { ascending: false });
         if (!error && data) prescriptions = data;
       } catch(e) {}
     }
     
-    const initial = name.charAt(0);
+    // Store data for tab rendering
+    this._pdData = { patientData, records, checkupRecords, prescriptions };
+    
+    this._renderPatientDetail();
+  },
+
+  _renderPatientDetail() {
+    const name = this._pdName;
+    const phone = this._pdPhone;
+    const { patientData, records, checkupRecords, prescriptions } = this._pdData;
     const p = patientData || {};
-    const ageDisplay = p.age || (assessmentPatient ? '' : '-');
+    const initial = name.charAt(0);
     const genderDisplay = p.gender || '';
     
-    // 基本信息 - 存储患者数据用于编辑
-    const editData = JSON.stringify({
-      id: p.id || '', name, phone, age: p.age || '', gender: genderDisplay,
-      id_number: p.id_number || '', chief_complaint: p.chief_complaint || '',
-      medical_history: p.medical_history || '', allergy_history: p.allergy_history || '',
-      family_history: p.family_history || '', notes: p.notes || ''
-    }).replace(/"/g, '&quot;');
-    let infoHtml = `
-      <div class="info-card">
-        <h4>👤 基本信息 <button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:12px;" 
-          data-patient='${editData}' onclick="openEditPatientModalFromData(this)">✏️ 编辑</button></h4>
-        <div class="info-row"><div class="info-label">姓名</div><div class="info-value">${name}</div></div>
-        <div class="info-row"><div class="info-label">手机号</div><div class="info-value">${phone}</div></div>
-        <div class="info-row"><div class="info-label">性别</div><div class="info-value">${genderDisplay || '-'}</div></div>
-        <div class="info-row"><div class="info-label">年龄</div><div class="info-value">${p.age ? p.age + '岁' : '-'}</div></div>
-        ${p.id_number ? `<div class="info-row"><div class="info-label">身份证号</div><div class="info-value">${p.id_number}</div></div>` : ''}
-        ${p.chief_complaint ? `<div class="info-row"><div class="info-label">主诉</div><div class="info-value">${p.chief_complaint}</div></div>` : ''}
-        ${p.medical_history ? `<div class="info-row"><div class="info-label">既往病史</div><div class="info-value">${p.medical_history}</div></div>` : ''}
-        ${p.allergy_history ? `<div class="info-row"><div class="info-label">过敏史</div><div class="info-value">${p.allergy_history}</div></div>` : ''}
-        ${p.family_history ? `<div class="info-row"><div class="info-label">家族史</div><div class="info-value">${p.family_history}</div></div>` : ''}
-        ${p.notes ? `<div class="info-row"><div class="info-label">备注</div><div class="info-value">${p.notes}</div></div>` : ''}
-      </div>
-    `;
+    const tabs = [
+      { id: 'summary', label: '摘要', icon: '📊' },
+      { id: 'archive', label: '健康档案', icon: '📁' },
+      { id: 'tcm', label: '中医诊疗', icon: '🏥' },
+      { id: 'plan', label: '健康方案', icon: '💊' },
+      { id: 'tasks', label: '健康任务', icon: '✅' },
+      { id: 'records', label: '客户记录', icon: '📝' },
+      { id: 'aichat', label: 'AI对话', icon: '🤖' }
+    ];
     
-    // 评估记录时间线
-    let assessmentHtml = '';
-    if (records.length > 0) {
-      const dateGroups = {};
-      records.forEach(r => {
-        if (!dateGroups[r.date]) dateGroups[r.date] = [];
-        dateGroups[r.date].push(r);
-      });
-      
-      assessmentHtml += '<div class="info-card"><h4>📋 评估记录</h4><div class="timeline">';
-      Object.keys(dateGroups).sort().reverse().forEach(date => {
-        dateGroups[date].forEach(r => {
-          const levelColor = r.level ? r.level.color : 'gray';
-          assessmentHtml += `
-            <div class="timeline-item">
-              <div class="timeline-date">${date} ${r.time || ''}</div>
-              <div class="timeline-content">
-                <strong>${r.scaleName}</strong>
-                <span style="color:var(--color-${levelColor});font-weight:700;margin-left:8px;">${r.scoreDisplay}</span>
-                ${r.level ? `<span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>` : ''}
-                ${r.anxietyScore != null ? `<div style="font-size:13px;color:var(--color-text-secondary);">焦虑${r.anxietyScore}分(${r.anxietyLevel}) / 抑郁${r.depressionScore}分(${r.depressionLevel})</div>` : ''}
-                ${r.mainConstitution ? `<div style="font-size:13px;color:var(--color-text-secondary);">体质: ${r.mainConstitution}${r.tendencyConstitutions ? ' 倾向'+r.tendencyConstitutions.join('、') : ''}</div>` : ''}
-              </div>
-            </div>`;
-        });
-      });
-      assessmentHtml += '</div></div>';
-    }
-    
-    // 体检记录时间线
-    let checkupHtml = '';
-    if (checkupRecords.length > 0) {
-      checkupHtml += '<div class="info-card"><h4>🧬 体检记录</h4><div class="timeline">';
-      checkupRecords.forEach(r => {
-        checkupHtml += `
-          <div class="timeline-item">
-            <div class="timeline-date">${r.checkup_date}</div>
-            <div class="timeline-content">
-              <strong>${r.package_name || '体检'}</strong>
-              <div style="margin-top:4px;">
-                <button class="btn btn-outline btn-sm" style="font-size:12px;" 
-                  onclick="AdminApp.ckViewRpt('${r.id}')">查看报告</button>
-              </div>
-            </div>
-          </div>`;
-      });
-      checkupHtml += '</div></div>';
-    }
-    
-    // 开单记录
-    let prescriptionHtml = '';
-    if (prescriptions.length > 0) {
-      prescriptionHtml += '<div class="info-card"><h4>📝 开单记录</h4>';
-      prescriptions.forEach(rx => {
-        const scaleNames = (rx.scale_ids || []).map(id => {
-          const s = SCALES.find(sc => sc.id === id);
-          return s ? s.name : id;
-        });
-        const statusLabel = rx.status === 'completed' ? '<span style="color:var(--color-green);">已完成</span>' : '<span style="color:var(--color-orange);">待完成</span>';
-        prescriptionHtml += `
-          <div style="padding:10px 0;border-bottom:1px solid var(--color-border);font-size:14px;">
-            <div style="display:flex;justify-content:space-between;">
-              <span>${scaleNames.join('、')}</span>
-              ${statusLabel}
-            </div>
-            <div style="font-size:12px;color:var(--color-gray);margin-top:2px;">${new Date(rx.created_at).toLocaleDateString('zh-CN')}</div>
-          </div>`;
-      });
-      prescriptionHtml += '</div>';
-    }
+    const tabsHtml = tabs.map(t => 
+      `<div class="pd-tab${t.id===this._pdTab?' active':''}" onclick="AdminApp._switchPdTab('${t.id}')">${t.icon} ${t.label}</div>`
+    ).join('');
     
     document.getElementById('patients-content').innerHTML = `
-      <button class="btn btn-outline btn-sm" onclick="AdminApp.renderPatients()" style="margin-bottom:20px;">← 返回客户列表</button>
+      <button class="btn btn-outline btn-sm" onclick="AdminApp.renderPatients()" style="margin-bottom:16px;">← 返回客户列表</button>
       <div class="patient-detail-header">
         <div class="patient-detail-avatar">${initial}</div>
         <div class="patient-detail-info">
           <h3>${name}</h3>
           <div class="patient-detail-meta">${phone} ${genderDisplay} ${p.age ? p.age+'岁' : ''} · ${records.length}次评估 · ${checkupRecords.length}次体检</div>
         </div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-outline btn-sm" onclick="AdminApp._pdAddRecord()">＋ 添加记录</button>
+        </div>
       </div>
-      ${infoHtml}
-      ${assessmentHtml}
-      ${checkupHtml}
-      ${prescriptionHtml}
+      <div class="pd-tabs">${tabsHtml}</div>
+      <div id="pd-tab-content"></div>
     `;
+    
+    this._renderPdTabContent();
+  },
+
+  _switchPdTab(tab) {
+    this._pdTab = tab;
+    document.querySelectorAll('.pd-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    this._renderPdTabContent();
+  },
+
+  async _renderPdTabContent() {
+    const name = this._pdName;
+    const phone = this._pdPhone;
+    const { patientData, records, checkupRecords, prescriptions } = this._pdData;
+    const p = patientData || {};
+    const el = document.getElementById('pd-tab-content');
+    if (!el) return;
+    
+    switch(this._pdTab) {
+      case 'summary': el.innerHTML = await this._renderPdSummary(name, phone, p, records, checkupRecords); break;
+      case 'archive': el.innerHTML = this._renderPdArchive(name, phone, p, records, checkupRecords, prescriptions); break;
+      case 'tcm': el.innerHTML = this._renderPdTCM(name, phone); break;
+      case 'plan': el.innerHTML = await this._renderPdPlan(name, phone); break;
+      case 'tasks': el.innerHTML = await this._renderPdTasks(name, phone); break;
+      case 'records': el.innerHTML = await this._renderPdRecords(name, phone); break;
+      case 'aichat': el.innerHTML = await this._renderPdAIChat(name, phone); break;
+    }
+  },
+
+  async _renderPdSummary(name, phone, p, records, checkupRecords) {
+    // Fetch health plans for this patient
+    let healthPlans = [];
+    let activePlanCount = 0;
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plans').select('*').eq('patient_name', name);
+        if (data) { healthPlans = data; activePlanCount = data.filter(p => p.status === 'active').length; }
+      } catch(e) {}
+    }
+    
+    // Checkin stats (last 7 days)
+    let checkinCount7d = 0;
+    if (supabaseClient) {
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+        const { data, count } = await supabaseClient.from('checkin_records')
+          .select('*', { count: 'exact' }).eq('patient_name', name).gte('checkin_date', sevenDaysAgo);
+        if (count !== undefined) checkinCount7d = count;
+        else if (data) checkinCount7d = data.length;
+      } catch(e) {}
+    }
+    
+    // Latest checkup data for metrics
+    let latestCheckup = null;
+    if (supabaseClient && checkupRecords.length > 0) {
+      try {
+        const { data } = await supabaseClient.from('health_checkups').select('*')
+          .eq('id', checkupRecords[0].id).single();
+        if (data) latestCheckup = data;
+      } catch(e) {}
+    }
+    
+    // Metrics
+    const bmi = latestCheckup?.bmi || (p.age && p.gender ? '-' : '-');
+    const glucose = latestCheckup?.fasting_glucose || '-';
+    const sbp = latestCheckup?.systolic_bp || '-';
+    const dbp = latestCheckup?.diastolic_bp || '-';
+    const hr = latestCheckup?.heart_rate || '-';
+    
+    let html = `
+      <div class="pd-metric-grid">
+        <div class="pd-metric-card"><div class="pd-metric-icon">⚖️</div><div class="pd-metric-value">${bmi}</div><div class="pd-metric-label">BMI</div></div>
+        <div class="pd-metric-card"><div class="pd-metric-icon">🩸</div><div class="pd-metric-value">${glucose}</div><div class="pd-metric-label">空腹血糖</div></div>
+        <div class="pd-metric-card"><div class="pd-metric-icon">❤️</div><div class="pd-metric-value">${sbp==='-'?'-':sbp+'/'+dbp}</div><div class="pd-metric-label">血压</div></div>
+        <div class="pd-metric-card"><div class="pd-metric-icon">💓</div><div class="pd-metric-value">${hr}</div><div class="pd-metric-label">心率</div></div>
+        <div class="pd-metric-card"><div class="pd-metric-icon">📋</div><div class="pd-metric-value">${activePlanCount}</div><div class="pd-metric-label">活跃计划</div></div>
+        <div class="pd-metric-card"><div class="pd-metric-icon">✅</div><div class="pd-metric-value">${checkinCount7d}</div><div class="pd-metric-label">7日打卡</div></div>
+      </div>`;
+    
+    // Active plans overview
+    const activePlans = healthPlans.filter(p => p.status === 'active');
+    if (activePlans.length > 0) {
+      html += '<div class="info-card"><h4>📋 当前健康计划</h4>';
+      activePlans.forEach(pl => {
+        html += `<div style="padding:8px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;">
+          <div><strong>${pl.title}</strong><div style="font-size:12px;color:var(--color-gray);">${pl.start_date} ~ ${pl.end_date}</div></div>
+          <div style="text-align:right;"><span style="font-weight:700;color:var(--color-primary);">${pl.completion_rate||0}%</span><div style="font-size:11px;color:var(--color-gray);">完成率</div></div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+    
+    // Latest assessment summary
+    if (records.length > 0) {
+      html += '<div class="info-card"><h4>📋 最近评估</h4>';
+      records.slice(0, 3).forEach(r => {
+        const levelColor = r.level ? r.level.color : 'gray';
+        html += `<div style="padding:6px 0;font-size:14px;">
+          <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>
+          <span style="font-size:12px;color:var(--color-gray);margin-left:8px;">${r.date}</span>
+        </div>`;
+      });
+      html += '</div>';
+    }
+    
+    return html;
+  },
+
+  _renderPdArchive(name, phone, p, records, checkupRecords, prescriptions) {
+    const genderDisplay = p.gender || '';
+    const editData = JSON.stringify({
+      id: p.id || '', name, phone, age: p.age || '', gender: genderDisplay,
+      id_number: p.id_number || '', chief_complaint: p.chief_complaint || '',
+      medical_history: p.medical_history || '', allergy_history: p.allergy_history || '',
+      family_history: p.family_history || '', notes: p.notes || ''
+    }).replace(/"/g, '&quot;');
+    
+    let html = `<div class="info-card">
+      <h4>👤 基本信息 <button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:12px;" 
+        data-patient='${editData}' onclick="openEditPatientModalFromData(this)">✏️ 编辑</button></h4>
+      <div class="info-row"><div class="info-label">姓名</div><div class="info-value">${name}</div></div>
+      <div class="info-row"><div class="info-label">手机号</div><div class="info-value">${phone}</div></div>
+      <div class="info-row"><div class="info-label">性别</div><div class="info-value">${genderDisplay || '-'}</div></div>
+      <div class="info-row"><div class="info-label">年龄</div><div class="info-value">${p.age ? p.age + '岁' : '-'}</div></div>
+      ${p.id_number ? `<div class="info-row"><div class="info-label">身份证号</div><div class="info-value">${p.id_number}</div></div>` : ''}
+      ${p.chief_complaint ? `<div class="info-row"><div class="info-label">主诉</div><div class="info-value">${p.chief_complaint}</div></div>` : ''}
+      ${p.medical_history ? `<div class="info-row"><div class="info-label">既往病史</div><div class="info-value">${p.medical_history}</div></div>` : ''}
+      ${p.allergy_history ? `<div class="info-row"><div class="info-label">过敏史</div><div class="info-value">${p.allergy_history}</div></div>` : ''}
+      ${p.family_history ? `<div class="info-row"><div class="info-label">家族史</div><div class="info-value">${p.family_history}</div></div>` : ''}
+      ${p.notes ? `<div class="info-row"><div class="info-label">备注</div><div class="info-value">${p.notes}</div></div>` : ''}
+    </div>`;
+    
+    // 评估记录
+    if (records.length > 0) {
+      const dateGroups = {};
+      records.forEach(r => { if (!dateGroups[r.date]) dateGroups[r.date] = []; dateGroups[r.date].push(r); });
+      html += '<div class="info-card"><h4>📋 测评记录</h4><div class="timeline">';
+      Object.keys(dateGroups).sort().reverse().forEach(date => {
+        dateGroups[date].forEach(r => {
+          const levelColor = r.level ? r.level.color : 'gray';
+          html += `<div class="timeline-item">
+            <div class="timeline-date">${date} ${r.time || ''}</div>
+            <div class="timeline-content">
+              <strong>${r.scaleName}</strong>
+              <span style="color:var(--color-${levelColor});font-weight:700;margin-left:8px;">${r.scoreDisplay}</span>
+              ${r.level ? `<span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>` : ''}
+            </div>
+          </div>`;
+        });
+      });
+      html += '</div></div>';
+    }
+    
+    // 体检记录
+    if (checkupRecords.length > 0) {
+      html += '<div class="info-card"><h4>🧬 体检记录</h4><div class="timeline">';
+      checkupRecords.forEach(r => {
+        html += `<div class="timeline-item">
+          <div class="timeline-date">${r.checkup_date}</div>
+          <div class="timeline-content">
+            <strong>${r.package_name || '体检'}</strong>
+            <div style="margin-top:4px;"><button class="btn btn-outline btn-sm" style="font-size:12px;" onclick="AdminApp.ckViewRpt('${r.id}')">查看报告</button></div>
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+    
+    // 开单记录
+    if (prescriptions.length > 0) {
+      html += '<div class="info-card"><h4>📝 开单记录</h4>';
+      prescriptions.forEach(rx => {
+        const scaleNames = (rx.scale_ids || []).map(id => { const s = SCALES.find(sc => sc.id === id); return s ? s.name : id; });
+        const statusLabel = rx.status === 'completed' ? '<span style="color:var(--color-green);">已完成</span>' : '<span style="color:var(--color-orange);">待完成</span>';
+        html += `<div style="padding:10px 0;border-bottom:1px solid var(--color-border);font-size:14px;">
+          <div style="display:flex;justify-content:space-between;"><span>${scaleNames.join('、')}</span>${statusLabel}</div>
+          <div style="font-size:12px;color:var(--color-gray);margin-top:2px;">${new Date(rx.created_at).toLocaleDateString('zh-CN')}</div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+    
+    return html;
+  },
+
+  _renderPdTCM(name, phone) {
+    return `<div class="info-card">
+      <h4>🏥 中医诊疗</h4>
+      <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:16px;">跳转至中医诊疗模块查看该患者的诊疗记录</p>
+      <button class="btn btn-primary" onclick="switchPage('consultation',document.querySelector('[data-page=consultation]'))">进入中医诊疗</button>
+    </div>`;
+  },
+
+  async _renderPdPlan(name, phone) {
+    let healthPlans = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plans').select('*').eq('patient_name', name).order('created_at', { ascending: false });
+        if (data) healthPlans = data;
+      } catch(e) {}
+    }
+    
+    let html = '';
+    if (healthPlans.length === 0) {
+      html = '<div style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:32px;margin-bottom:8px;">📋</div><div>暂无健康方案</div></div>';
+    } else {
+      healthPlans.forEach(pl => {
+        const statusLabels = { active: '活跃中', completed: '已完成', expired: '已过期', paused: '已暂停' };
+        html += `<div class="hp-plan-card status-${pl.status}" onclick="switchPage('health-plan',document.querySelector('[data-page=health-plan]'))">
+          <div class="hp-plan-header">
+            <div class="hp-plan-title">${pl.title}</div>
+            <span class="hp-plan-status ${pl.status}">${statusLabels[pl.status]||pl.status}</span>
+          </div>
+          <div class="hp-plan-meta">${pl.duration_days}天 · ${pl.start_date||''} ~ ${pl.end_date||''}</div>
+          <div class="hp-progress-bar"><div class="hp-progress-fill${pl.status==='completed'?' completed':''}" style="width:${pl.completion_rate||0}%"></div></div>
+          <div class="hp-progress-text">完成率 ${pl.completion_rate||0}%</div>
+        </div>`;
+      });
+    }
+    return html;
+  },
+
+  async _renderPdTasks(name, phone) {
+    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+    html += '<h4 style="margin:0;font-size:15px;">今日任务</h4></div>';
+    
+    // Get active plans for this patient
+    let activePlans = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plans').select('id,title').eq('patient_name', name).eq('status', 'active');
+        if (data) activePlans = data;
+      } catch(e) {}
+    }
+    
+    if (activePlans.length === 0) {
+      return '<div style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:32px;margin-bottom:8px;">✅</div><div>暂无活跃任务</div></div>';
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    for (const plan of activePlans) {
+      let tasks = [];
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('health_tasks').select('*').eq('plan_id', plan.id).order('sort_order');
+          if (data) tasks = data;
+        } catch(e) {}
+      }
+      
+      let todayCheckins = [];
+      if (supabaseClient && tasks.length > 0) {
+        try {
+          const { data } = await supabaseClient.from('checkin_records').select('*')
+            .eq('plan_id', plan.id).eq('checkin_date', today);
+          if (data) todayCheckins = data;
+        } catch(e) {}
+      }
+      
+      const checkedIds = todayCheckins.map(c => c.task_id);
+      html += `<div class="info-card"><h4>${plan.title}</h4><div class="hp-checkin-grid">`;
+      tasks.forEach(t => {
+        const isChecked = checkedIds.includes(t.id);
+        const freqLabel = t.frequency==='daily'?'每日':t.frequency==='weekly'?'每周':'自定义';
+        html += `<div class="hp-checkin-item${isChecked?' checked':''}">
+          <div class="hp-checkin-checkbox${isChecked?' checked':''}" onclick="AdminApp.hpCheckin('${t.id}','${plan.id}',${isChecked})">
+            ${isChecked?'✓':''}
+          </div>
+          <div class="hp-checkin-text">${t.title}<div class="hp-checkin-freq">${freqLabel} · ${t.category||''}</div></div>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+    
+    return html;
+  },
+
+  async _renderPdRecords(name, phone) {
+    let customerRecords = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('customer_records').select('*')
+          .eq('patient_name', name).order('created_at', { ascending: false });
+        if (data) customerRecords = data;
+      } catch(e) {}
+    }
+    
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h4 style="margin:0;font-size:15px;">随访记录</h4>
+      <button class="btn btn-primary btn-sm" onclick="AdminApp._pdAddRecord()">＋ 添加记录</button>
+    </div>`;
+    
+    if (customerRecords.length === 0) {
+      html += '<div style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:32px;margin-bottom:8px;">📝</div><div>暂无随访记录</div><div style="font-size:13px;margin-top:4px;">点击"添加记录"开始</div></div>';
+    } else {
+      html += '<div class="cr-timeline">';
+      const typeLabels = { followup: '随访', phone: '电话', visit: '面诊', note: '备注' };
+      customerRecords.forEach(r => {
+        html += `<div class="cr-timeline-item">
+          <div class="cr-timeline-date">${r.followup_date || new Date(r.created_at).toLocaleDateString('zh-CN')}</div>
+          <span class="cr-timeline-type">${typeLabels[r.record_type]||r.record_type}</span>
+          ${r.title ? `<strong style="margin-left:8px;">${r.title}</strong>` : ''}
+          <div class="cr-timeline-content">${r.content}</div>
+          ${r.next_followup_date ? `<div style="font-size:12px;color:var(--color-orange);margin-top:4px;">📅 下次随访：${r.next_followup_date}</div>` : ''}
+          <div style="margin-top:4px;"><button class="btn btn-outline btn-sm" style="font-size:11px;color:var(--color-red);border-color:var(--color-red);" onclick="AdminApp._pdDeleteRecord('${r.id}')">删除</button></div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+    return html;
+  },
+
+  async _renderPdAIChat(name, phone) {
+    let conversations = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('ai_conversations').select('*')
+          .eq('patient_name', name).order('updated_at', { ascending: false }).limit(20);
+        if (data) conversations = data;
+      } catch(e) {}
+    }
+    
+    let html = `<div class="info-card">
+      <h4>🤖 AI对话记录</h4>
+      <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:16px;">与 ${name} 相关的AI对话</p>`;
+    
+    if (conversations.length === 0) {
+      html += '<div style="text-align:center;padding:20px;color:var(--color-gray);">暂无AI对话记录</div>';
+    } else {
+      conversations.forEach(c => {
+        const msgCount = (c.messages || []).length;
+        html += `<div style="padding:10px 0;border-bottom:1px solid var(--color-border);cursor:pointer;" onclick="AdminApp._pdViewAIConv('${c.id}')">
+          <div style="display:flex;justify-content:space-between;">
+            <strong>${c.title || '对话'}</strong>
+            <span style="font-size:12px;color:var(--color-gray);">${msgCount}条消息</span>
+          </div>
+          <div style="font-size:12px;color:var(--color-gray);margin-top:2px;">${new Date(c.created_at).toLocaleDateString('zh-CN')}</div>
+        </div>`;
+      });
+    }
+    
+    html += `</div>
+      <button class="btn btn-primary btn-block" onclick="AdminApp._pdStartAIChat()">🤖 开始AI对话</button>`;
+    return html;
+  },
+
+  _pdAddRecord() {
+    const name = this._pdName;
+    const phone = this._pdPhone;
+    const type = prompt('记录类型：\n1-随访  2-电话  3-面诊  4-备注\n请输入数字：', '1');
+    if (!type) return;
+    const typeMap = { '1': 'followup', '2': 'phone', '3': 'visit', '4': 'note' };
+    const recordType = typeMap[type] || 'followup';
+    const content = prompt('请输入记录内容：');
+    if (!content) return;
+    const title = prompt('标题（可选）：', '') || '';
+    const nextDate = prompt('下次随访日期（可选，格式YYYY-MM-DD）：', '') || null;
+    
+    const record = {
+      patient_name: name,
+      patient_phone: phone,
+      record_type: recordType,
+      title,
+      content,
+      followup_date: new Date().toISOString().split('T')[0],
+      next_followup_date: nextDate
+    };
+    
+    if (supabaseClient) {
+      supabaseClient.from('customer_records').insert(record).then(({ error }) => {
+        if (error) {
+          if (error.message && error.message.includes('does not exist')) {
+            alert('customer_records表尚未创建，请先执行建表SQL');
+          } else {
+            alert('保存失败：' + error.message);
+          }
+        } else {
+          this._renderPdTabContent();
+        }
+      });
+    }
+  },
+
+  async _pdDeleteRecord(id) {
+    if (!confirm('确定删除此记录？')) return;
+    if (supabaseClient) {
+      await supabaseClient.from('customer_records').delete().eq('id', id);
+      this._renderPdTabContent();
+    }
+  },
+
+  _pdStartAIChat() {
+    const name = this._pdName;
+    switchPage('ai-workspace', document.querySelector('[data-page=ai-workspace]'));
+    // Pre-fill with patient context
+    setTimeout(() => {
+      const input = document.getElementById('ai-input');
+      if (input) input.value = `[关于患者${name}] `;
+    }, 300);
+  },
+
+  async _pdViewAIConv(convId) {
+    if (!supabaseClient) return;
+    try {
+      const { data } = await supabaseClient.from('ai_conversations').select('*').eq('id', convId).single();
+      if (data && data.messages) {
+        const msgHtml = data.messages.map(m => {
+          const role = m.role === 'user' ? 'user' : 'assistant';
+          const icon = role === 'user' ? '👤' : '🤖';
+          let content = m.content || '';
+          content = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          content = content.replace(/\n/g, '<br>');
+          return `<div class="ai-msg ${role}"><div class="ai-msg-avatar">${icon}</div><div class="ai-msg-bubble">${content}</div></div>`;
+        }).join('');
+        
+        const el = document.getElementById('pd-tab-content');
+        el.innerHTML = `
+          <button class="btn btn-outline btn-sm" onclick="AdminApp._renderPdTabContent()" style="margin-bottom:12px;">← 返回对话列表</button>
+          <div class="info-card"><h4>${data.title || 'AI对话'}</h4></div>
+          <div style="padding:16px;background:white;border-radius:var(--radius);box-shadow:var(--shadow);">
+            ${msgHtml}
+          </div>`;
+      }
+    } catch(e) {}
   },
 
   // ========== 开单 ==========
@@ -12844,60 +13525,934 @@ const AdminApp = {
     if (ok) this.renderPrescribe();
   },
 
-  // ========== AI工作台 ==========
+  // ========== AI工作台 v2.1 ==========
+  _aiConversations: null, // 当前对话列表
+  _aiCurrentConvId: null, // 当前对话ID
+  _aiMessages: [], // 当前对话消息
+  _aiIsSending: false,
+
   renderAIWorkspace() {
+    // 加载对话列表
+    this._loadAIConversations();
+    
+    const convListHtml = this._renderAIConvList();
+    
     document.getElementById('ai-workspace-content').innerHTML = `
-      <div class="ai-chat-container">
-        <div class="ai-welcome">
-          <div class="ai-welcome-icon">🤖</div>
-          <h3>归元AI 智能助手</h3>
-          <p>基于功能医学知识，为您提供智能分析、报告生成和健康管理建议。<br/>AI助手即将接入，敬请期待。</p>
-        </div>
-        <div class="ai-templates">
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('分析患者报告')">
-            <div class="at-icon">📊</div>
-            <div class="at-title">分析患者报告</div>
-            <div class="at-desc">上传评估结果，AI自动生成综合分析</div>
+      <div class="ai-workspace-layout">
+        <div class="ai-sidebar">
+          <div class="ai-sidebar-header">
+            <h4>💬 AI助手</h4>
+            <button class="ai-new-chat-btn" onclick="AdminApp.aiNewChat()">＋ 新建对话</button>
           </div>
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('生成健康计划')">
-            <div class="at-icon">📋</div>
-            <div class="at-title">生成健康计划</div>
-            <div class="at-desc">基于评估数据，制定个性化方案</div>
-          </div>
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('解读体检指标')">
-            <div class="at-icon">🧬</div>
-            <div class="at-title">解读体检指标</div>
-            <div class="at-desc">智能解读异常指标与健康风险</div>
-          </div>
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('营养方案建议')">
-            <div class="at-icon">🥗</div>
-            <div class="at-title">营养方案建议</div>
-            <div class="at-desc">根据体质评估，定制营养干预方案</div>
-          </div>
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('随访话术生成')">
-            <div class="at-icon">💬</div>
-            <div class="at-title">随访话术生成</div>
-            <div class="at-desc">智能生成个性化随访沟通内容</div>
-          </div>
-          <div class="ai-template-btn" onclick="AdminApp.aiTemplate('知识问答')">
-            <div class="at-icon">❓</div>
-            <div class="at-title">知识问答</div>
-            <div class="at-desc">功能医学专业知识问答</div>
+          <div class="ai-conversation-list" id="ai-conv-list">
+            ${convListHtml}
           </div>
         </div>
-        <div class="ai-chat-input">
-          <input type="text" id="ai-input" placeholder="输入您的问题...（AI功能即将上线）" disabled />
-          <button disabled>发送</button>
-        </div>
-        <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--color-gray);">
-          AI助手基于Coze Bot构建，功能开发中
+        <div class="ai-main">
+          <div class="ai-main-header">
+            <h4 id="ai-conv-title">归元AI 智能助手</h4>
+            <div style="font-size:12px;color:var(--color-gray);" id="ai-coze-status"></div>
+          </div>
+          <div class="ai-chat-messages" id="ai-chat-messages">
+            ${this._renderAIWelcome()}
+          </div>
+          <div class="ai-chat-input-bar">
+            <textarea id="ai-input" rows="1" placeholder="输入您的问题... (Enter发送, Shift+Enter换行)" 
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();AdminApp.aiSendMessage();}"></textarea>
+            <button class="ai-send-btn" id="ai-send-btn" onclick="AdminApp.aiSendMessage()">➤</button>
+          </div>
         </div>
       </div>
     `;
+    this._updateAICozeStatus();
+    this._scrollAIToBottom();
   },
 
-  aiTemplate(template) {
-    alert('🤖 AI功能即将上线\n\n模板：' + template + '\n\n该功能正在开发中，敬请期待！');
+  _renderAIWelcome() {
+    return `
+      <div class="ai-welcome-page">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:40px;margin-bottom:8px;">🤖</div>
+          <h3 style="color:var(--color-primary-dark);font-size:18px;">归元AI 智能助手</h3>
+          <p style="color:var(--color-text-secondary);font-size:14px;">基于功能医学知识，为您提供智能分析与健康管理建议</p>
+        </div>
+        <div class="ai-prompt-tabs">
+          <div class="ai-prompt-tab active" onclick="AdminApp._switchPromptTab('quick',this)">快速提示</div>
+          <div class="ai-prompt-tab" onclick="AdminApp._switchPromptTab('workflow',this)">工作流提示</div>
+        </div>
+        <div id="ai-prompt-content">
+          ${this._renderQuickPrompts()}
+        </div>
+        <div style="margin-top:20px;">
+          <div style="font-size:13px;font-weight:600;color:var(--color-primary-dark);margin-bottom:8px;">⚡ 快捷操作</div>
+          <div class="ai-quick-actions">
+            <div class="ai-qa-card" onclick="switchPage('patients',document.querySelector('[data-page=patients]'))">
+              <div class="aq-icon">👤</div><div class="aq-text">新建档案</div>
+            </div>
+            <div class="ai-qa-card" onclick="switchPage('clinical-docs',document.querySelector('[data-page=clinical-docs]'))">
+              <div class="aq-icon">📄</div><div class="aq-text">资料上传</div>
+            </div>
+            <div class="ai-qa-card" onclick="switchPage('health-plan',document.querySelector('[data-page=health-plan]'))">
+              <div class="aq-icon">📋</div><div class="aq-text">健康计划</div>
+            </div>
+            <div class="ai-qa-card" onclick="AdminApp.aiSendPrompt('请推荐适合的检测项目和体检方案')">
+              <div class="aq-icon">🔬</div><div class="aq-text">检测推荐</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _renderQuickPrompts() {
+    const prompts = [
+      { icon: '📊', title: '分析患者报告', desc: '综合分析评估结果', prompt: '请帮我分析患者的评估报告数据，给出综合健康评估和关键风险提示' },
+      { icon: '📋', title: '生成健康计划', desc: '制定个性化方案', prompt: '请根据患者的评估数据，生成一份个性化的健康管理计划，包含营养、运动、生活方式建议' },
+      { icon: '🧬', title: '解读体检指标', desc: '解读异常指标风险', prompt: '请帮我解读以下体检指标，分析异常项的健康风险和改善建议：' },
+      { icon: '🥗', title: '营养方案建议', desc: '定制营养干预', prompt: '请根据功能医学原则，为该患者制定营养干预方案，包含营养素补充和饮食建议' },
+      { icon: '💬', title: '随访话术生成', desc: '个性化沟通内容', prompt: '请生成一段针对该患者的随访话术，包含关怀问候、症状追踪和依从性检查' },
+      { icon: '❓', title: '知识问答', desc: '功能医学问答', prompt: '请回答以下功能医学相关问题：' }
+    ];
+    return '<div class="ai-prompt-grid">' + prompts.map(p => `
+      <div class="ai-prompt-btn" onclick="AdminApp.aiSendPrompt('${p.prompt.replace(/'/g, "\'")}')">
+        <div class="ap-icon">${p.icon}</div>
+        <div class="ap-title">${p.title}</div>
+        <div class="ap-desc">${p.desc}</div>
+      </div>`).join('') + '</div>';
+  },
+
+  _renderWorkflowPrompts() {
+    const workflows = [
+      { icon: '📋', title: '健康计划制定流程', desc: '评估→方案→执行→追踪', prompt: '请按照功能医学健康计划制定流程，从评估、方案设计、执行到追踪，为我系统化地制定健康计划' },
+      { icon: '💊', title: '药物营养素相互作用', desc: '安全用药指导', prompt: '请分析以下药物与营养素的相互作用，包括影响吸收、代谢的潜在风险和调整建议：' },
+      { icon: '🔄', title: '功能医学5R修复', desc: 'Remove/Replace/Reinoculate/Repair/Rebalance', prompt: '请按照功能医学5R肠道修复方案（去除、替代、再接种、修复、再平衡），为该患者制定肠道修复计划' },
+      { icon: '☯️', title: '中医辨证论治', desc: '四诊合参辨证', prompt: '请根据中医辨证论治原则，对该患者进行辨证分析，给出证型、治法、方药和生活调护建议' },
+      { icon: '⏳', title: '抗衰方案设计', desc: '系统化抗衰管理', prompt: '请为该患者设计系统化的抗衰方案，涵盖激素平衡、营养优化、运动处方、睡眠管理和压力调节' }
+    ];
+    return '<div class="ai-prompt-grid">' + workflows.map(w => `
+      <div class="ai-prompt-btn" onclick="AdminApp.aiSendPrompt('${w.prompt.replace(/'/g, "\'")}')">
+        <div class="ap-icon">${w.icon}</div>
+        <div class="ap-title">${w.title}</div>
+        <div class="ap-desc">${w.desc}</div>
+      </div>`).join('') + '</div>';
+  },
+
+  _switchPromptTab(tab, el) {
+    document.querySelectorAll('.ai-prompt-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const content = document.getElementById('ai-prompt-content');
+    if (tab === 'quick') content.innerHTML = this._renderQuickPrompts();
+    else content.innerHTML = this._renderWorkflowPrompts();
+  },
+
+  _loadAIConversations() {
+    try {
+      this._aiConversations = JSON.parse(localStorage.getItem('guiyuan_ai_conversations') || '[]');
+    } catch(e) { this._aiConversations = []; }
+    // Also load from Supabase
+    this._syncAIConversationsFromCloud();
+  },
+
+  async _syncAIConversationsFromCloud() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient.from('ai_conversations')
+        .select('*').eq('source', 'workspace').order('updated_at', { ascending: false }).limit(50);
+      if (!error && data) {
+        // Merge: cloud conversations add to local if not exists
+        data.forEach(c => {
+          if (!this._aiConversations.find(lc => lc.id === c.id)) {
+            this._aiConversations.unshift({
+              id: c.id, title: c.title, messages: c.messages || [],
+              createdAt: c.created_at, updatedAt: c.updated_at
+            });
+          }
+        });
+        this._saveAIConversations();
+        this._renderAIConvList();
+      }
+    } catch(e) {}
+  },
+
+  _saveAIConversations() {
+    localStorage.setItem('guiyuan_ai_conversations', JSON.stringify(this._aiConversations));
+  },
+
+  _renderAIConvList() {
+    if (!this._aiConversations) return '';
+    return this._aiConversations.map(c => `
+      <div class="ai-conv-item${c.id === this._aiCurrentConvId ? ' active' : ''}" 
+        onclick="AdminApp.aiSelectConversation('${c.id}')">
+        💬 ${c.title || '新对话'}
+        <span class="ai-conv-del" onclick="event.stopPropagation();AdminApp.aiDeleteConversation('${c.id}')">✕</span>
+      </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--color-gray);font-size:13px;">暂无对话记录</div>';
+  },
+
+  aiNewChat() {
+    this._aiCurrentConvId = null;
+    this._aiMessages = [];
+    const msgEl = document.getElementById('ai-chat-messages');
+    if (msgEl) msgEl.innerHTML = this._renderAIWelcome();
+    document.getElementById('ai-conv-title').textContent = '归元AI 智能助手';
+    // Update sidebar
+    const listEl = document.getElementById('ai-conv-list');
+    if (listEl) listEl.innerHTML = this._renderAIConvList();
+  },
+
+  aiSelectConversation(id) {
+    const conv = this._aiConversations.find(c => c.id === id);
+    if (!conv) return;
+    this._aiCurrentConvId = id;
+    this._aiMessages = conv.messages || [];
+    document.getElementById('ai-conv-title').textContent = conv.title || '对话';
+    this._renderAIMessages();
+    const listEl = document.getElementById('ai-conv-list');
+    if (listEl) listEl.innerHTML = this._renderAIConvList();
+  },
+
+  aiDeleteConversation(id) {
+    if (!confirm('确定删除此对话？')) return;
+    this._aiConversations = this._aiConversations.filter(c => c.id !== id);
+    this._saveAIConversations();
+    // Delete from Supabase
+    if (supabaseClient) {
+      supabaseClient.from('ai_conversations').delete().eq('id', id).then(() => {});
+    }
+    if (this._aiCurrentConvId === id) {
+      this.aiNewChat();
+    } else {
+      const listEl = document.getElementById('ai-conv-list');
+      if (listEl) listEl.innerHTML = this._renderAIConvList();
+    }
+  },
+
+  _renderAIMessages() {
+    const msgEl = document.getElementById('ai-chat-messages');
+    if (!msgEl) return;
+    if (this._aiMessages.length === 0) {
+      msgEl.innerHTML = this._renderAIWelcome();
+      return;
+    }
+    msgEl.innerHTML = this._aiMessages.map(m => this._renderAIMsg(m)).join('');
+    this._scrollAIToBottom();
+  },
+
+  _renderAIMsg(msg) {
+    const role = msg.role === 'user' ? 'user' : 'assistant';
+    const icon = role === 'user' ? '👤' : '🤖';
+    // Simple markdown-ish rendering
+    let content = msg.content || '';
+    content = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    content = content.replace(/\n/g, '\n');
+    // Bold
+    content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Code blocks
+    content = content.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+    // Inline code
+    content = content.replace(/`(.+?)`/g, '<code>$1</code>');
+    // Line breaks
+    content = content.replace(/\n/g, '<br>');
+    
+    return `<div class="ai-msg ${role}">
+      <div class="ai-msg-avatar">${icon}</div>
+      <div class="ai-msg-bubble">${content}</div>
+    </div>`;
+  },
+
+  _scrollAIToBottom() {
+    setTimeout(() => {
+      const msgEl = document.getElementById('ai-chat-messages');
+      if (msgEl) msgEl.scrollTop = msgEl.scrollHeight;
+    }, 50);
+  },
+
+  async aiSendPrompt(prompt) {
+    document.getElementById('ai-input').value = prompt;
+    await this.aiSendMessage();
+  },
+
+  async aiSendMessage() {
+    if (this._aiIsSending) return;
+    const input = document.getElementById('ai-input');
+    const text = (input.value || '').trim();
+    if (!text) return;
+    
+    // Check coze config
+    const botId = localStorage.getItem('coze_bot_id');
+    const token = localStorage.getItem('coze_access_token');
+    if (!botId || !token) {
+      alert('请先在设置中配置扣子Bot ID和Access Token');
+      return;
+    }
+    
+    // Add user message
+    const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
+    this._aiMessages.push(userMsg);
+    input.value = '';
+    
+    // If no conversation, create one
+    if (!this._aiCurrentConvId) {
+      const convId = 'conv_' + Date.now();
+      const title = text.substring(0, 20) + (text.length > 20 ? '...' : '');
+      const conv = { id: convId, title, messages: this._aiMessages, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      this._aiConversations.unshift(conv);
+      this._aiCurrentConvId = convId;
+      document.getElementById('ai-conv-title').textContent = title;
+      const listEl = document.getElementById('ai-conv-list');
+      if (listEl) listEl.innerHTML = this._renderAIConvList();
+    }
+    
+    // Render messages
+    this._renderAIMessages();
+    
+    // Show typing indicator
+    this._aiIsSending = true;
+    const sendBtn = document.getElementById('ai-send-btn');
+    if (sendBtn) sendBtn.disabled = true;
+    
+    const msgEl = document.getElementById('ai-chat-messages');
+    msgEl.innerHTML += '<div class="ai-msg assistant" id="ai-typing"><div class="ai-msg-avatar">🤖</div><div class="ai-msg-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div></div>';
+    this._scrollAIToBottom();
+    
+    try {
+      // Build prompt with conversation history
+      let fullPrompt = text;
+      // If there's history, prepend context
+      if (this._aiMessages.length > 1) {
+        const history = this._aiMessages.slice(0, -1).map(m => 
+          (m.role === 'user' ? '用户：' : '助手：') + m.content
+        ).join('\n');
+        fullPrompt = '以下是之前的对话上下文：\n' + history + '\n\n用户最新问题：' + text;
+      }
+      
+      const response = await callCozeBot(fullPrompt);
+      
+      // Remove typing indicator
+      const typingEl = document.getElementById('ai-typing');
+      if (typingEl) typingEl.remove();
+      
+      // Add assistant message
+      const assistantMsg = { role: 'assistant', content: response || '抱歉，AI未返回有效回复。', timestamp: new Date().toISOString() };
+      this._aiMessages.push(assistantMsg);
+      
+      // Update conversation
+      const conv = this._aiConversations.find(c => c.id === this._aiCurrentConvId);
+      if (conv) {
+        conv.messages = this._aiMessages;
+        conv.updatedAt = new Date().toISOString();
+      }
+      this._saveAIConversations();
+      
+      // Save to Supabase
+      this._saveAIConversationToCloud();
+      
+      // Render
+      msgEl.innerHTML += this._renderAIMsg(assistantMsg);
+      this._scrollAIToBottom();
+    } catch(e) {
+      const typingEl = document.getElementById('ai-typing');
+      if (typingEl) typingEl.remove();
+      
+      const errorMsg = { role: 'assistant', content: '⚠️ AI请求失败：' + e.message, timestamp: new Date().toISOString() };
+      this._aiMessages.push(errorMsg);
+      msgEl.innerHTML += this._renderAIMsg(errorMsg);
+      this._scrollAIToBottom();
+    } finally {
+      this._aiIsSending = false;
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  },
+
+  async _saveAIConversationToCloud() {
+    if (!supabaseClient || !this._aiCurrentConvId) return;
+    try {
+      const conv = this._aiConversations.find(c => c.id === this._aiCurrentConvId);
+      if (!conv) return;
+      const record = {
+        id: conv.id,
+        title: conv.title,
+        messages: conv.messages,
+        source: 'workspace',
+        updated_at: new Date().toISOString()
+      };
+      // Try upsert
+      const { error } = await supabaseClient.from('ai_conversations').upsert(record, { onConflict: 'id' });
+      if (error && error.message && error.message.includes('does not exist')) {
+        // Table not created yet, silently ignore
+      }
+    } catch(e) {}
+  },
+
+  _updateAICozeStatus() {
+    const el = document.getElementById('ai-coze-status');
+    if (!el) return;
+    const botId = localStorage.getItem('coze_bot_id');
+    const token = localStorage.getItem('coze_access_token');
+    if (botId && token) {
+      el.innerHTML = '<span style="color:var(--color-green);">✅ AI已就绪</span>';
+    } else {
+      el.innerHTML = '<span style="color:var(--color-orange);">⚠️ 未配置Bot</span>';
+    }
+  },
+
+  // ========== 健康计划 v2.1 ==========
+  _healthPlans: [],
+  _healthPlanFilter: 'all',
+
+  async renderHealthPlan() {
+    this._healthPlanFilter = 'all';
+    await this._loadHealthPlans();
+    this._renderHealthPlanList();
+  },
+
+  async _loadHealthPlans() {
+    this._healthPlans = [];
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.from('health_plans')
+          .select('*').order('created_at', { ascending: false });
+        if (!error && data) this._healthPlans = data;
+      } catch(e) {}
+    }
+    // Also load from localStorage as fallback
+    try {
+      const local = JSON.parse(localStorage.getItem('guiyuan_health_plans') || '[]');
+      local.forEach(lp => {
+        if (!this._healthPlans.find(p => p.id === lp.id)) this._healthPlans.push(lp);
+      });
+    } catch(e) {}
+  },
+
+  _renderHealthPlanList() {
+    const filter = this._healthPlanFilter;
+    let plans = this._healthPlans;
+    if (filter !== 'all') plans = plans.filter(p => p.status === filter);
+    
+    const statusCounts = { all: this._healthPlans.length, active: 0, completed: 0, expired: 0, paused: 0 };
+    this._healthPlans.forEach(p => { if (statusCounts[p.status] !== undefined) statusCounts[p.status]++; });
+
+    let html = `
+      <div class="hp-layout">
+        <div class="hp-toolbar">
+          <button class="btn btn-primary btn-sm" onclick="AdminApp.hpShowCreateModal()">＋ 创建计划</button>
+          <div style="flex:1;"></div>
+          <button class="hp-filter-btn${filter==='all'?' active':''}" onclick="AdminApp.hpSetFilter('all')">全部(${statusCounts.all})</button>
+          <button class="hp-filter-btn${filter==='active'?' active':''}" onclick="AdminApp.hpSetFilter('active')">活跃中(${statusCounts.active})</button>
+          <button class="hp-filter-btn${filter==='completed'?' active':''}" onclick="AdminApp.hpSetFilter('completed')">已完成(${statusCounts.completed})</button>
+          <button class="hp-filter-btn${filter==='expired'?' active':''}" onclick="AdminApp.hpSetFilter('expired')">已过期(${statusCounts.expired})</button>
+        </div>
+        <div id="hp-plan-list">`;
+    
+    if (plans.length === 0) {
+      html += '<div style="text-align:center;padding:60px;color:var(--color-gray);"><div style="font-size:40px;margin-bottom:12px;">📋</div><div>暂无健康计划</div><div style="font-size:13px;margin-top:4px;">点击"创建计划"开始</div></div>';
+    } else {
+      plans.forEach(p => {
+        const rate = p.completion_rate || 0;
+        const statusLabels = { active: '活跃中', completed: '已完成', expired: '已过期', paused: '已暂停' };
+        html += `
+          <div class="hp-plan-card status-${p.status}" onclick="AdminApp.hpViewPlan('${p.id}')">
+            <div class="hp-plan-header">
+              <div class="hp-plan-title">${p.title}</div>
+              <span class="hp-plan-status ${p.status}">${statusLabels[p.status]||p.status}</span>
+            </div>
+            <div class="hp-plan-meta">${p.patient_name} · ${p.duration_days}天 · ${p.start_date||'未设定'}</div>
+            <div class="hp-progress-bar"><div class="hp-progress-fill${p.status==='completed'?' completed':''}" style="width:${rate}%"></div></div>
+            <div class="hp-progress-text">完成率 ${rate}%</div>
+          </div>`;
+      });
+    }
+    html += '</div></div>';
+    
+    document.getElementById('health-plan-content').innerHTML = html;
+  },
+
+  hpSetFilter(f) {
+    this._healthPlanFilter = f;
+    this._renderHealthPlanList();
+  },
+
+  async hpShowCreateModal() {
+    // Load patients for selection
+    let patients = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('patients').select('name,phone').order('name');
+        if (data) patients = data;
+      } catch(e) {}
+    }
+    
+    const patientOptions = patients.map(p => `<option value="${p.name}|${p.phone}">${p.name} (${p.phone})</option>`).join('');
+    
+    // Load templates
+    let templates = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plan_templates').select('*');
+        if (data) templates = data;
+      } catch(e) {}
+    }
+    // Fallback default templates
+    if (templates.length === 0) {
+      templates = [
+        { id: 't1', name: '更年期抗衰管理', category: '更年期管理', duration_days: 30 },
+        { id: 't2', name: 'POI/卵巢早衰调理', category: '卵巢调理', duration_days: 90 },
+        { id: 't3', name: '5R肠道修复', category: '肠道修复', duration_days: 30 },
+        { id: 't4', name: '抗炎饮食计划', category: '抗炎饮食', duration_days: 14 },
+        { id: 't5', name: '运动处方基础版', category: '运动处方', duration_days: 30 },
+        { id: 't6', name: '中医外治法疗程', category: '中医外治', duration_days: 30 }
+      ];
+    }
+    
+    const templateCards = templates.map(t => {
+      const icons = { '更年期管理': '🌸', '卵巢调理': '🥚', '肠道修复': '🔄', '抗炎饮食': '🥗', '运动处方': '🏃', '中医外治': '☯️' };
+      return `<div class="hp-template-card" data-tid="${t.id}" data-days="${t.duration_days}" onclick="AdminApp.hpSelectTemplate(this,'${t.id}')">
+        <div class="ht-icon">${icons[t.category]||'📋'}</div>
+        <div class="ht-name">${t.name}</div>
+        <div class="ht-days">${t.duration_days}天</div>
+      </div>`;
+    }).join('');
+    
+    const modalHtml = `
+      <div class="hp-create-modal" id="hp-create-modal" onclick="if(event.target===this)AdminApp.hpCloseCreateModal()">
+        <div class="hp-create-box">
+          <h3>📋 创建健康计划</h3>
+          <div class="form-group">
+            <label>选择客户 *</label>
+            <select id="hp-patient" class="form-input" style="padding:10px;">
+              <option value="">-- 选择客户 --</option>
+              ${patientOptions}
+            </select>
+            <div style="font-size:12px;color:var(--color-gray);margin-top:4px;">或手动输入：<input type="text" id="hp-patient-manual" placeholder="姓名" style="width:80px;padding:4px 8px;border:1px solid var(--color-border);border-radius:4px;font-size:12px;"> <input type="text" id="hp-phone-manual" placeholder="手机号" style="width:120px;padding:4px 8px;border:1px solid var(--color-border);border-radius:4px;font-size:12px;"></div>
+          </div>
+          <div class="form-group">
+            <label>计划标题 *</label>
+            <input type="text" id="hp-title" class="form-input" placeholder="如：更年期抗衰管理方案" />
+          </div>
+          <div class="form-group">
+            <label>选择模板</label>
+            <div class="hp-template-grid">${templateCards}</div>
+          </div>
+          <div class="form-group">
+            <label>计划时长</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="hp-filter-btn active" onclick="AdminApp.hpSetDuration(7,this)">7天</button>
+              <button class="hp-filter-btn" onclick="AdminApp.hpSetDuration(14,this)">14天</button>
+              <button class="hp-filter-btn" onclick="AdminApp.hpSetDuration(30,this)">30天</button>
+              <button class="hp-filter-btn" onclick="AdminApp.hpSetDuration(90,this)">90天</button>
+              <input type="number" id="hp-custom-days" placeholder="自定义天数" style="width:100px;padding:8px;border:1px solid var(--color-border);border-radius:20px;font-size:13px;text-align:center;" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>任务项</label>
+            <div id="hp-task-list" class="hp-task-list"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <input type="text" id="hp-new-task" class="form-input" placeholder="添加任务，如：服用维生素D 2000IU" style="flex:1;padding:10px;" />
+              <button class="btn btn-secondary btn-sm" onclick="AdminApp.hpAddTask()">添加</button>
+            </div>
+            <div style="font-size:12px;color:var(--color-gray);margin-top:4px;">
+              频率：<select id="hp-task-freq" style="padding:2px 6px;border:1px solid var(--color-border);border-radius:4px;font-size:12px;">
+                <option value="daily">每日</option><option value="weekly">每周</option><option value="custom">自定义</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea id="hp-description" class="form-input" rows="2" placeholder="计划说明（可选）"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary btn-lg" style="flex:1;" onclick="AdminApp.hpCreatePlan()">✅ 创建并推送</button>
+            <button class="btn btn-outline btn-lg" onclick="AdminApp.hpCloseCreateModal()">取消</button>
+          </div>
+        </div>
+      </div>`;
+    
+    // Append modal to body
+    const existing = document.getElementById('hp-create-modal');
+    if (existing) existing.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Init
+    this._hpSelectedTemplate = null;
+    this._hpDuration = 7;
+    this._hpTasks = [];
+  },
+
+  hpCloseCreateModal() {
+    const modal = document.getElementById('hp-create-modal');
+    if (modal) modal.remove();
+  },
+
+  hpSelectTemplate(el, tid) {
+    document.querySelectorAll('.hp-template-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    this._hpSelectedTemplate = tid;
+    // Auto-fill title if empty
+    const titleInput = document.getElementById('hp-title');
+    if (!titleInput.value) {
+      titleInput.value = el.querySelector('.ht-name').textContent;
+    }
+    // Set duration from template
+    const days = parseInt(el.dataset.days) || 30;
+    this._hpDuration = days;
+    document.getElementById('hp-custom-days').value = days;
+    // Load template tasks
+    this._loadTemplateTasks(tid);
+  },
+
+  async _loadTemplateTasks(tid) {
+    this._hpTasks = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plan_templates').select('tasks').eq('id', tid).single();
+        if (data && data.tasks) {
+          this._hpTasks = data.tasks.map((t, i) => ({
+            title: t.title, frequency: t.frequency || 'daily',
+            description: t.description || '', category: t.category || '生活方式',
+            sort_order: i
+          }));
+        }
+      } catch(e) {}
+    }
+    // Fallback default tasks for built-in templates
+    if (this._hpTasks.length === 0) {
+      const defaultTasks = {
+        't1': [
+          { title: '服用维生素D3 2000IU', frequency: 'daily', description: '每日早餐后服用', category: '营养' },
+          { title: '服用钙片600mg', frequency: 'daily', description: '每日晚餐后服用', category: '营养' },
+          { title: '每日步行30分钟', frequency: 'daily', description: '中等强度有氧运动', category: '运动' },
+          { title: '记录症状日记', frequency: 'daily', description: '潮热/情绪/睡眠', category: '生活方式' }
+        ],
+        't3': [
+          { title: '去除敏感食物', frequency: 'daily', description: '停食麸质/乳制品/糖', category: '营养' },
+          { title: '服用消化酶', frequency: 'daily', description: '随餐服用', category: '营养' },
+          { title: '服用益生菌', frequency: 'daily', description: '100亿CFU空腹', category: '营养' },
+          { title: '抗炎饮食', frequency: 'daily', description: '全阶段遵循', category: '营养' }
+        ]
+      };
+      if (defaultTasks[tid]) {
+        this._hpTasks = defaultTasks[tid].map((t, i) => ({ ...t, sort_order: i }));
+      }
+    }
+    this._renderHPTaskList();
+  },
+
+  _renderHPTaskList() {
+    const el = document.getElementById('hp-task-list');
+    if (!el) return;
+    if (this._hpTasks.length === 0) {
+      el.innerHTML = '<div style="color:var(--color-gray);font-size:13px;padding:8px 0;">暂未添加任务项</div>';
+      return;
+    }
+    el.innerHTML = this._hpTasks.map((t, i) => `
+      <div class="hp-task-item">
+        <span style="color:var(--color-primary);">${t.frequency==='daily'?'📅':t.frequency==='weekly'?'📆':'🔄'}</span>
+        <span style="flex:1;">${t.title} <span style="color:var(--color-gray);font-size:12px;">(${t.frequency==='daily'?'每日':t.frequency==='weekly'?'每周':'自定义'})</span></span>
+        <button class="hp-task-remove" onclick="AdminApp.hpRemoveTask(${i})">✕</button>
+      </div>`).join('');
+  },
+
+  hpAddTask() {
+    const input = document.getElementById('hp-new-task');
+    const freq = document.getElementById('hp-task-freq').value;
+    const title = input.value.trim();
+    if (!title) return;
+    this._hpTasks.push({
+      title, frequency: freq, description: '', category: '生活方式',
+      sort_order: this._hpTasks.length
+    });
+    input.value = '';
+    this._renderHPTaskList();
+  },
+
+  hpRemoveTask(index) {
+    this._hpTasks.splice(index, 1);
+    this._renderHPTaskList();
+  },
+
+  hpSetDuration(days, el) {
+    this._hpDuration = days;
+    document.querySelectorAll('.form-group .hp-filter-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.getElementById('hp-custom-days').value = '';
+  },
+
+  async hpCreatePlan() {
+    // Get patient
+    const patientSel = document.getElementById('hp-patient').value;
+    const manualName = document.getElementById('hp-patient-manual').value.trim();
+    const manualPhone = document.getElementById('hp-phone-manual').value.trim();
+    
+    let patientName, patientPhone;
+    if (patientSel) {
+      const parts = patientSel.split('|');
+      patientName = parts[0];
+      patientPhone = parts[1];
+    } else if (manualName) {
+      patientName = manualName;
+      patientPhone = manualPhone || '';
+    } else {
+      alert('请选择客户或手动输入姓名');
+      return;
+    }
+    
+    const title = document.getElementById('hp-title').value.trim();
+    if (!title) { alert('请输入计划标题'); return; }
+    
+    const description = document.getElementById('hp-description').value.trim();
+    const customDays = document.getElementById('hp-custom-days').value;
+    const durationDays = customDays ? parseInt(customDays) : this._hpDuration;
+    
+    const startDate = new Date().toISOString().split('T')[0];
+    const endDate = new Date(Date.now() + durationDays * 86400000).toISOString().split('T')[0];
+    
+    const plan = {
+      patient_name: patientName,
+      patient_phone: patientPhone,
+      title,
+      description,
+      template_id: this._hpSelectedTemplate || null,
+      status: 'active',
+      start_date: startDate,
+      end_date: endDate,
+      duration_days: durationDays,
+      completion_rate: 0
+    };
+    
+    try {
+      let planId;
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient.from('health_plans').insert(plan).select('id').single();
+        if (error) throw error;
+        planId = data.id;
+      } else {
+        planId = 'plan_' + Date.now();
+        plan.id = planId;
+      }
+      
+      // Create tasks
+      if (this._hpTasks.length > 0) {
+        const tasks = this._hpTasks.map((t, i) => ({
+          plan_id: planId,
+          patient_name: patientName,
+          patient_phone: patientPhone,
+          title: t.title,
+          description: t.description || '',
+          frequency: t.frequency || 'daily',
+          category: t.category || '生活方式',
+          is_completed: false,
+          sort_order: i
+        }));
+        
+        if (supabaseClient) {
+          await supabaseClient.from('health_tasks').insert(tasks);
+        }
+      }
+      
+      // Save to localStorage too
+      plan.id = planId;
+      let localPlans = [];
+      try { localPlans = JSON.parse(localStorage.getItem('guiyuan_health_plans') || '[]'); } catch(e) {}
+      localPlans.unshift(plan);
+      localStorage.setItem('guiyuan_health_plans', JSON.stringify(localPlans));
+      
+      alert('✅ 健康计划创建成功！已推送给 ' + patientName);
+      this.hpCloseCreateModal();
+      await this._loadHealthPlans();
+      this._renderHealthPlanList();
+    } catch(e) {
+      if (e.message && e.message.includes('does not exist')) {
+        alert('数据库表尚未创建，请先在Supabase SQL编辑器中执行建表SQL（create_v2_tables.sql）');
+      } else {
+        alert('创建失败：' + e.message);
+      }
+    }
+  },
+
+  async hpViewPlan(planId) {
+    // Load plan details
+    let plan = this._healthPlans.find(p => p.id === planId);
+    if (!plan) return;
+    
+    // Load tasks
+    let tasks = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_tasks')
+          .select('*').eq('plan_id', planId).order('sort_order');
+        if (data) tasks = data;
+      } catch(e) {}
+    }
+    
+    // Load today's checkin
+    let todayCheckins = [];
+    const today = new Date().toISOString().split('T')[0];
+    if (supabaseClient && tasks.length > 0) {
+      try {
+        const taskIds = tasks.map(t => t.id);
+        const { data } = await supabaseClient.from('checkin_records')
+          .select('*').in('task_id', taskIds).eq('checkin_date', today);
+        if (data) todayCheckins = data;
+      } catch(e) {}
+    }
+    
+    const statusLabels = { active: '活跃中', completed: '已完成', expired: '已过期', paused: '已暂停' };
+    const rate = plan.completion_rate || 0;
+    const checkedTaskIds = todayCheckins.map(c => c.task_id);
+    
+    let html = `
+      <button class="btn btn-outline btn-sm" onclick="AdminApp.renderHealthPlan()" style="margin-bottom:16px;">← 返回计划列表</button>
+      <div class="info-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+          <h4 style="margin-bottom:0;">${plan.title}</h4>
+          <span class="hp-plan-status ${plan.status}">${statusLabels[plan.status]||plan.status}</span>
+        </div>
+        <div class="info-row"><div class="info-label">客户</div><div class="info-value">${plan.patient_name} ${plan.patient_phone||''}</div></div>
+        <div class="info-row"><div class="info-label">时长</div><div class="info-value">${plan.duration_days}天</div></div>
+        <div class="info-row"><div class="info-label">日期</div><div class="info-value">${plan.start_date||'-'} ~ ${plan.end_date||'-'}</div></div>
+        ${plan.description ? `<div style="margin-top:8px;font-size:14px;color:var(--color-text-secondary);">${plan.description}</div>` : ''}
+        <div style="margin-top:12px;">
+          <div class="hp-progress-bar"><div class="hp-progress-fill${plan.status==='completed'?' completed':''}" style="width:${rate}%"></div></div>
+          <div class="hp-progress-text">完成率 ${rate}%</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          ${plan.status==='active'?`<button class="btn btn-outline btn-sm" onclick="AdminApp.hpPausePlan('${planId}')">⏸ 暂停</button>`:''}
+          ${plan.status==='paused'?`<button class="btn btn-primary btn-sm" onclick="AdminApp.hpResumePlan('${planId}')">▶ 恢复</button>`:''}
+          ${plan.status==='active'?`<button class="btn btn-outline btn-sm" onclick="AdminApp.hpCompletePlan('${planId}')">✅ 完成</button>`:''}
+          <button class="btn btn-outline btn-sm" style="color:var(--color-red);border-color:var(--color-red);" onclick="AdminApp.hpDeletePlan('${planId}')">🗑 删除</button>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <h4>📋 今日打卡 <span style="font-size:12px;color:var(--color-gray);font-weight:400;">${today}</span></h4>`;
+    
+    if (tasks.length === 0) {
+      html += '<div style="color:var(--color-gray);font-size:14px;padding:8px 0;">暂无任务项</div>';
+    } else {
+      html += '<div class="hp-checkin-grid">';
+      tasks.forEach(t => {
+        const isChecked = checkedTaskIds.includes(t.id);
+        const freqLabel = t.frequency==='daily'?'每日':t.frequency==='weekly'?'每周':'自定义';
+        html += `
+          <div class="hp-checkin-item${isChecked?' checked':''}">
+            <div class="hp-checkin-checkbox${isChecked?' checked':''}" onclick="AdminApp.hpCheckin('${t.id}','${planId}',${isChecked})">
+              ${isChecked?'✓':''}
+            </div>
+            <div class="hp-checkin-text">
+              ${t.title}
+              <div class="hp-checkin-freq">${freqLabel} · ${t.category||''}</div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    
+    // All checkin history
+    html += '<div class="info-card"><h4>📊 打卡统计</h4>';
+    if (tasks.length > 0 && supabaseClient) {
+      try {
+        const { data: allCheckins } = await supabaseClient.from('checkin_records')
+          .select('checkin_date,task_id').eq('plan_id', planId)
+          .order('checkin_date', { ascending: false }).limit(30);
+        if (allCheckins && allCheckins.length > 0) {
+          // Group by date
+          const dateGroups = {};
+          allCheckins.forEach(c => {
+            if (!dateGroups[c.checkin_date]) dateGroups[c.checkin_date] = [];
+            dateGroups[c.checkin_date].push(c.task_id);
+          });
+          html += '<div class="timeline">';
+          Object.keys(dateGroups).sort().reverse().slice(0, 10).forEach(date => {
+            const count = dateGroups[date].length;
+            html += `<div class="timeline-item">
+              <div class="timeline-date">${date}</div>
+              <div class="timeline-content"><strong>完成 ${count}/${tasks.length} 项</strong></div>
+            </div>`;
+          });
+          html += '</div>';
+        } else {
+          html += '<div style="color:var(--color-gray);font-size:14px;">暂无打卡记录</div>';
+        }
+      } catch(e) {
+        html += '<div style="color:var(--color-gray);font-size:14px;">暂无打卡记录</div>';
+      }
+    } else {
+      html += '<div style="color:var(--color-gray);font-size:14px;">暂无打卡记录</div>';
+    }
+    html += '</div>';
+    
+    document.getElementById('health-plan-content').innerHTML = html;
+  },
+
+  async hpCheckin(taskId, planId, isChecked) {
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      if (isChecked) {
+        // Uncheckin
+        if (supabaseClient) {
+          await supabaseClient.from('checkin_records').delete()
+            .eq('task_id', taskId).eq('checkin_date', today);
+        }
+      } else {
+        // Checkin
+        const task = { task_id: taskId, plan_id: planId, checkin_date: today };
+        // Get patient info from current plan
+        const plan = this._healthPlans.find(p => p.id === planId);
+        if (plan) {
+          task.patient_name = plan.patient_name;
+          task.patient_phone = plan.patient_phone;
+        }
+        if (supabaseClient) {
+          await supabaseClient.from('checkin_records').insert(task);
+        }
+      }
+      // Refresh view
+      this.hpViewPlan(planId);
+    } catch(e) {
+      alert('打卡操作失败：' + e.message);
+    }
+  },
+
+  async hpPausePlan(id) {
+    if (!confirm('确定暂停此计划？')) return;
+    if (supabaseClient) {
+      await supabaseClient.from('health_plans').update({ status: 'paused' }).eq('id', id);
+    }
+    await this._loadHealthPlans();
+    this.hpViewPlan(id);
+  },
+
+  async hpResumePlan(id) {
+    if (supabaseClient) {
+      await supabaseClient.from('health_plans').update({ status: 'active' }).eq('id', id);
+    }
+    await this._loadHealthPlans();
+    this.hpViewPlan(id);
+  },
+
+  async hpCompletePlan(id) {
+    if (!confirm('确定标记此计划为已完成？')) return;
+    if (supabaseClient) {
+      await supabaseClient.from('health_plans').update({ status: 'completed', completion_rate: 100 }).eq('id', id);
+    }
+    await this._loadHealthPlans();
+    this.hpViewPlan(id);
+  },
+
+  async hpDeletePlan(id) {
+    if (!confirm('确定删除此计划？此操作不可恢复！')) return;
+    if (supabaseClient) {
+      await supabaseClient.from('checkin_records').delete().eq('plan_id', id);
+      await supabaseClient.from('health_tasks').delete().eq('plan_id', id);
+      await supabaseClient.from('health_plans').delete().eq('id', id);
+    }
+    // Also remove from localStorage
+    let localPlans = [];
+    try { localPlans = JSON.parse(localStorage.getItem('guiyuan_health_plans') || '[]'); } catch(e) {}
+    localPlans = localPlans.filter(p => p.id !== id);
+    localStorage.setItem('guiyuan_health_plans', JSON.stringify(localPlans));
+    
+    await this._loadHealthPlans();
+    this._renderHealthPlanList();
   },
 
   // ========== 设置 ==========
@@ -12968,7 +14523,7 @@ const AdminApp = {
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
           <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">归元AI 健康管理平台</div></div>
-          <div class="info-row"><div class="info-label">版本</div><div class="info-value">2.0.0 平台版</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">2.1.0 AI工作台+健康计划</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
