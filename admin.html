@@ -14708,6 +14708,16 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     content += '<div class="ck-g3"><div class="ck-fg"><label>年龄 *</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期 *</label><input id="ck_date" type="date"></div></div>';
     content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_package" placeholder="如：女性甄选套餐"></div>';
     content += '</div>';
+    // === AI智能提取区 ===
+    content += '<div class="ck-card" style="margin-bottom:12px;border:2px solid var(--color-primary);background:linear-gradient(135deg,#F8F6FA,#F0E8FA)">';
+    content += '<div class="ck-title" style="color:var(--color-primary-dark)">🤖 AI智能提取</div>';
+    content += '<div style="font-size:13px;color:var(--color-gray);margin-bottom:8px">粘贴体检报告文本，AI自动提取指标并填入下方表单</div>';
+    content += '<textarea id="ck_aiInput" class="form-input" rows="6" placeholder="将体检报告文本粘贴到这里...支持格式：白细胞WBC 6.5 / 空腹血糖 5.2 mmol/L / 或直接粘贴整份报告文本，AI会自动识别提取"></textarea>';
+    content += '<div style="display:flex;gap:8px;margin-top:8px">';
+    content += '<button class="btn btn-primary" id="ck_aiBtn" onclick="AdminApp.ckAIExtract()">🤖 AI提取指标</button>';
+    content += '<span id="ck_aiStatus" style="line-height:38px;font-size:13px;color:var(--color-gray)"></span>';
+    content += '</div>';
+    content += '</div>';
     content += '<div id="ck_indicatorCards"></div>';
     content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存并生成解读</button>';
     content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckReset()" style="margin-top:8px">🔄 重置表单</button>';
@@ -15019,15 +15029,65 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
   ckChkAbn(k){const el=document.getElementById('cki_'+k);if(!el||el.type!=='number')return;const v=parseFloat(el.value);if(isNaN(v)){el.classList.remove('abnormal');return}const g=this.ckG(),f=this.CK_DIMS.flatMap(d=>d.fields).find(x=>x.k===k);if(!f||f.t!=='n')return;const rv=f.r(g);let ab=false;if(f.sp==='bmd')ab=v<-1;else if(rv[0]===0)ab=v>rv[1];else ab=v<rv[0]||v>rv[1];el.classList.toggle('abnormal',ab)},
 
   async ckSave(){
-    const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,dt=document.getElementById('ck_date').value,pk=document.getElementById('ck_package').value.trim();
+    const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,pk=document.getElementById('ck_package').value.trim(),dt=document.getElementById('ck_date').value;
     if(!nm){alert('请输入患者姓名');return}if(!ag){alert('请输入年龄');return}if(!dt){alert('请选择体检日期');return}
     const ind={};this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el)ind[f.k]=el.value})});
     const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
     try{
-      const data={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
-      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(data).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(data)}
-      alert('✅ 保存成功');this.ckReset();this.ckEditId=null;
-    }catch(e){alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存体检数据'}
+      // 1. 保存到 checkup_reports
+      const reportData={person_name:nm,phone:ph,age:ag,gender:gd,package_name:pk,report_date:dt,indicators:ind,ai_conclusion:null,risk_level:'green'};
+      const ip=this.ckInterpRec({indicators:ind,patient_gender:gd});
+      if(ip){reportData.dim_scores=ip.dim_scores;reportData.total_score=ip.overall_score;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):''}
+      await CloudBaseManager.sb.from('checkup_reports').insert(reportData);
+      // 2. 创建/更新 checkup_persons
+      let personId=null;
+      if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,last_checkup_date:dt,latest_risk_level:reportData.risk_level}).eq('id',personId)}}
+      if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,last_checkup_date:dt,latest_risk_level:reportData.risk_level,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
+      // 3. 兼容旧表 health_checkups
+      const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
+      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
+      alert('✅ 保存成功！风险等级：'+reportData.risk_level);this.ckReset();this.ckEditId=null;
+    }catch(e){console.error('[ckSave] error:',e);alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存并生成解读'}
+  },
+
+  async ckAIExtract() {
+    const input = document.getElementById('ck_aiInput')?.value?.trim();
+    if (!input) { alert('请先粘贴体检报告文本'); return; }
+    const btn = document.getElementById('ck_aiBtn');
+    const status = document.getElementById('ck_aiStatus');
+    btn.disabled = true; btn.textContent = '⏳ AI提取中...';
+    status.textContent = '正在调用AI分析报告，请稍候...';
+    status.style.color = 'var(--color-primary)';
+    try {
+      const botId = localStorage.getItem('coze_bot_id');
+      const token = localStorage.getItem('coze_access_token');
+      if (!botId || !token) { throw new Error('请先在设置中配置扣子Bot ID和Access Token'); }
+      let fieldList = '';
+      this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
+      const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
+      const result = await this.callCozeBot(prompt);
+      let jsonStr = result;
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (jsonMatch) jsonStr = jsonMatch[0];
+      const extracted = JSON.parse(jsonStr);
+      let filled = 0;
+      this.CK_DIMS.forEach(d => { d.fields.forEach(f => {
+        const el = document.getElementById('cki_' + f.k);
+        if (el && extracted[f.k] !== undefined && extracted[f.k] !== '') {
+          el.value = extracted[f.k];
+          filled++;
+          if (el.type === 'number') this.ckChkAbn(f.k);
+        }
+      }); });
+      status.textContent = '✅ AI提取完成！已填入 ' + filled + ' 个指标';
+      status.style.color = 'var(--color-green)';
+    } catch(e) {
+      console.error('[AI Extract] error:', e);
+      status.textContent = '❌ 提取失败: ' + (e.message || '未知错误');
+      status.style.color = 'var(--color-red)';
+    } finally {
+      btn.disabled = false; btn.textContent = '🤖 AI提取指标';
+    }
   },
 
   ckReset(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});this.ckEditId=null},
