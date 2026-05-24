@@ -1308,7 +1308,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
           <span class="nav-icon">🏥</span> 中医诊疗
         </div>
         <div class="nav-item" onclick="switchPage('checkup', this)" data-page="checkup">
-          <span class="nav-icon">🧬</span> 体检解读
+          <span class="nav-icon">🔬</span> 体检管理
         </div>
         <div class="nav-item" onclick="switchPage('ai-workspace', this)" data-page="ai-workspace">
           <span class="nav-icon">🤖</span> AI工作台
@@ -12468,7 +12468,7 @@ const PAGE_TITLES = {
   'health-plan': '📋 健康计划',
   'prescribe': '📝 问卷管理',
   'consultation': '🏥 中医诊疗',
-  'checkup': '🧬 体检解读',
+  'checkup': '🔬 体检管理',
   'ai-workspace': '🤖 AI工作台',
   'clinical-docs': '📄 临床文档',
   'knowledge': '📚 知识库',
@@ -14683,9 +14683,10 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
 
   renderCheckup() {
     const tabs = [
-      {id:'ck-input',label:'📋 体检录入'},
-      {id:'ck-interp',label:'🧠 智能解读'},
-      {id:'ck-records',label:'📊 体检记录'}
+      {id:'ck-dashboard',label:'📊 汇总看板'},
+      {id:'ck-upload',label:'📤 报告上传'},
+      {id:'ck-query',label:'🔍 报告查询'},
+      {id:'ck-convert',label:'🔄 转化管理'}
     ];
     let nav = '<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">';
     tabs.forEach((t,i) => {
@@ -14694,35 +14695,308 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     nav += '</div>';
 
     let content = nav;
-    content += '<div id="ck-input">';
-    content += '<div class="ck-card"><div class="ck-title">👤 患者基本信息</div>';
-    content += '<div class="ck-g2"><div class="ck-fg"><label>姓名 *</label><input id="ck_name" placeholder="患者姓名"></div><div class="ck-fg"><label>手机号</label><input id="ck_phone" placeholder="手机号" maxlength="11"></div></div>';
+
+    // Tab 1: 汇总看板
+    content += '<div id="ck-dashboard">';
+    content += '<div id="ck_dashboardContent" style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:40px;margin-bottom:12px;">📊</div><div>加载汇总看板...</div></div>';
+    content += '</div>';
+
+    // Tab 2: 报告上传（保留原有的体检录入功能+增强）
+    content += '<div id="ck-upload" style="display:none">';
+    content += '<div class="ck-card"><div class="ck-title">👤 体检人员信息</div>';
+    content += '<div class="ck-g2"><div class="ck-fg"><label>姓名 *</label><input id="ck_name" placeholder="体检者姓名"></div><div class="ck-fg"><label>手机号</label><input id="ck_phone" placeholder="手机号" maxlength="11"></div></div>';
     content += '<div class="ck-g3"><div class="ck-fg"><label>年龄 *</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期 *</label><input id="ck_date" type="date"></div></div>';
     content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_package" placeholder="如：女性甄选套餐"></div>';
     content += '</div>';
     content += '<div id="ck_indicatorCards"></div>';
-    content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存体检数据</button>';
+    content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存并生成解读</button>';
     content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckReset()" style="margin-top:8px">🔄 重置表单</button>';
     content += '</div>';
 
-    content += '<div id="ck-interp" style="display:none">';
-    content += '<div class="ck-card"><div class="ck-title">🔍 选择体检记录</div><select style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:12px" id="ck_interpSel" onchange="AdminApp.ckOnInterpSel()"><option value="">-- 请选择 --</option></select><button class="btn btn-primary btn-lg btn-block" onclick="AdminApp.ckRunInterp()" id="ck_interpBtn" disabled>🧠 生成解读报告</button></div>';
-    content += '<div id="ck_interpResult"></div>';
+    // Tab 3: 报告查询
+    content += '<div id="ck-query" style="display:none">';
+    content += '<div class="ck-card"><div class="ck-title">🔍 筛选条件</div>';
+    content += '<div class="ck-g3">';
+    content += '<div class="ck-fg"><label>风险等级</label><select id="ck_qrisk"><option value="">全部</option><option value="red">🔴 高危</option><option value="orange">🟠 中高</option><option value="yellow">🟡 关注</option><option value="green">🟢 正常</option></select></div>';
+    content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_qpkg" placeholder="套餐名称"></div>';
+    content += '<div class="ck-fg"><label>姓名</label><input id="ck_qname" placeholder="搜索姓名"></div>';
+    content += '</div>';
+    content += '<button class="btn btn-primary btn-sm" onclick="AdminApp.ckQueryReports()">查询</button>';
+    content += '<button class="btn btn-outline btn-sm" onclick="AdminApp.ckExportCSV()" style="margin-left:8px">📥 导出CSV</button>';
+    content += '</div>';
+    content += '<div id="ck_queryResults"></div>';
     content += '</div>';
 
-    content += '<div id="ck-records" style="display:none"><div id="ck_recordsList"></div></div>';
+    // Tab 4: 转化管理
+    content += '<div id="ck-convert" style="display:none">';
+    content += '<div id="ck_convertContent" style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:40px;margin-bottom:12px;">🔄</div><div>加载转化管理...</div></div>';
+    content += '</div>';
 
     document.getElementById('checkup-content').innerHTML = content;
     document.getElementById('ck_date').value = new Date().toISOString().split('T')[0];
     this.ckBuildCards();
+    // Auto-load dashboard
+    this.ckLoadDashboard();
   },
 
   ckSwitchTab(id, btn) {
     document.querySelectorAll('#checkup-content .btn-secondary').forEach(b=>b.classList.remove('active'));
     if(btn) btn.classList.add('active');
-    ['ck-input','ck-interp','ck-records'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none'});
-    if(id==='ck-records') this.ckLoadRecs();
-    if(id==='ck-interp') this.ckLoadInterp();
+    ['ck-dashboard','ck-upload','ck-query','ck-convert'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'block':'none'});
+    if(id==='ck-dashboard') this.ckLoadDashboard();
+    if(id==='ck-query') this.ckQueryReports();
+    if(id==='ck-convert') this.ckLoadConversion();
+  },
+
+  // ===== 汇总看板 =====
+  async ckLoadDashboard() {
+    const el = document.getElementById('ck_dashboardContent');
+    if(!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:40px;">加载中...</div>';
+
+    let persons = [], reports = [];
+    if(supabaseClient) {
+      try {
+        const {data:p} = await supabaseClient.from('checkup_persons').select('*');
+        if(p) persons = p;
+        const {data:r} = await supabaseClient.from('checkup_reports').select('*').order('created_at',{ascending:false});
+        if(r) reports = r;
+      } catch(e) { console.warn('[Dashboard] load error:', e); }
+    }
+
+    // Also count from health_checkups for backward compat
+    let legacyRecs = [];
+    if(supabaseClient) {
+      try {
+        const {data:h} = await supabaseClient.from('health_checkups').select('*');
+        if(h) legacyRecs = h;
+      } catch(e) {}
+    }
+
+    const total = persons.length + legacyRecs.length;
+    const riskCounts = {red:0, orange:0, yellow:0, green:0};
+    persons.forEach(p => { if(riskCounts[p.risk_level] !== undefined) riskCounts[p.risk_level]++; });
+    legacyRecs.forEach(r => {
+      const rl = r.data?.risk_level || 'green';
+      if(riskCounts[rl] !== undefined) riskCounts[rl]++;
+    });
+
+    const convCounts = {none:0, flagged:0, contacting:0, converted:0};
+    persons.forEach(p => { if(convCounts[p.conversion_status] !== undefined) convCounts[p.conversion_status]++; });
+
+    let html = '';
+    // Stats cards
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">';
+    html += `<div class="info-card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:var(--color-primary);">${total}</div><div style="font-size:12px;color:var(--color-gray);">体检总人数</div></div>`;
+    html += `<div class="info-card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#E74C3C;">${riskCounts.red}</div><div style="font-size:12px;color:var(--color-gray);">🔴 高危</div></div>`;
+    html += `<div class="info-card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#E67E22;">${riskCounts.orange}</div><div style="font-size:12px;color:var(--color-gray);">🟠 中高</div></div>`;
+    html += `<div class="info-card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#F39C12;">${riskCounts.yellow}</div><div style="font-size:12px;color:var(--color-gray);">🟡 关注</div></div>`;
+    html += `<div class="info-card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#27AE60;">${riskCounts.green}</div><div style="font-size:12px;color:var(--color-gray);">🟢 正常</div></div>`;
+    html += '</div>';
+
+    // Conversion funnel
+    const highRisk = riskCounts.red + riskCounts.orange;
+    const flagged = convCounts.flagged + convCounts.contacting;
+    const converted = convCounts.converted;
+    html += '<div class="ck-card"><div class="ck-title">🔄 转化漏斗</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+    html += `<div style="background:#E8E0F0;padding:12px 16px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;">${total}</div><div style="font-size:11px;">体检总人数</div></div>`;
+    html += '<div style="font-size:20px;">→</div>';
+    html += `<div style="background:#FDE8E8;padding:12px 16px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#E74C3C;">${highRisk}</div><div style="font-size:11px;">高+中风险</div></div>`;
+    html += '<div style="font-size:20px;">→</div>';
+    html += `<div style="background:#FFF3E0;padding:12px 16px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#E67E22;">${flagged}</div><div style="font-size:11px;">已标记跟进</div></div>`;
+    html += '<div style="font-size:20px;">→</div>';
+    html += `<div style="background:#E8F5E9;padding:12px 16px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#27AE60;">${converted}</div><div style="font-size:11px;">已转化抗衰</div></div>`;
+    if(highRisk > 0) {
+      html += `<div style="margin-left:12px;font-size:13px;color:var(--color-gray);">转化率 ${total>0?((converted/highRisk)*100).toFixed(1):0}%</div>`;
+    }
+    html += '</div></div>';
+
+    // Recent reports
+    if(reports.length > 0) {
+      html += '<div class="ck-card"><div class="ck-title">📋 最新体检报告</div>';
+      reports.slice(0, 10).forEach(r => {
+        const rlColors = {red:'#E74C3C',orange:'#E67E22',yellow:'#F39C12',green:'#27AE60'};
+        const rlLabels = {red:'高危',orange:'中高',yellow:'关注',green:'正常'};
+        const c = rlColors[r.risk_level]||'#999';
+        const l = rlLabels[r.risk_level]||'未知';
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-border);">`;
+        html += `<div><strong>${r.person_name||'未知'}</strong> <span style="color:var(--color-gray);font-size:12px;">${r.report_date||''} ${r.package_name||''}</span></div>`;
+        html += `<span style="background:${c}20;color:${c};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;">${l}</span>`;
+        html += `</div>`;
+      });
+      html += '</div>';
+    }
+
+    if(total === 0) {
+      html = '<div style="text-align:center;padding:60px;color:var(--color-gray);"><div style="font-size:48px;margin-bottom:12px;">🔬</div><div>暂无体检数据</div><div style="font-size:13px;margin-top:4px;">点击"报告上传"开始录入</div></div>';
+    }
+
+    el.innerHTML = html;
+  },
+
+  // ===== 报告查询 =====
+  async ckQueryReports() {
+    const el = document.getElementById('ck_queryResults');
+    if(!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:20px;">加载中...</div>';
+
+    let reports = [];
+    if(supabaseClient) {
+      try {
+        let q = supabaseClient.from('checkup_reports').select('*').order('created_at',{ascending:false});
+        const riskFilter = document.getElementById('ck_qrisk')?.value;
+        if(riskFilter) q = q.eq('risk_level', riskFilter);
+        const {data} = await q;
+        if(data) reports = data;
+      } catch(e) { console.warn('[Query] error:', e); }
+    }
+
+    // Also query legacy health_checkups
+    let legacyRecs = [];
+    if(supabaseClient) {
+      try {
+        const {data:h} = await supabaseClient.from('health_checkups').select('*').order('created_at',{ascending:false});
+        if(h) legacyRecs = h;
+      } catch(e) {}
+    }
+
+    const nameFilter = document.getElementById('ck_qname')?.value?.trim().toLowerCase();
+    if(nameFilter) {
+      reports = reports.filter(r => (r.person_name||'').toLowerCase().includes(nameFilter));
+      legacyRecs = legacyRecs.filter(r => (r.patient_name||'').toLowerCase().includes(nameFilter));
+    }
+
+    let html = '';
+    if(reports.length === 0 && legacyRecs.length === 0) {
+      html = '<div style="text-align:center;padding:40px;color:var(--color-gray);">暂无查询结果</div>';
+    } else {
+      // New format reports
+      reports.forEach(r => {
+        const rlColors = {red:'#E74C3C',orange:'#E67E22',yellow:'#F39C12',green:'#27AE60'};
+        const rlLabels = {red:'高危',orange:'中高',yellow:'关注',green:'正常'};
+        const c = rlColors[r.risk_level]||'#999';
+        const l = rlLabels[r.risk_level]||'未知';
+        html += `<div class="info-card" style="margin-bottom:8px;">`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;">`;
+        html += `<div><strong>${r.person_name||'未知'}</strong> <span style="color:var(--color-gray);font-size:12px;">${r.report_date||''} ${r.package_name||''}</span></div>`;
+        html += `<span style="background:${c}20;color:${c};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;">${l}</span>`;
+        html += `</div>`;
+        if(r.ai_conclusion) html += `<div style="margin-top:6px;font-size:13px;color:#555;">${r.ai_conclusion.substring(0,100)}${r.ai_conclusion.length>100?'...':''}</div>`;
+        html += `</div>`;
+      });
+      // Legacy records
+      if(reports.length === 0) {
+        legacyRecs.slice(0, 20).forEach(r => {
+          html += `<div class="info-card" style="margin-bottom:8px;">`;
+          html += `<div><strong>${r.patient_name||'未知'}</strong> <span style="color:var(--color-gray);font-size:12px;">${r.checkup_date||''}</span></div>`;
+          html += `</div>`;
+        });
+      }
+    }
+    el.innerHTML = html;
+  },
+
+  // ===== 转化管理 =====
+  async ckLoadConversion() {
+    const el = document.getElementById('ck_convertContent');
+    if(!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:20px;">加载中...</div>';
+
+    let persons = [];
+    if(supabaseClient) {
+      try {
+        const {data} = await supabaseClient.from('checkup_persons').select('*').in('risk_level', ['red','orange']).order('created_at',{ascending:false});
+        if(data) persons = data;
+      } catch(e) { console.warn('[Convert] error:', e); }
+    }
+
+    let html = '';
+    if(persons.length === 0) {
+      html = '<div style="text-align:center;padding:60px;color:var(--color-gray);"><div style="font-size:48px;margin-bottom:12px;">✅</div><div>暂无高潜力转化客户</div><div style="font-size:13px;margin-top:4px;">体检管理中标记的高风险人员将显示在此</div></div>';
+    } else {
+      html += `<div style="margin-bottom:12px;color:var(--color-gray);font-size:13px;">共 ${persons.length} 位高/中风险体检者</div>`;
+      persons.forEach(p => {
+        const rlColors = {red:'#E74C3C',orange:'#E67E22'};
+        const rlLabels = {red:'高危',orange:'中高'};
+        const c = rlColors[p.risk_level]||'#999';
+        const l = rlLabels[p.risk_level]||'';
+        const convLabels = {none:'待跟进',flagged:'已标记',contacting:'联系中',converted:'已转化'};
+        const cv = convLabels[p.conversion_status]||p.conversion_status;
+        html += `<div class="info-card" style="margin-bottom:8px;">`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;">`;
+        html += `<div><strong>${p.name}</strong> <span style="color:var(--color-gray);font-size:12px;">${p.age||''}岁 ${p.phone||''}</span> <span style="background:${c}20;color:${c};padding:1px 8px;border-radius:10px;font-size:11px;">${l}</span></div>`;
+        html += `<div style="display:flex;gap:6px;">`;
+        if(p.conversion_status === 'none') {
+          html += `<button class="btn btn-secondary btn-sm" onclick="AdminApp.ckFlagPerson('${p.id}')">🚩 标记</button>`;
+        }
+        if(p.conversion_status === 'flagged') {
+          html += `<button class="btn btn-secondary btn-sm" onclick="AdminApp.ckFlagPerson('${p.id}','contacting')">📞 联系中</button>`;
+        }
+        if(p.conversion_status !== 'converted') {
+          html += `<button class="btn btn-primary btn-sm" onclick="AdminApp.ckConvertToPatient('${p.id}')">➡️ 转为客户</button>`;
+        }
+        html += `</div></div>`;
+        if(p.conversion_status !== 'none') html += `<div style="font-size:12px;color:var(--color-gray);margin-top:4px;">状态：${cv}</div>`;
+        html += `</div>`;
+      });
+    }
+    el.innerHTML = html;
+  },
+
+  async ckFlagPerson(pid, status) {
+    if(!supabaseClient) return;
+    const newStatus = status || 'flagged';
+    try {
+      await supabaseClient.from('checkup_persons').update({conversion_status: newStatus, updated_at: new Date().toISOString()}).eq('id', pid);
+      await supabaseClient.from('conversion_records').insert({person_id: pid, action: newStatus, notes: ''});
+      this.ckLoadConversion();
+    } catch(e) { alert('标记失败：' + e.message); }
+  },
+
+  async ckConvertToPatient(pid) {
+    if(!supabaseClient) return;
+    if(!confirm('确认将此体检者转为抗衰客户？')) return;
+    try {
+      const {data:person} = await supabaseClient.from('checkup_persons').select('*').eq('id', pid).single();
+      if(!person) { alert('找不到体检人员'); return; }
+      // Create patient
+      const {data:newPatient} = await supabaseClient.from('patients').insert({
+        name: person.name,
+        phone: person.phone || '',
+        age: person.age,
+        gender: person.gender,
+        tags: [{'source':'体检转化','risk':person.risk_level}]
+      }).select('id').single();
+      // Update person
+      await supabaseClient.from('checkup_persons').update({
+        conversion_status: 'converted',
+        converted_patient_id: newPatient?.id,
+        updated_at: new Date().toISOString()
+      }).eq('id', pid);
+      await supabaseClient.from('conversion_records').insert({person_id: pid, action: 'converted', notes: '转为抗衰客户'});
+      alert('✅ 已成功转为抗衰客户！');
+      this.ckLoadConversion();
+    } catch(e) { alert('转化失败：' + e.message); }
+  },
+
+  async ckExportCSV() {
+    let reports = [];
+    if(supabaseClient) {
+      try {
+        const {data} = await supabaseClient.from('checkup_reports').select('*').order('created_at',{ascending:false});
+        if(data) reports = data;
+      } catch(e) {}
+    }
+    if(reports.length === 0) { alert('暂无数据导出'); return; }
+    let csv = '姓名,日期,套餐,风险等级,结论\n';
+    reports.forEach(r => {
+      csv += `"${r.person_name||''}","${r.report_date||''}","${r.package_name||''}","${r.risk_level||''}","${(r.ai_conclusion||'').replace(/"/g,'""')}"\n`;
+    });
+    const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = '体检报告_'+new Date().toISOString().split('T')[0]+'.csv'; a.click();
+    URL.revokeObjectURL(url);
   },
 
   ckBuildCards() {
