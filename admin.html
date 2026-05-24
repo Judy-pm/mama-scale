@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>归元AI - 管理后台</title>
+  <title>归元AI v2.2 - 管理后台</title>
   <style>
 /* ========== 归元AI管理平台 - 主样式 ========== */
 
@@ -14275,9 +14275,11 @@ const AdminApp = {
     try {
       let planId;
       if (supabaseClient) {
+        console.log('[hpCreatePlan] 插入health_plans:', JSON.stringify(plan));
         const { data, error } = await supabaseClient.from('health_plans').insert(plan).select('id').single();
-        if (error) throw error;
+        if (error) { console.error('[hpCreatePlan] insert error:', error); throw new Error(error.message || JSON.stringify(error)); }
         planId = data.id;
+        console.log('[hpCreatePlan] planId:', planId);
       } else {
         planId = 'plan_' + Date.now();
         plan.id = planId;
@@ -14298,7 +14300,8 @@ const AdminApp = {
         }));
         
         if (supabaseClient) {
-          await supabaseClient.from('health_tasks').insert(tasks);
+          const { error: tErr } = await supabaseClient.from('health_tasks').insert(tasks);
+          if (tErr) console.warn('[hpCreatePlan] tasks insert warning:', tErr);
         }
       }
       
@@ -14314,11 +14317,8 @@ const AdminApp = {
       await this._loadHealthPlans();
       this._renderHealthPlanList();
     } catch(e) {
-      if (e.message && e.message.includes('does not exist')) {
-        alert('数据库表尚未创建，请先在Supabase SQL编辑器中执行建表SQL（create_v2_tables.sql）');
-      } else {
-        alert('创建失败：' + e.message);
-      }
+      console.error('[hpCreatePlan] 完整错误:', e);
+      alert('创建失败：' + (e.message || e));
     }
   },
 
