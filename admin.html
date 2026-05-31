@@ -15035,14 +15035,14 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
     try{
       // 1. 保存到 checkup_reports
-      const reportData={person_name:nm,phone:ph,age:ag,gender:gd,package_name:pk,report_date:dt,indicators:ind,ai_conclusion:null,risk_level:'green'};
+      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green'};
       const ip=this.ckInterpRec({indicators:ind,patient_gender:gd});
-      if(ip){reportData.dim_scores=ip.dim_scores;reportData.total_score=ip.overall_score;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):''}
+      if(ip){reportData.dimension_scores=ip.dim_scores;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):'';reportData.ai_recommendation=ip.recommendations?ip.recommendations.map(r=>r.suggest).join('\n'):''}
       await CloudBaseManager.sb.from('checkup_reports').insert(reportData);
       // 2. 创建/更新 checkup_persons
       let personId=null;
-      if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,last_checkup_date:dt,latest_risk_level:reportData.risk_level}).eq('id',personId)}}
-      if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,last_checkup_date:dt,latest_risk_level:reportData.risk_level,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
+      if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level}).eq('id',personId)}}
+      if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
       // 3. 兼容旧表 health_checkups
       const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
       if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
