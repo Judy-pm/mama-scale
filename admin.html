@@ -13901,10 +13901,9 @@ const AdminApp = {
   _updateAICozeStatus() {
     const el = document.getElementById('ai-coze-status');
     if (!el) return;
-    const botId = localStorage.getItem('coze_bot_id');
-    const token = localStorage.getItem('coze_access_token');
-    if (botId && token) {
-      el.innerHTML = '<span style="color:var(--color-green);">✅ AI已就绪</span>';
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (apiKey && apiKey.startsWith('sk-')) {
+      el.innerHTML = '<span style="color:var(--color-green);">✅ AI已就绪（DeepSeek免费）</span>';
     } else {
       el.innerHTML = '<span style="color:var(--color-orange);">⚠️ 未配置Bot</span>';
     }
