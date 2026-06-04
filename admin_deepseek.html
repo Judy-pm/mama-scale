@@ -15297,27 +15297,44 @@ tcmStartRecording() {
   if (status) status.textContent = '正在请求麦克风权限...';
   if (transcriptEl) transcriptEl.value = '';
 
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' 
+    : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+    : MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg' : '';
+
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     this.tcmAudioStream = stream;
-    this.tcmMediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    const options = mimeType ? { mimeType } : {};
+    this.tcmMediaRecorder = new MediaRecorder(stream, options);
     this.tcmAudioChunks = [];
+    console.log('[录音] MediaRecorder mimeType:', mimeType || 'default');
 
     this.tcmMediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) this.tcmAudioChunks.push(e.data);
+      if (e.data.size > 0) {
+        this.tcmAudioChunks.push(e.data);
+        console.log('[录音] 收到音频片段:', e.data.size, '字节');
+      }
     };
 
     this.tcmMediaRecorder.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
-      const blob = new Blob(this.tcmAudioChunks, { type: 'audio/webm' });
-      this.tcmTranscribeAudio(blob);
+      const bt = mimeType || 'audio/webm';
+      const blob = new Blob(this.tcmAudioChunks, { type: bt });
+      console.log('[录音] 停止，音频块数:', this.tcmAudioChunks.length, '，总大小:', blob.size, '字节');
+      if (blob.size > 0) {
+        this.tcmTranscribeAudio(blob);
+      } else {
+        if (status) status.textContent = '⚠️ 录音为空，请重试';
+        if (btn) btn.disabled = false;
+      }
     };
 
-    this.tcmMediaRecorder.start();
+    this.tcmMediaRecorder.start(1000);
     this.tcmRecording = true;
     this.tcmUpdateRecBtn();
     if (status) status.textContent = '🎙 录音中...（最长60分钟）';
   }).catch(e => {
-    if (status) status.textContent = '麦克风权限被拒绝';
+    console.error('[录音] 麦克风错误:', e);
+    if (status) status.textContent = '麦克风权限被拒绝: ' + e.message;
     alert('无法访问麦克风：请在浏览器设置中允许麦克风权限');
   });
 },
@@ -15340,6 +15357,8 @@ async tcmTranscribeAudio(blob) {
   if (status) status.textContent = '🔄 转写中，请稍候...';
   if (btn) btn.disabled = true;
 
+  console.log('[转写] 开始，blob大小:', blob.size, 'bytes, type:', blob.type);
+
   try {
     const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) {
@@ -15354,18 +15373,22 @@ async tcmTranscribeAudio(blob) {
     formData.append('model', 'FunAudioLLM/SenseVoiceSmall');
     formData.append('language', 'zh');
 
+    console.log('[转写] 发送请求到硅基流动...');
     const response = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + apiKey },
       body: formData
     });
 
+    console.log('[转写] 响应状态:', response.status, response.statusText);
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || '转写失败');
+      console.error('[转写] API错误:', err);
+      throw new Error(err.message || '转写失败(' + response.status + ')');
     }
 
     const result = await response.json();
+    console.log('[转写] 成功:', result);
     const text = result.text || '';
     if (transcriptEl) {
       transcriptEl.value = text;
@@ -15373,7 +15396,7 @@ async tcmTranscribeAudio(blob) {
     }
     if (status) status.textContent = text ? '✅ 转写完成' : '⚠️ 未识别到文字，请重试';
   } catch(e) {
-    console.error('转写错误:', e);
+    console.error('[转写] 失败:', e);
     if (status) status.textContent = '❌ 转写失败: ' + e.message;
     alert('语音转写失败：' + e.message + '\n\n可尝试：直接输入文字或重新录音');
   } finally {
