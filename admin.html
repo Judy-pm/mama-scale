@@ -13796,7 +13796,7 @@ const AdminApp = {
     const botId = localStorage.getItem('coze_bot_id');
     const token = localStorage.getItem('coze_access_token');
     if (!botId || !token) {
-      alert('请先在设置中配置扣子Bot ID和Access Token');
+      alert('请先在设置中配置DeepSeek ID和Access Token');
       return;
     }
     
@@ -14497,7 +14497,7 @@ const AdminApp = {
           <h4>🤖 AI配置</h4>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);">
             <div>
-              <div style="font-weight:600;">扣子Bot ID</div>
+              <div style="font-weight:600;">DeepSeek ID</div>
               <div style="font-size:13px;color:var(--color-gray);">在扣子平台创建Bot后获取</div>
             </div>
             <button class="btn btn-outline btn-sm" onclick="AdminApp.configCozeSettings()">配置</button>
@@ -15077,7 +15077,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     try {
       const botId = localStorage.getItem('coze_bot_id');
       const token = localStorage.getItem('coze_access_token');
-      if (!botId || !token) { throw new Error('请先在设置中配置扣子Bot ID和Access Token'); }
+      if (!botId || !token) { throw new Error('请先在设置中配置DeepSeek ID和Access Token'); }
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
       const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
@@ -15553,7 +15553,7 @@ async tcmAISummarizeTranscript() {
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
   const botId = localStorage.getItem('coze_bot_id');
   const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
+  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
   
   const btn = event.target.closest('button');
   const orig = btn.innerHTML;
@@ -15724,7 +15724,7 @@ tcmAutoDifferentiate() {
 async tcmAIDiagnosis() {
   const botId = localStorage.getItem('coze_bot_id');
   const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
+  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
   if (!chief) { alert('请先填写主诉'); return; }
   
@@ -15978,7 +15978,7 @@ async tcmSaveFollowup() {
 async tcmAIFollowupAnalysis() {
   const botId = localStorage.getItem('coze_bot_id');
   const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置扣子Bot ID和Access Token'); return; }
+  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
   const p = this.tcmCurrentPatient;
   if (!p) return;
   
@@ -16140,101 +16140,67 @@ async tcmViewArchiveRecord(id) {
 },
 
 // ========== DeepSeek配置 ==========
-// ========== 扣子Bot配置 ==========
+// ========== DeepSeek配置 ==========
 async callCozeBot(prompt) {
-  const botId = localStorage.getItem('coze_bot_id');
-  const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) throw new Error('请先在设置中配置扣子Bot ID和Access Token');
+  // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow DeepSeek
+  const apiKey = localStorage.getItem('coze_access_token');
+  if (!apiKey) throw new Error('请先在设置中配置 DeepSeek API密钥');
   
-  // 创建对话
-  const createResp = await fetch('https://api.coze.cn/v3/chat', {
+  const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
+      'Authorization': 'Bearer ' + apiKey
     },
     body: JSON.stringify({
-      bot_id: botId,
-      user_id: 'guiyuan_admin_' + Date.now(),
-      stream: false,
-      auto_save_history: false,
-      additional_messages: [{
-        role: 'user',
-        content: prompt,
-        content_type: 'text'
-      }]
+      model: 'deepseek-ai/DeepSeek-V3',
+      messages: [{ role: 'user', content: prompt }],
+      stream: false
     })
   });
   
-  const createResult = await createResp.json();
-  if (createResult.code !== 0) throw new Error(createResult.msg || '扣子API调用失败');
-  
-  const chatId = createResult.data.id;
-  const conversationId = createResult.data.conversation_id;
-  
-  // 轮询结果（最多60秒）
-  let attempts = 0;
-  while (attempts < 60) {
-    await new Promise(r => setTimeout(r, 1000));
-    const checkResp = await fetch(
-      `https://api.coze.cn/v3/chat/retrieve?chat_id=${chatId}&conversation_id=${conversationId}`,
-      { headers: { 'Authorization': 'Bearer ' + token } }
-    );
-    const checkResult = await checkResp.json();
-    
-    if (checkResult.data && checkResult.data.status === 'completed') {
-      const msgResp = await fetch(
-        `https://api.coze.cn/v3/chat/message/list?chat_id=${chatId}&conversation_id=${conversationId}`,
-        { headers: { 'Authorization': 'Bearer ' + token } }
-      );
-      const msgResult = await msgResp.json();
-      const answer = (msgResult.data || []).find(m => m.role === 'assistant' && m.type === 'answer');
-      return answer ? answer.content : '';
-    }
-    if (checkResult.data && ['failed', 'requires_action'].includes(checkResult.data.status)) {
-      throw new Error('AI处理失败: ' + (checkResult.data.last_error?.msg || '未知错误'));
-    }
-    attempts++;
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error('DeepSeek API调用失败: ' + (err.error?.message || response.statusText));
   }
-  throw new Error('AI响应超时');
+  
+  const result = await response.json();
+  return result.choices && result.choices[0] && result.choices[0].message
+    ? result.choices[0].message.content
+    : '';
 },
 
 configCozeSettings() {
-  const currentBotId = localStorage.getItem('coze_bot_id')||'';
-  const currentToken = localStorage.getItem('coze_access_token')||'';
-  const botId = prompt('请输入扣子Bot ID：', currentBotId);
-  if(botId===null) return;
-  const token = prompt('请输入扣子Access Token（Personal Access Token）：', currentToken);
-  if(token===null) return;
-  if(botId.trim()){
-    localStorage.setItem('coze_bot_id', botId.trim());
-  } else {
-    localStorage.removeItem('coze_bot_id');
-  }
-  if(token.trim()){
-    localStorage.setItem('coze_access_token', token.trim());
-  } else {
+  // 改为配置 DeepSeek API密钥（复用 coze_access_token 字段存储）
+  const currentKey = localStorage.getItem('coze_access_token')||'';
+  const key = prompt('请输入 DeepSeek API密钥（硅基流动 sk-xxx）：', currentKey);
+  if(key===null) return;
+  if(key.trim() && key.trim().startsWith('sk-')){
+    localStorage.setItem('coze_access_token', key.trim());
+    alert('DeepSeek API密钥配置成功！归元AI现已免费使用。');
+  } else if(!key.trim()) {
     localStorage.removeItem('coze_access_token');
+    alert('已清除API密钥');
+  } else {
+    alert('密钥格式错误，应以 sk- 开头');
   }
-  alert('扣子配置已保存');
   this.updateCozeStatus();
 },
 
 updateCozeStatus() {
-  const botId = localStorage.getItem('coze_bot_id');
-  const token = localStorage.getItem('coze_access_token');
+  const apiKey = localStorage.getItem('coze_access_token');
   const statusEl = document.getElementById('coze-status');
   const badgeEl = document.getElementById('coze-badge');
   const tokenBadgeEl = document.getElementById('coze-token-badge');
-  const configured = botId && token;
-  if(statusEl) statusEl.textContent = configured ? '已配置' : '未配置';
+  const configured = apiKey && apiKey.startsWith('sk-');
+  if(statusEl) statusEl.textContent = configured ? '✅ DeepSeek已连接（免费）' : '⚠️ 未配置';
   if(badgeEl){
-    badgeEl.textContent = configured ? '✅ 已就绪' : '—';
-    badgeEl.style.color = configured ? 'var(--color-green)' : 'var(--color-gray)';
+    badgeEl.textContent = configured ? '✅ 免费运行中' : '⚠️ 待配置';
+    badgeEl.style.color = configured ? 'var(--color-green)' : '#e67e22';
   }
   if(tokenBadgeEl){
-    tokenBadgeEl.textContent = token ? '✅ 已配置' : '—';
-    tokenBadgeEl.style.color = token ? 'var(--color-green)' : 'var(--color-gray)';
+    tokenBadgeEl.textContent = configured ? '✅ sk-已配置' : '—';
+    tokenBadgeEl.style.color = configured ? 'var(--color-green)' : 'var(--color-gray)';
   }
 }
 
