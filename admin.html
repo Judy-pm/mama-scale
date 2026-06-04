@@ -13793,9 +13793,9 @@ const AdminApp = {
     if (!text) return;
     
     // Check coze config
-    const botId = localStorage.getItem('coze_bot_id');
-    const token = localStorage.getItem('coze_access_token');
-    if (!botId || !token) {
+    const apiKey = localStorage.getItem('coze_access_token');
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) {
       alert('请先在设置中配置DeepSeek ID和Access Token');
       return;
     }
@@ -15074,9 +15074,9 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     status.textContent = '正在调用AI分析报告，请稍候...';
     status.style.color = 'var(--color-primary)';
     try {
-      const botId = localStorage.getItem('coze_bot_id');
-      const token = localStorage.getItem('coze_access_token');
-      if (!botId || !token) { throw new Error('请先在设置中配置DeepSeek ID和Access Token'); }
+    const apiKey = localStorage.getItem('coze_access_token');
+      const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) { throw new Error('请先配置 DeepSeek API密钥'); }
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
       const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
@@ -15550,9 +15550,9 @@ previewTonguePhoto(input) {
 async tcmAISummarizeTranscript() {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
-  const botId = localStorage.getItem('coze_bot_id');
-  const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
+  const apiKey = localStorage.getItem('coze_access_token');
+  const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   
   const btn = event.target.closest('button');
   const orig = btn.innerHTML;
@@ -15721,9 +15721,9 @@ tcmAutoDifferentiate() {
 },
 
 async tcmAIDiagnosis() {
-  const botId = localStorage.getItem('coze_bot_id');
-  const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
+  const apiKey = localStorage.getItem('coze_access_token');
+  const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
   if (!chief) { alert('请先填写主诉'); return; }
   
@@ -15975,9 +15975,9 @@ async tcmSaveFollowup() {
 },
 
 async tcmAIFollowupAnalysis() {
-  const botId = localStorage.getItem('coze_bot_id');
-  const token = localStorage.getItem('coze_access_token');
-  if (!botId || !token) { alert('请先在设置中配置DeepSeek ID和Access Token'); return; }
+  const apiKey = localStorage.getItem('coze_access_token');
+  const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const p = this.tcmCurrentPatient;
   if (!p) return;
   
