@@ -13794,7 +13794,6 @@ const AdminApp = {
     
     // Check coze config
     const apiKey = localStorage.getItem('coze_access_token');
-    const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) {
       alert('请先在设置中配置DeepSeek ID和Access Token');
       return;
@@ -15075,7 +15074,6 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     status.style.color = 'var(--color-primary)';
     try {
     const apiKey = localStorage.getItem('coze_access_token');
-      const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { throw new Error('请先配置 DeepSeek API密钥'); }
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
@@ -15551,7 +15549,6 @@ async tcmAISummarizeTranscript() {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
   const apiKey = localStorage.getItem('coze_access_token');
-  const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   
   const btn = event.target.closest('button');
@@ -15721,7 +15718,6 @@ tcmAutoDifferentiate() {
 },
 
 async tcmAIDiagnosis() {
-  const apiKey = localStorage.getItem('coze_access_token');
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
@@ -15975,7 +15971,6 @@ async tcmSaveFollowup() {
 },
 
 async tcmAIFollowupAnalysis() {
-  const apiKey = localStorage.getItem('coze_access_token');
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const p = this.tcmCurrentPatient;
