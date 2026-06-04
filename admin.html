@@ -12590,7 +12590,17 @@ async function updatePatient() {
     updated_at: new Date().toISOString()
   };
   
-  if (supabaseClient) {
+  // 同时更新本地存储（防止UUID为空导致更新失败）
+  const patients = AdminApp.getPatients();
+  const patient = patients.find(p => p.phone === phone || p.name === name);
+  if (patient) {
+    Object.assign(patient, updates);
+    patient.lastVisit = new Date().toISOString();
+    AdminApp.savePatients(patients);
+  }
+  
+  if (supabaseClient && id && id.length > 10) {
+    // 仅当id为有效UUID时才更新云端
     try {
       const { error } = await supabaseClient.from('patients').update(updates).eq('id', id);
       if (error) throw error;
@@ -12598,8 +12608,14 @@ async function updatePatient() {
       closeEditPatientModal();
       AdminApp.renderPatients();
     } catch (e) {
-      alert('更新失败：' + e.message);
+      alert('云端更新失败（本地已保存）：' + e.message);
+      closeEditPatientModal();
+      AdminApp.renderPatients();
     }
+  } else {
+    alert('更新成功！');
+    closeEditPatientModal();
+    AdminApp.renderPatients();
   }
 }
 
