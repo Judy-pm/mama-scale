@@ -15282,7 +15282,7 @@ tcmSelectPatient() {
   this.tcmCurrentRecord = null;
 },
 
-// ========== 录音功能 ==========
+// ========== 录音功能（硅基流动SenseVoice免费转写）==========
 tcmToggleRecording() {
   if (this.tcmRecording) {
     this.tcmStopRecording();
@@ -15292,63 +15292,115 @@ tcmToggleRecording() {
 },
 
 tcmStartRecording() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('您的浏览器不支持语音识别，请使用Chrome浏览器');
-    return;
-  }
-  this.tcmRecognition = new SpeechRecognition();
-  this.tcmRecognition.lang = 'zh-CN';
-  this.tcmRecognition.continuous = true;
-  this.tcmRecognition.interimResults = true;
-  this.tcmTranscript = '';
-  
+  const status = document.getElementById('tcm-rec-status');
   const transcriptEl = document.getElementById('tcm-transcript');
-  this.tcmRecognition.onresult = (event) => {
-    let interim = '';
-    let final = '';
-    for (let i = 0; i < event.results.length; i++) {
-      if (event.results[i].isFinal) {
-        final += event.results[i][0].transcript;
-      } else {
-        interim += event.results[i][0].transcript;
+  if (status) status.textContent = '正在请求麦克风权限...';
+  if (transcriptEl) transcriptEl.value = '';
+
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' 
+    : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+    : MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg' : '';
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    this.tcmAudioStream = stream;
+    const options = mimeType ? { mimeType } : {};
+    this.tcmMediaRecorder = new MediaRecorder(stream, options);
+    this.tcmAudioChunks = [];
+    console.log('[录音] MediaRecorder mimeType:', mimeType || 'default');
+
+    this.tcmMediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        this.tcmAudioChunks.push(e.data);
+        console.log('[录音] 收到音频片段:', e.data.size, '字节');
       }
-    }
-    this.tcmTranscript = final;
-    if (transcriptEl) {
-      transcriptEl.value = final + (interim ? '【实时】' + interim : '');
-      transcriptEl.scrollTop = transcriptEl.scrollHeight;
-    }
-  };
-  
-  this.tcmRecognition.onerror = (e) => {
-    console.warn('语音识别错误:', e.error);
-    if (e.error !== 'no-speech') {
-      this.tcmRecording = false;
-      this.tcmUpdateRecBtn();
-    }
-  };
-  
-  this.tcmRecognition.onend = () => {
-    if (this.tcmRecording) {
-      try { this.tcmRecognition.start(); } catch(e) {}
-    }
-  };
-  
-  try {
-    this.tcmRecognition.start();
+    };
+
+    this.tcmMediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const bt = mimeType || 'audio/webm';
+      const blob = new Blob(this.tcmAudioChunks, { type: bt });
+      console.log('[录音] 停止，音频块数:', this.tcmAudioChunks.length, '，总大小:', blob.size, '字节');
+      if (blob.size > 0) {
+        this.tcmTranscribeAudio(blob);
+      } else {
+        if (status) status.textContent = '⚠️ 录音为空，请重试';
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    this.tcmMediaRecorder.start(1000);
     this.tcmRecording = true;
     this.tcmUpdateRecBtn();
-  } catch (e) {
-    alert('录音启动失败: ' + e.message);
-  }
+    if (status) status.textContent = '🎙 录音中...（最长60分钟）';
+  }).catch(e => {
+    console.error('[录音] 麦克风错误:', e);
+    if (status) status.textContent = '麦克风权限被拒绝: ' + e.message;
+    alert('无法访问麦克风：请在浏览器设置中允许麦克风权限');
+  });
 },
 
 tcmStopRecording() {
-  if (this.tcmRecognition) {
+  if (this.tcmMediaRecorder && this.tcmRecording) {
+    const status = document.getElementById('tcm-rec-status');
+    if (status) status.textContent = '⏹ 停止录音，转写中...';
     this.tcmRecording = false;
-    this.tcmRecognition.stop();
+    this.tcmMediaRecorder.stop();
     this.tcmUpdateRecBtn();
+  }
+},
+
+// 调用硅基流动SenseVoice转写（免费，中文优先）
+async tcmTranscribeAudio(blob) {
+  const status = document.getElementById('tcm-rec-status');
+  const transcriptEl = document.getElementById('tcm-transcript');
+  const btn = document.getElementById('tcm-rec-btn');
+  if (status) status.textContent = '🔄 转写中，请稍候...';
+  if (btn) btn.disabled = true;
+
+  console.log('[转写] 开始，blob大小:', blob.size, 'bytes, type:', blob.type);
+
+  try {
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) {
+      if (status) status.textContent = '❌ 未配置DeepSeek API密钥';
+      if (btn) btn.disabled = false;
+      alert('请先在"配置DeepSeek"里填写API密钥');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', blob, 'recording.webm');
+    formData.append('model', 'FunAudioLLM/SenseVoiceSmall');
+    formData.append('language', 'zh');
+
+    console.log('[转写] 发送请求到硅基流动...');
+    const response = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + apiKey },
+      body: formData
+    });
+
+    console.log('[转写] 响应状态:', response.status, response.statusText);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.error('[转写] API错误:', err);
+      throw new Error(err.message || '转写失败(' + response.status + ')');
+    }
+
+    const result = await response.json();
+    console.log('[转写] 成功:', result);
+    const text = result.text || '';
+    if (transcriptEl) {
+      transcriptEl.value = text;
+      transcriptEl.scrollTop = transcriptEl.scrollHeight;
+    }
+    if (status) status.textContent = text ? '✅ 转写完成' : '⚠️ 未识别到文字，请重试';
+  } catch(e) {
+    console.error('[转写] 失败:', e);
+    if (status) status.textContent = '❌ 转写失败: ' + e.message;
+    alert('语音转写失败：' + e.message + '\n\n可尝试：直接输入文字或重新录音');
+  } finally {
+    if (btn) btn.disabled = false;
   }
 },
 
@@ -15359,11 +15411,14 @@ tcmUpdateRecBtn() {
   if (this.tcmRecording) {
     btn.className = 'tcm-rec-btn recording';
     btn.textContent = '⏹';
-    if (status) status.textContent = '录音中...点击停止';
+    btn.title = '点击停止录音并转写';
   } else {
     btn.className = 'tcm-rec-btn';
     btn.textContent = '🎙';
-    if (status) status.textContent = '点击开始录音';
+    btn.title = '点击开始录音';
+    if (status && !status.textContent.includes('转写') && !status.textContent.includes('录音')) {
+      status.textContent = '点击🎙开始录音';
+    }
   }
 },
 
