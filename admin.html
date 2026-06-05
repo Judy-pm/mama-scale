@@ -15604,33 +15604,151 @@ async tcmAISummarizeTranscript() {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
   const apiKey = localStorage.getItem('coze_access_token');
-    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
+  if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   
   const btn = event.target.closest('button');
   const orig = btn.innerHTML;
   btn.innerHTML = '⏳ 归纳中...'; btn.disabled = true;
   
   try {
-    const prompt = '你是中医+功能医学AI助手。将患者的口述问诊内容，按以下维度整理归纳：主诉、现病史、就医史、用药史、检验结果、既往史、手术史、过敏史、家族史、婚育月经史、情绪状态、饮食习惯、睡眠质量、生活环境、工作压力、运动习惯。用JSON返回，key: chief_complaint, present_illness, medical_history, medication_history, lab_results, past_history, surgical_history, allergy_history, family_history, menstrual_history, emotional_status, dietary_habits, sleep_quality, living_environment, work_stress, exercise_habits。如果某维度信息不足，填空字符串。\n\n请归纳以下口述内容：\n' + transcript.value;
-    const content = await this.callCozeBot(prompt);
-    let summary;
-    try { const m = content.match(/\{[\s\S]*\}/); summary = m ? JSON.parse(m[0]) : {}; } catch(e) { summary = {}; }
+    const prompt = `你是中医AI助手。请仔细阅读患者的口述问诊内容，按以下维度整理归纳并用JSON返回：
+
+【必填字段】
+- chief_complaint: 主诉（最不适的症状）
+- present_illness: 现病史（发病过程、症状演变）
+- current_medication: 目前用药（西药、中药、保健品等）
+- past_disease: 既往疾病史
+- past_medication: 既往用药史
+- family_history: 家族史
+- menstrual_history: 月经史（周期/经量/颜色/质地/痛经）
+- last_period: 末次月经时间
+- pregnancy_history: 婚育史（生育情况）
+- exam_report: 体检报告异常情况
+
+【舌象字段】（选填，未提及则填空字符串）
+- tongue_color: 舌颜色（淡白/淡红/红/绛红/紫暗）
+- tongue_coating_color: 舌苔颜色（薄白/白/薄黄/黄/灰/黑）
+- tongue_coating_texture: 舌苔厚薄（薄/厚/腻/剥/无苔）
+- tongue_shape: 舌形状（胖大/瘦薄/齿痕/裂纹/芒刺）
+- sublingual_veins: 舌下络脉（正常/瘀点/青紫/曲张）
+
+【脉象字段】（选填，未提及则填空字符串）
+- pulse_left: 左手脉象（寸/关/尺各部情况）
+- pulse_right: 右手脉象（寸/关/尺各部情况）
+- pulse_overall: 整体脉象描述
+
+【其他】（选填）
+- emotional_status: 情绪状态
+- dietary_habits: 饮食习惯
+- sleep_quality: 睡眠情况
+- work_stress: 工作压力
+- exercise_habits: 运动习惯
+- living_environment: 生活环境
+- allergy_history: 过敏史
+- surgical_history: 手术史
+
+如果某维度信息不足，填空字符串。确保返回的是有效JSON格式。
+
+请归纳以下口述内容：
+${transcript.value}`;
     
-    // Fill form fields
+    const content = await this.callCozeBot(prompt);
+    let summary = {};
+    try { 
+      const m = content.match(/\{[\s\S]*\}/); 
+      if (m) summary = JSON.parse(m[0]); 
+    } catch(e) { 
+      console.error('JSON解析失败:', e); 
+      alert('AI返回格式异常，请重试');
+      return;
+    }
+    
+    console.log('[AI归纳] 解析结果:', summary);
+    
+    // 填充基础字段
     const fieldMap = {
-      chief_complaint: 'chief_complaint', present_illness: 'present_illness',
-      medical_history: 'medical_history', medication_history: 'medication_history',
-      lab_results: 'lab_results', past_history: 'past_history',
-      surgical_history: 'surgical_history', allergy_history: 'allergy_history',
-      family_history: 'family_history', menstrual_history: 'menstrual_history',
-      living_environment: 'living_environment'
+      chief_complaint: 'chief_complaint', 
+      present_illness: 'present_illness',
+      current_medication: 'medication_history',
+      past_disease: 'past_history',
+      family_history: 'family_history',
+      menstrual_history: 'menstrual_history',
+      exam_report: 'lab_results'
     };
+    
     Object.keys(fieldMap).forEach(k => {
-      const el = document.getElementById('tcm-' + k);
-      if (el && summary[k]) el.value = summary[k];
+      const el = document.getElementById('tcm-' + fieldMap[k]);
+      if (el && summary[k]) {
+        el.value = summary[k];
+        el.style.backgroundColor = '#e8f5e9'; // 浅绿色提示已填充
+      }
     });
-    alert('AI归纳完成，已自动填入各字段，请检查修正。');
+    
+    // 舌象字段 - 选择芯片
+    const tongueMap = {
+      tongue_color: 'tongue_color',
+      tongue_shape: 'tongue_shape'
+    };
+    Object.keys(tongueMap).forEach(k => {
+      if (summary[k]) {
+        const vals = summary[k].split(/[,，/、]/).map(v => v.trim());
+        vals.forEach(v => {
+          const chip = document.querySelector(`#tcm-chip-${tongueMap[k]} .tcm-chip[onclick*="'${v}'"]`);
+          if (chip) chip.click();
+        });
+      }
+    });
+    
+    // 舌苔颜色和质地
+    if (summary.tongue_coating_color) {
+      const coatingMap = { '薄白':'薄白', '白':'白', '薄黄':'薄黄', '黄':'黄', '灰':'灰', '黑':'黑' };
+      const coatingVal = summary.tongue_coating_color;
+      Object.keys(coatingMap).forEach(k => {
+        if (coatingVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-coating_color .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    if (summary.tongue_coating_texture) {
+      const textureMap = { '薄':'薄', '厚':'厚', '腻':'腻', '剥':'剥', '无苔':'无苔' };
+      const textureVal = summary.tongue_coating_texture;
+      Object.keys(textureMap).forEach(k => {
+        if (textureVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-coating_texture .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    
+    // 舌下络脉
+    if (summary.sublingual_veins) {
+      const subMap = { '正常':'正常', '瘀点':'瘀点', '青紫':'青紫', '曲张':'曲张' };
+      const subVal = summary.sublingual_veins;
+      Object.keys(subMap).forEach(k => {
+        if (subVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-sublingual .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    
+    // 脉象备注
+    const pulseNotes = [];
+    if (summary.pulse_left) pulseNotes.push('左手: ' + summary.pulse_left);
+    if (summary.pulse_right) pulseNotes.push('右手: ' + summary.pulse_right);
+    if (summary.pulse_overall) pulseNotes.push('整体: ' + summary.pulse_overall);
+    if (pulseNotes.length > 0) {
+      const pulseEl = document.getElementById('tcm-pulse_notes');
+      if (pulseEl) {
+        pulseEl.value = pulseNotes.join('；');
+        pulseEl.style.backgroundColor = '#e8f5e9';
+      }
+    }
+    
+    alert('✅ AI归纳完成！已自动填入各字段，请检查确认。');
   } catch(e) {
+    console.error('[AI归纳] 错误:', e);
     alert('AI归纳失败: ' + e.message);
   } finally {
     btn.innerHTML = orig; btn.disabled = false;
