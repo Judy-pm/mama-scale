@@ -13866,8 +13866,9 @@ const AdminApp = {
         ).join('\n');
         fullPrompt = '以下是之前的对话上下文：\n' + history + '\n\n用户最新问题：' + text;
       }
-      
-      const response = await callCozeBot(fullPrompt);
+
+      // 自由对话/病案探讨：保留 V3
+      const response = await callCozeBot(fullPrompt, 'deepseek-ai/DeepSeek-V3');
       
       // Remove typing indicator
       const typingEl = document.getElementById('ai-typing');
@@ -15106,7 +15107,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
       const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
-      const result = await this.callCozeBot(prompt);
+      // 高频结构化任务：走 Qwen3-8B（永久免费，严格 JSON 输出 Qwen 也能干）
+      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
       let jsonStr = result;
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) jsonStr = jsonMatch[0];
@@ -15680,7 +15682,8 @@ async tcmAISummarizeTranscript() {
 请归纳以下口述内容：
 ${transcript.value}`;
     
-    const content = await this.callCozeBot(prompt);
+    // 高频结构化任务：走 Qwen3-8B（永久免费）
+    const content = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
     let summary = {};
     try { 
       const m = content.match(/\{[\s\S]*\}/); 
@@ -15945,7 +15948,8 @@ async tcmAIDiagnosis() {
 
   try {
     const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用JSON格式返回以下字段：syndrome（证型）、pathogenesis（病机分析）、treatment_principle（治法）、main_formula（主方名称及组成）、modification（加减变化）、acupuncture（针灸建议）、lifestyle（生活调护建议）、prognosis（预后判断）。每个字段用专业但易懂的语言。\n\n患者四诊数据：\n' + consultData;
-    const content = await this.callCozeBot(prompt);
+    // 医学深度任务：保留 V3（辨证论治需要顶级能力）
+    const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
     let diagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); diagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { diagnosis = { syndrome: content }; }
     
@@ -16197,7 +16201,8 @@ async tcmAIFollowupAnalysis() {
 副作用：${document.getElementById('fu_side_effects').value.trim()}`;
 
     const cozePrompt = '你是归元AI的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
-    const content = await this.callCozeBot(cozePrompt);
+    // 医学深度任务：保留 V3（对比分析需要顶级能力）
+    const content = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
     let analysis;
     try { const m = content.match(/\{[\s\S]*\}/); analysis = m ? JSON.parse(m[0]) : { treatment_summary: content }; } catch(e) { analysis = { treatment_summary: content }; }
     
@@ -16336,11 +16341,16 @@ async tcmViewArchiveRecord(id) {
 
 // ========== DeepSeek配置 ==========
 // ========== DeepSeek配置 ==========
-async callCozeBot(prompt) {
-  // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow DeepSeek
+// 双模型策略：高频结构化任务走 Qwen3-8B（永久免费），低频医学深度任务走 DeepSeek-V3（付费）
+// 调用时传 model 参数指定；不传默认 V3
+async callCozeBot(prompt, model) {
+  // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow
   const apiKey = localStorage.getItem('coze_access_token');
   if (!apiKey) throw new Error('请先在设置中配置 DeepSeek API密钥');
-  
+
+  const useModel = model || 'deepseek-ai/DeepSeek-V3';
+  console.log('[AI调用] 模型:', useModel, '| prompt长度:', (prompt||'').length);
+
   const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -16348,17 +16358,17 @@ async callCozeBot(prompt) {
       'Authorization': 'Bearer ' + apiKey
     },
     body: JSON.stringify({
-      model: 'deepseek-ai/DeepSeek-V3',
+      model: useModel,
       messages: [{ role: 'user', content: prompt }],
       stream: false
     })
   });
-  
+
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error('DeepSeek API调用失败: ' + (err.error?.message || response.statusText));
+    throw new Error('AI API调用失败: ' + (err.error?.message || response.statusText) + ' (model=' + useModel + ')');
   }
-  
+
   const result = await response.json();
   return result.choices && result.choices[0] && result.choices[0].message
     ? result.choices[0].message.content
