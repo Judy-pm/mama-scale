@@ -13463,33 +13463,41 @@ const AdminApp = {
     if (pending.length > 0) {
       prescriptionList += '<h3 style="color:var(--color-primary-dark);margin-bottom:12px;font-size:16px;">📋 待完成开单</h3>';
       pending.forEach(p => {
-        const scaleNames = (p.scale_ids || []).map(id => {
+        const scaleIds = p.scale_ids || [];
+        const scaleNames = scaleIds.map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
+        const scalesJson = JSON.stringify(scaleIds).replace(/"/g, '&quot;');
         prescriptionList += `
           <div class="prescription-card">
             <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-gray);font-size:12px;">${p.patient_phone}</span></div>
             <div class="rx-meta">${scaleNames.join('、')}</div>
             ${p.note ? `<div style="color:var(--color-gray);font-size:12px;margin-top:2px;">备注: ${p.note}</div>` : ''}
             <div class="rx-actions">
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.viewPrescriptionResult('${p.patient_name}','${p.patient_phone}','${scalesJson}')">📄 查看结果</button>
               <button class="btn btn-outline btn-sm" onclick="AdminApp.deletePrescription('${p.id}')" style="color:var(--color-red);border-color:var(--color-red);">删除</button>
             </div>
           </div>`;
       });
     }
-    
+
     if (completed.length > 0) {
       prescriptionList += '<h3 style="color:var(--color-green);margin-bottom:12px;margin-top:20px;font-size:16px;">✅ 已完成开单</h3>';
       completed.slice(0, 10).forEach(p => {
-        const scaleNames = (p.scale_ids || []).map(id => {
+        const scaleIds = p.scale_ids || [];
+        const scaleNames = scaleIds.map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
+        const scalesJson = JSON.stringify(scaleIds).replace(/"/g, '&quot;');
         prescriptionList += `
           <div class="prescription-card" style="background:#f8f8f8;">
             <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-green);font-size:12px;">已完成</span></div>
             <div class="rx-meta">${scaleNames.join('、')}</div>
+            <div class="rx-actions">
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.viewPrescriptionResult('${p.patient_name}','${p.patient_phone}','${scalesJson}')">📄 查看结果</button>
+            </div>
           </div>`;
       });
     }
@@ -13540,6 +13548,25 @@ const AdminApp = {
     if (!confirm('确定删除该开单？')) return;
     const ok = await CloudBaseManager.deletePrescription(id);
     if (ok) this.renderPrescribe();
+  },
+
+  async viewPrescriptionResult(name, phone, scaleIdsJson) {
+    let scaleIds = [];
+    try { scaleIds = JSON.parse(scaleIdsJson || '[]'); } catch(e) { scaleIds = []; }
+    const hasTcm = scaleIds.includes('tcm_consultation');
+    if (hasTcm) {
+      // 中医问诊单 → 中医诊疗 → 档案
+      this.tcmCurrentPatient = { name, phone };
+      this.tcmTab = 'archive';
+      switchPage('consultation', document.querySelector('[data-page=consultation]'));
+    } else {
+      // 标准量表 → 客户管理 → 详情
+      this._pdName = name;
+      this._pdPhone = phone;
+      this._pdTab = 'summary';
+      switchPage('patients', document.querySelector('[data-page=patients]'));
+      await this.showPatientDetail(name, phone);
+    }
   },
 
   // ========== AI工作台 v2.1 ==========
