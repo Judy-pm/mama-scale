@@ -13104,7 +13104,7 @@ const AdminApp = {
       records.slice(0, 3).forEach(r => {
         const levelColor = r.level ? r.level.color : 'gray';
         html += `<div style="padding:6px 0;font-size:14px;">
-          <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>
+          <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>${r.level ? ` <span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>` : ''}
           <span style="font-size:12px;color:var(--color-gray);margin-left:8px;">${r.date}</span>
         </div>`;
       });
