@@ -15947,7 +15947,7 @@ async tcmAIDiagnosis() {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用JSON格式返回以下字段：syndrome（证型）、pathogenesis（病机分析）、treatment_principle（治法）、main_formula（主方名称及组成）、modification（加减变化）、acupuncture（针灸建议）、lifestyle（生活调护建议）、prognosis（预后判断）。每个字段用专业但易懂的语言。\n\n患者四诊数据：\n' + consultData;
+    const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
     // 医学深度任务：保留 V3（辨证论治需要顶级能力）
     const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
     let diagnosis;
@@ -15972,9 +15972,23 @@ async tcmAIDiagnosis() {
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
       let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:11px;color:var(--color-gray);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
+      // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
+      const toStr = (v) => {
+        if (v == null) return '';
+        if (typeof v === 'string') return v;
+        if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+        if (typeof v === 'object') {
+          if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+          if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+          if (v.name || v.formula_name) return v.name || v.formula_name;
+          return Object.values(v).map(toStr).filter(Boolean).join('；');
+        }
+        return String(v);
+      };
       sections.forEach(s => {
-        if(diagnosis[s.key]) {
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${diagnosis[s.key]}</div></div>`;
+        const val = toStr(diagnosis[s.key]);
+        if(val) {
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
         }
       });
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
