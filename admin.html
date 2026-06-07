@@ -1823,6 +1823,34 @@ const CloudBaseManager = {
       return false;
     }
   },
+  // 🆕 完成指定量表：把对应 prescription 状态从 pending → completed
+  async completePrescriptionScale(patientName, patientPhone, scaleId) {
+    if (!supabaseClient) return false;
+    try {
+      const { data: pendingList, error: qErr } = await supabaseClient
+        .from('prescriptions')
+        .select('id, scale_ids')
+        .eq('patient_name', patientName)
+        .eq('patient_phone', patientPhone)
+        .eq('status', 'pending');
+      if (qErr) throw qErr;
+      if (!pendingList || !pendingList.length) return true;
+      const matchedIds = pendingList
+        .filter(p => Array.isArray(p.scale_ids) && p.scale_ids.includes(scaleId))
+        .map(p => p.id);
+      if (!matchedIds.length) return true;
+      const { error: uErr } = await supabaseClient
+        .from('prescriptions')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .in('id', matchedIds);
+      if (uErr) throw uErr;
+      console.log(`[Supabase] 已标记量表 ${scaleId} 完成（${matchedIds.length} 条 prescription）`);
+      return true;
+    } catch (e) {
+      console.warn('[Supabase] 标记量表完成失败:', e.message);
+      return false;
+    }
+  },
   // 初始化：尝试访问表，检测是否可用
   async init() {
     if (!supabaseClient) {
