@@ -12666,6 +12666,12 @@ function doChangePwd() {
 }
 
 // ========== AdminApp 主应用 ==========
+
+// 🆕 中医配伍禁忌参考清单（应用于辨证论治 / 探讨 / 应用 3 处 prompt，避免 LLM 自由发挥编造）
+// 根因：2026-06-07 19:57 公主陛下反馈旋覆花与甘草是否属十九畏，系统 AI 与网页版 AI 答得不一样
+// 修法：在所有涉及"开方/配伍"的 prompt 头部显式列出 19畏 9对 + 18反 3组 + 强约束
+const TCM_PROMPT_PREAMBLE = '\n【配伍禁忌参考（必须严格依据，不确定时明确说明，禁止编造）】\n【十九畏·9对】硫黄畏朴硝、水银畏砒霜、狼毒畏密陀僧、巴豆畏牵牛、丁香畏郁金、川乌草乌畏犀角、牙硝畏三棱、官桂畏石脂、人参畏五灵脂。\n【十八反·3组】甘草反甘遂/大戟/海藻/芫花；藜芦反人参/丹参/玄参/沙参/细辛/芍药；乌头(川乌/草乌/附子)反贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄与旋覆花合用有致心率失常的现代药理警示(动物实验+临床报道);旋覆花绒毛刺激咽喉需包煎。\n【回答原则】(1)严格依据上述清单,不要凭直觉联想 (2)患者所问组合若不在清单内,明确回答"未见该组合在传统十九畏/十八反中的明确记载" (3)禁止编造清单外条目 (4)开方时自动避开清单内冲突药对。\n';
+
 const AdminApp = {
   async init() {
     const ok = await CloudBaseManager.init();
@@ -16023,7 +16029,7 @@ async tcmAIDiagnosis(e) {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
+    const prompt = TCM_PROMPT_PREAMBLE + '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
     // 医学深度任务：保留 V3（辨证论治需要顶级能力）
     const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
     let diagnosis;
@@ -16159,6 +16165,13 @@ async tcmRestoreFromHistory(historyId) {
     .single();
   if (error || !data) { alert('加载历史版本失败'); return; }
 
+  // 🆕 应用前先弹预览 modal（带"取消"按钮），用户确认后才覆盖 AI 辨证结果区
+  // 根因：2026-06-07 20:46 公主陛下要求"已加载历史版本"弹窗要能取消
+  // 旧逻辑：直接覆盖 AI 辨证结果区 + 弹 alert；用户想取消时已被覆盖
+  // 新逻辑：先弹预览 modal（时间/模型/证型/主方摘要），用户点"应用"才覆盖，点"取消"啥也不做
+  const confirmed = await this._showHistoryPreviewModal(data);
+  if (!confirmed) return;  // 用户取消，啥也不做
+
   const container = document.getElementById('tcm-ai-result');
   if (!container) return;
 
@@ -16211,7 +16224,79 @@ async tcmRestoreFromHistory(historyId) {
 
   this.tcmLoadAndRenderHistory(this.tcmCurrentRecord?.id);
 
-  alert(`✅ 已加载历史版本\n时间：${sourceTime}\n模型：${data.model}\n\n如要存为正式方案，点"✅ 确认方案并存档"`);
+  // 🆕 改用自定义 modal 通知（带"取消"），用户可选择应用此版本或放弃
+  // 旧版：alert(`✅ 已加载历史版本...`) — 浏览器原生 alert 只能"确定"，无法取消
+  await this._showHistoryLoadedToast(sourceTime, data.model);
+},
+
+// 🆕 历史版本加载完成提示（轻量 toast，3 秒自动消失，无须操作）
+async _showHistoryLoadedToast(sourceTime, model) {
+  const id = 'tcm-history-loaded-toast';
+  document.getElementById(id)?.remove();
+  const toast = document.createElement('div');
+  toast.id = id;
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#5A4D7A;color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:99999;font-size:13px;max-width:360px;animation:fadeInUp 0.3s ease-out;';
+  toast.innerHTML = `✅ 已加载历史版本<br><span style="font-size:11px;opacity:0.85;">${sourceTime} · ${model}</span><br><span style="font-size:11px;opacity:0.85;">如要存为正式方案，点"✅ 确认方案并存档"</span>`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 4000);
+},
+
+// 🆕 历史版本预览 modal（应用前确认，带"取消"按钮）
+// 返回 Promise<boolean>：true=用户点"应用此版本"，false=用户点"取消"或点背景
+_showHistoryPreviewModal(data) {
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') {
+      if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+      if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+      if (v.name || v.formula_name) return v.name || v.formula_name;
+      return Object.values(v).map(toStr).filter(Boolean).join('；');
+    }
+    return String(v);
+  };
+  const syndrome = toStr(data.diagnosis.syndrome).substring(0, 80) || '(无证型)';
+  const main = toStr(data.diagnosis.main_formula).substring(0, 100) || '(无主方)';
+  const treat = toStr(data.diagnosis.treatment_principle).substring(0, 80) || '(无治法)';
+  const sourceTime = new Date(data.created_at).toLocaleString('zh-CN', { hour12: false });
+
+  const modalId = 'tcm-history-preview-modal';
+  document.getElementById(modalId)?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = modalId;
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:99999;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <h3 style="margin:0 0 12px;color:var(--color-primary);font-size:18px;">📜 历史版本预览</h3>
+      <div style="font-size:12px;color:#666;margin-bottom:14px;">
+        <div><strong>时间：</strong>${sourceTime}</div>
+        <div><strong>模型：</strong><code style="font-size:11px;background:#f0eef5;padding:1px 5px;border-radius:3px;">${data.model}</code></div>
+      </div>
+      <div style="background:#f8f6fa;padding:12px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+        <div><strong>🎯 证型：</strong>${syndrome}</div>
+        <div><strong>⚖️ 治法：</strong>${treat}</div>
+        <div><strong>💊 主方：</strong>${main}</div>
+      </div>
+      <p style="font-size:12px;color:#999;margin:0 0 16px;">应用后将覆盖当前 AI 辨证结果区。如要存为正式方案，请用 "✅ 确认方案并存档"。</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" id="tcm-modal-cancel" style="min-width:80px;">取消</button>
+        <button class="btn btn-primary btn-sm" id="tcm-modal-confirm" style="min-width:120px;">✅ 应用此版本</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  return new Promise((resolve) => {
+    const cleanup = (val) => { modal.remove(); resolve(val); };
+    document.getElementById('tcm-modal-cancel').onclick = () => cleanup(false);
+    document.getElementById('tcm-modal-confirm').onclick = () => cleanup(true);
+    modal.onclick = (e) => { if (e.target === modal) cleanup(false); };  // 点背景=取消
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); cleanup(false); }
+    });
+  });
 },
 
 async tcmConfirmDiagnosis() {
@@ -16335,7 +16420,7 @@ async tcmDialogueSend() {
     const messages = [];
     const chief = (document.getElementById('tcm-chief_complaint') || {}).value || '';
     const currentAiDiag = this.tcmCurrentRecord.ai_diagnosis || {};
-    const sysContent = `你是归元AI的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
+    const sysContent = TCM_PROMPT_PREAMBLE + `你是归元AI的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
     messages.push({ role: 'system', content: sysContent });
     (history || []).forEach(item => {
       const d = item.diagnosis || {};
@@ -16406,7 +16491,7 @@ async tcmDialogueApply() {
     });
 
     // 让 V3 总结为标准诊断 JSON
-    const prompt = '你是一位资深中医师。请根据以下与归元AI探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    const prompt = TCM_PROMPT_PREAMBLE + '你是一位资深中医师。请根据以下与归元AI探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
     const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
     let finalDiagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); finalDiagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { finalDiagnosis = { syndrome: content }; }
