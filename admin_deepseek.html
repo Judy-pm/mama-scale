@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>归元AI - 管理后台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237B68AE'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'%3E归%3C/text%3E%3C/svg%3E" />
   <style>
 /* ========== 归元AI管理平台 - 主样式 ========== */
 
@@ -1820,6 +1821,34 @@ const CloudBaseManager = {
       return true;
     } catch (e) {
       console.warn('[Supabase] 删除开单失败:', e.message);
+      return false;
+    }
+  },
+  // 🆕 完成指定量表：把对应 prescription 状态从 pending → completed
+  async completePrescriptionScale(patientName, patientPhone, scaleId) {
+    if (!supabaseClient) return false;
+    try {
+      const { data: pendingList, error: qErr } = await supabaseClient
+        .from('prescriptions')
+        .select('id, scale_ids')
+        .eq('patient_name', patientName)
+        .eq('patient_phone', patientPhone)
+        .eq('status', 'pending');
+      if (qErr) throw qErr;
+      if (!pendingList || !pendingList.length) return true;
+      const matchedIds = pendingList
+        .filter(p => Array.isArray(p.scale_ids) && p.scale_ids.includes(scaleId))
+        .map(p => p.id);
+      if (!matchedIds.length) return true;
+      const { error: uErr } = await supabaseClient
+        .from('prescriptions')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .in('id', matchedIds);
+      if (uErr) throw uErr;
+      console.log(`[Supabase] 已标记量表 ${scaleId} 完成（${matchedIds.length} 条 prescription）`);
+      return true;
+    } catch (e) {
+      console.warn('[Supabase] 标记量表完成失败:', e.message);
       return false;
     }
   },
@@ -12637,6 +12666,16 @@ function doChangePwd() {
 }
 
 // ========== AdminApp 主应用 ==========
+
+// 🆕 中医配伍禁忌与临床回答规范 v3（应用于辨证论治 / 探讨 / 应用 3 处 prompt）
+// 🆕 v3 升级 2026-06-08 07:35（公主陛下决策：✅ 置信度自评 + ✅ 医生把关界面提示）：
+//   v2 → v3 3 项升级：
+//   1. 铁律第 4 条"数字禁令"加细化场景：饮食间隔/煎服时长/监测频率/起效时间/症状缓解时间（修"2 小时幽灵"）
+//   2. COT 流程加 3.5【补充】+ 5【置信度自评】（修"回答偏简"+ 加置信度标签）
+//   3. 界面顶部加"⚠️ AI 辨证仅供参考"法律提示（修"医生把关"）
+//   v2 → v3 沿用项：角色设定/速查表/十九畏十八反分类别混用/避开表内冲突药对
+const TCM_PROMPT_PREAMBLE = '\n【中医配伍禁忌与临床回答规范（必须严格遵守）】\n【角色】你是武汉市妇幼保健院女性抗衰门诊的资深中医师，30 年临床经验，所有回答以《中国药典》和《伤寒论》《金匮要略》等经典为准。\n【速查表·十九畏 9对】硫黄-朴硝 / 水银-砒霜 / 狼毒-密陀僧 / 巴豆-牵牛 / 丁香-郁金 / 川乌草乌-犀角 / 牙硝-三棱 / 官桂-石脂 / 人参-五灵脂。\n【速查表·十八反 3组】(1)甘草-甘遂/大戟/芫花/海藻 (2)藜芦-人参/丹参/玄参/沙参/细辛/芍药 (3)乌头(川乌/草乌/附子)-贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄-旋覆花合用：致心率失常的现代药理警示（动物实验+临床报道）；旋覆花绒毛刺激咽喉需包煎。\n【回答流程】1.【分析】先判断问题类型（配伍禁忌/剂量煎服/特殊人群/临床诊断）2.【依据】查上述速查表+经典方剂，不要凭直觉 3.【结论】给出明确答案 3.5【补充】如适用，补充临床表现/方剂组成/煎服法/古籍出处/关键药对等关键信息，让答案更完整 4.【不确定项】如有不明确，明确说"建议医生面诊"或"建议参考《中国药典》" 5.【置信度】自评本次回答的确定性——高/中/低 + 1 句话说明（高=有药典/经典明确依据；中=基于证型推断；低=仅凭一般原则），让医生一眼看到你犹豫的地方。\n【5条铁律】(1)严格依据速查表，不要凭直觉联想 (2)患者所问组合若不在表内，明确答"未见该组合在传统十九畏/十八反中的明确记载" (3)十九畏和十八反是两个不同体系，不要混用——硫黄-朴硝是十九畏，不是十八反 (4)禁止编造任何具体数字（剂量克数/煎服分钟/毒性倍数/监测频率/服药天数等）。在以下软场景下，无药典/文献明确依据时必须答"具体时间因人而异，建议医生面诊"或"建议参考最新版《中国药典》"，禁止给具体小时数/克数/倍数/天数——软场景包括：饮食间隔（如"服药后几小时喝绿豆汤"）、煎服时长（如"附子先煎几分钟"）、监测频率（如"INR 多久查一次"）、起效时间（如"几天见效"）、症状缓解时间（如"疼痛多久缓解"） (5)开方时自动避开表内冲突药对。\n';
+
 const AdminApp = {
   async init() {
     const ok = await CloudBaseManager.init();
@@ -13103,8 +13142,9 @@ const AdminApp = {
       html += '<div class="info-card"><h4>📋 最近评估</h4>';
       records.slice(0, 3).forEach(r => {
         const levelColor = r.level ? r.level.color : 'gray';
+        const levelRange = r.level ? `<span style="color:var(--color-gray);font-size:11px;margin-left:4px;">(参考 ${r.level.min}–${r.level.max})</span>` : '';
         html += `<div style="padding:6px 0;font-size:14px;">
-          <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>
+          <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>${r.level ? ` <span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>${levelRange}` : ''}
           <span style="font-size:12px;color:var(--color-gray);margin-left:8px;">${r.date}</span>
         </div>`;
       });
@@ -13151,7 +13191,7 @@ const AdminApp = {
             <div class="timeline-content">
               <strong>${r.scaleName}</strong>
               <span style="color:var(--color-${levelColor});font-weight:700;margin-left:8px;">${r.scoreDisplay}</span>
-              ${r.level ? `<span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>` : ''}
+              ${r.level ? `<span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span><span style="color:var(--color-gray);font-size:11px;margin-left:4px;">(参考 ${r.level.min}–${r.level.max})</span>` : ''}
             </div>
           </div>`;
         });
@@ -13462,33 +13502,41 @@ const AdminApp = {
     if (pending.length > 0) {
       prescriptionList += '<h3 style="color:var(--color-primary-dark);margin-bottom:12px;font-size:16px;">📋 待完成开单</h3>';
       pending.forEach(p => {
-        const scaleNames = (p.scale_ids || []).map(id => {
+        const scaleIds = p.scale_ids || [];
+        const scaleNames = scaleIds.map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
+        const scalesJson = JSON.stringify(scaleIds).replace(/"/g, '&quot;');
         prescriptionList += `
           <div class="prescription-card">
             <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-gray);font-size:12px;">${p.patient_phone}</span></div>
             <div class="rx-meta">${scaleNames.join('、')}</div>
             ${p.note ? `<div style="color:var(--color-gray);font-size:12px;margin-top:2px;">备注: ${p.note}</div>` : ''}
             <div class="rx-actions">
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.viewPrescriptionResult('${p.patient_name}','${p.patient_phone}','${scalesJson}')">📄 查看结果</button>
               <button class="btn btn-outline btn-sm" onclick="AdminApp.deletePrescription('${p.id}')" style="color:var(--color-red);border-color:var(--color-red);">删除</button>
             </div>
           </div>`;
       });
     }
-    
+
     if (completed.length > 0) {
       prescriptionList += '<h3 style="color:var(--color-green);margin-bottom:12px;margin-top:20px;font-size:16px;">✅ 已完成开单</h3>';
       completed.slice(0, 10).forEach(p => {
-        const scaleNames = (p.scale_ids || []).map(id => {
+        const scaleIds = p.scale_ids || [];
+        const scaleNames = scaleIds.map(id => {
           const s = SCALES.find(sc => sc.id === id);
           return s ? s.name : id;
         });
+        const scalesJson = JSON.stringify(scaleIds).replace(/"/g, '&quot;');
         prescriptionList += `
           <div class="prescription-card" style="background:#f8f8f8;">
             <div class="rx-header"><strong>${p.patient_name}</strong><span style="color:var(--color-green);font-size:12px;">已完成</span></div>
             <div class="rx-meta">${scaleNames.join('、')}</div>
+            <div class="rx-actions">
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.viewPrescriptionResult('${p.patient_name}','${p.patient_phone}','${scalesJson}')">📄 查看结果</button>
+            </div>
           </div>`;
       });
     }
@@ -13539,6 +13587,25 @@ const AdminApp = {
     if (!confirm('确定删除该开单？')) return;
     const ok = await CloudBaseManager.deletePrescription(id);
     if (ok) this.renderPrescribe();
+  },
+
+  async viewPrescriptionResult(name, phone, scaleIdsJson) {
+    let scaleIds = [];
+    try { scaleIds = JSON.parse(scaleIdsJson || '[]'); } catch(e) { scaleIds = []; }
+    const hasTcm = scaleIds.includes('tcm_consultation');
+    if (hasTcm) {
+      // 中医问诊单 → 中医诊疗 → 档案
+      this.tcmCurrentPatient = { name, phone };
+      this.tcmTab = 'archive';
+      switchPage('consultation', document.querySelector('[data-page=consultation]'));
+    } else {
+      // 标准量表 → 客户管理 → 详情
+      this._pdName = name;
+      this._pdPhone = phone;
+      this._pdTab = 'summary';
+      switchPage('patients', document.querySelector('[data-page=patients]'));
+      await this.showPatientDetail(name, phone);
+    }
   },
 
   // ========== AI工作台 v2.1 ==========
@@ -13838,8 +13905,9 @@ const AdminApp = {
         ).join('\n');
         fullPrompt = '以下是之前的对话上下文：\n' + history + '\n\n用户最新问题：' + text;
       }
-      
-      const response = await callCozeBot(fullPrompt);
+
+      // 自由对话/病案探讨：保留 V3
+      const response = await callCozeBot(fullPrompt, 'deepseek-ai/DeepSeek-V3');
       
       // Remove typing indicator
       const typingEl = document.getElementById('ai-typing');
@@ -15078,7 +15146,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
       const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
-      const result = await this.callCozeBot(prompt);
+      // 高频结构化任务：走 Qwen3-8B（永久免费，严格 JSON 输出 Qwen 也能干）
+      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
       let jsonStr = result;
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) jsonStr = jsonMatch[0];
@@ -15446,7 +15515,7 @@ async tcmRenderInitial() {
   html += '</div>';
   html += '<div class="tcm-rec-transcript"><textarea id="tcm-transcript" class="tcm-textarea" rows="5" placeholder="录音转文字将显示在此，也可直接输入..."></textarea></div>';
   html += '<div style="margin-top:8px;display:flex;gap:8px;">';
-  html += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript()">🤖 AI智能归纳</button>';
+  html += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript(event)">🤖 AI智能归纳</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="document.getElementById(\'tcm-transcript\').value=\'\'">清空</button>';
   html += '</div></div>';
 
@@ -15483,15 +15552,31 @@ async tcmRenderInitial() {
     { id: 'exercise_habits', label: '运动习惯', opts: ['无','偶尔','每周1-2次','每周3次以上'], multi: false }
   ];
 
+  // 🆕 兼容：实际表用 JSONB 嵌套，扁平字段（dietary_regular / *_detail）是旧 schema
+  const _nested = existingData ? {
+    emotional_status: existingData.emotional_status?.main ?? existingData.emotional_status,
+    emotional_status_detail: existingData.emotional_status?.detail ?? existingData.emotional_status_detail,
+    dietary_regular: existingData.dietary_habits?.regular ?? existingData.dietary_regular,
+    dietary_preference: existingData.dietary_habits?.preference ?? existingData.dietary_preference,
+    dietary_preference_detail: existingData.dietary_habits?.detail ?? existingData.dietary_preference_detail,
+    sleep_quality: existingData.sleep_quality?.main ?? existingData.sleep_quality,
+    sleep_quality_detail: existingData.sleep_quality?.detail ?? existingData.sleep_quality_detail,
+    work_stress: existingData.work_stress?.main ?? existingData.work_stress,
+    work_stress_detail: existingData.work_stress?.detail ?? existingData.work_stress_detail,
+    exercise_habits: existingData.exercise_habits?.main ?? existingData.exercise_habits,
+    exercise_habits_detail: existingData.exercise_habits?.detail ?? existingData.exercise_habits_detail
+  } : {};
+
   lifestyleSelects.forEach(s => {
-    const existingVal = existingData && existingData[s.id] ? existingData[s.id] : (s.multi ? [] : '');
+    const existingVal = _nested[s.id] !== undefined && _nested[s.id] !== null ? _nested[s.id] : (s.multi ? [] : '');
     html += `<div class="tcm-field"><label>${s.label}</label><div class="tcm-chip-group" id="tcm-chip-${s.id}">`;
     s.opts.forEach(v => {
       const isActive = s.multi ? (Array.isArray(existingVal) && existingVal.includes(v)) : existingVal === v;
       html += `<div class="tcm-chip${isActive ? ' active' : ''}" onclick="AdminApp.tcmChipSelect('${s.id}','${v}',${s.multi},this)">${v}</div>`;
     });
     html += '</div>';
-    html += `<textarea class="tcm-textarea" id="tcm-${s.id}-detail" rows="1" placeholder="补充说明..." style="min-height:40px;">${existingData && existingData[s.id + '_detail'] ? existingData[s.id + '_detail'] : ''}</textarea>`;
+    const _detailVal = _nested[s.id + '_detail'] || '';
+    html += `<textarea class="tcm-textarea" id="tcm-${s.id}-detail" rows="1" placeholder="补充说明..." style="min-height:40px;">${_detailVal}</textarea>`;
     html += '</div>';
   });
 
@@ -15548,6 +15633,9 @@ async tcmRenderInitial() {
   // 自动辨证
   html += '<div id="tcm-syndrome-result"></div>';
 
+  // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。</div>';
+
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
 
@@ -15555,21 +15643,40 @@ async tcmRenderInitial() {
   html += '<div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">';
   html += '<button class="btn btn-primary btn-lg" onclick="AdminApp.tcmSaveInitial()">💾 保存初诊记录</button>';
   html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAutoDifferentiate()">🔮 自动辨证</button>';
-  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIDiagnosis()">🤖 AI辨证论治</button>';
+  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIDiagnosis(event)">🤖 AI辨证论治</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmPrint()">🖨️ 打印</button>';
   html += '</div>';
 
   // Init chip state from existing data
   this.tcmSelectedOptions = {};
   if (existingData) {
+    // 🆕 兼容：实际表用 JSONB 嵌套，扁平字段（dietary_regular / *_detail）是旧 schema
+    const nested = {
+      emotional_status: existingData.emotional_status?.main ?? existingData.emotional_status,
+      emotional_status_detail: existingData.emotional_status?.detail ?? existingData.emotional_status_detail,
+      dietary_regular: existingData.dietary_habits?.regular ?? existingData.dietary_regular,
+      dietary_preference: existingData.dietary_habits?.preference ?? existingData.dietary_preference,
+      dietary_preference_detail: existingData.dietary_habits?.detail ?? existingData.dietary_preference_detail,
+      sleep_quality: existingData.sleep_quality?.main ?? existingData.sleep_quality,
+      sleep_quality_detail: existingData.sleep_quality?.detail ?? existingData.sleep_quality_detail,
+      work_stress: existingData.work_stress?.main ?? existingData.work_stress,
+      work_stress_detail: existingData.work_stress?.detail ?? existingData.work_stress_detail,
+      exercise_habits: existingData.exercise_habits?.main ?? existingData.exercise_habits,
+      exercise_habits_detail: existingData.exercise_habits?.detail ?? existingData.exercise_habits_detail
+    };
     // Restore lifestyle selects
     lifestyleSelects.forEach(s => {
-      const val = existingData[s.id];
+      const val = nested[s.id] !== undefined ? nested[s.id] : existingData[s.id];
       this.tcmSelectedOptions[s.id] = val || (s.multi ? [] : '');
     });
     // Restore tongue/pulse
     tongueConfig.forEach(c => { this.tcmSelectedOptions[c.id] = existingTongue[c.id] || (c.multi ? [] : ''); });
     pulseConfig.forEach(c => { this.tcmSelectedOptions[c.id] = existingPulse[c.id] || (c.multi ? [] : ''); });
+    // 把 detail 也回填到 tcmSelectedOptions，方便后续 tcmSaveInitial 读取（如果用户再编辑时）
+    lifestyleSelects.forEach(s => {
+      const detailKey = s.id + '_detail';
+      if (nested[detailKey]) this.tcmSelectedOptions[detailKey] = nested[detailKey];
+    });
   }
 
   return html;
@@ -15600,48 +15707,169 @@ previewTonguePhoto(input) {
   }
 },
 
-async tcmAISummarizeTranscript() {
+async tcmAISummarizeTranscript(e) {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
   const apiKey = localStorage.getItem('coze_access_token');
-    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
-  
-  const btn = event.target.closest('button');
+  if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
+
+  // 修复：async 函数中 await 之后 event 会失效，必须用参数 e
+  const btn = (e && e.target) ? e.target.closest('button') : null;
   const orig = btn.innerHTML;
   btn.innerHTML = '⏳ 归纳中...'; btn.disabled = true;
   
   try {
-    const prompt = '你是中医+功能医学AI助手。将患者的口述问诊内容，按以下维度整理归纳：主诉、现病史、就医史、用药史、检验结果、既往史、手术史、过敏史、家族史、婚育月经史、情绪状态、饮食习惯、睡眠质量、生活环境、工作压力、运动习惯。用JSON返回，key: chief_complaint, present_illness, medical_history, medication_history, lab_results, past_history, surgical_history, allergy_history, family_history, menstrual_history, emotional_status, dietary_habits, sleep_quality, living_environment, work_stress, exercise_habits。如果某维度信息不足，填空字符串。\n\n请归纳以下口述内容：\n' + transcript.value;
-    const content = await this.callCozeBot(prompt);
-    let summary;
-    try { const m = content.match(/\{[\s\S]*\}/); summary = m ? JSON.parse(m[0]) : {}; } catch(e) { summary = {}; }
+    const prompt = `你是中医AI助手。请仔细阅读患者的口述问诊内容，按以下维度整理归纳并用JSON返回：
+
+【必填字段】
+- chief_complaint: 主诉（最不适的症状）
+- present_illness: 现病史（发病过程、症状演变）
+- current_medication: 目前用药（西药、中药、保健品等）
+- past_disease: 既往疾病史
+- past_medication: 既往用药史
+- family_history: 家族史
+- menstrual_history: 月经史（周期/经量/颜色/质地/痛经）
+- last_period: 末次月经时间
+- pregnancy_history: 婚育史（生育情况）
+- exam_report: 体检报告异常情况
+
+【舌象字段】（选填，未提及则填空字符串）
+- tongue_color: 舌颜色（淡白/淡红/红/绛红/紫暗）
+- tongue_coating_color: 舌苔颜色（薄白/白/薄黄/黄/灰/黑）
+- tongue_coating_texture: 舌苔厚薄（薄/厚/腻/剥/无苔）
+- tongue_shape: 舌形状（胖大/瘦薄/齿痕/裂纹/芒刺）
+- sublingual_veins: 舌下络脉（正常/瘀点/青紫/曲张）
+
+【脉象字段】（选填，未提及则填空字符串）
+- pulse_left: 左手脉象（寸/关/尺各部情况）
+- pulse_right: 右手脉象（寸/关/尺各部情况）
+- pulse_overall: 整体脉象描述
+
+【其他】（选填）
+- emotional_status: 情绪状态
+- dietary_habits: 饮食习惯
+- sleep_quality: 睡眠情况
+- work_stress: 工作压力
+- exercise_habits: 运动习惯
+- living_environment: 生活环境
+- allergy_history: 过敏史
+- surgical_history: 手术史
+
+如果某维度信息不足，填空字符串。确保返回的是有效JSON格式。
+
+请归纳以下口述内容：
+${transcript.value}`;
     
-    // Fill form fields
+    // 高频结构化任务：走 Qwen3-8B（永久免费）
+    const content = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
+    let summary = {};
+    try { 
+      const m = content.match(/\{[\s\S]*\}/); 
+      if (m) summary = JSON.parse(m[0]); 
+    } catch(e) { 
+      console.error('JSON解析失败:', e); 
+      alert('AI返回格式异常，请重试');
+      return;
+    }
+    
+    console.log('[AI归纳] 解析结果:', summary);
+    
+    // 填充基础字段
     const fieldMap = {
-      chief_complaint: 'chief_complaint', present_illness: 'present_illness',
-      medical_history: 'medical_history', medication_history: 'medication_history',
-      lab_results: 'lab_results', past_history: 'past_history',
-      surgical_history: 'surgical_history', allergy_history: 'allergy_history',
-      family_history: 'family_history', menstrual_history: 'menstrual_history',
-      living_environment: 'living_environment'
+      chief_complaint: 'chief_complaint', 
+      present_illness: 'present_illness',
+      current_medication: 'medication_history',
+      past_disease: 'past_history',
+      family_history: 'family_history',
+      menstrual_history: 'menstrual_history',
+      exam_report: 'lab_results'
     };
+    
     Object.keys(fieldMap).forEach(k => {
-      const el = document.getElementById('tcm-' + k);
-      if (el && summary[k]) el.value = summary[k];
+      const el = document.getElementById('tcm-' + fieldMap[k]);
+      if (el && summary[k]) {
+        el.value = summary[k];
+        el.style.backgroundColor = '#e8f5e9'; // 浅绿色提示已填充
+      }
     });
-    alert('AI归纳完成，已自动填入各字段，请检查修正。');
+    
+    // 舌象字段 - 选择芯片
+    const tongueMap = {
+      tongue_color: 'tongue_color',
+      tongue_shape: 'tongue_shape'
+    };
+    Object.keys(tongueMap).forEach(k => {
+      if (summary[k]) {
+        const vals = summary[k].split(/[,，/、]/).map(v => v.trim());
+        vals.forEach(v => {
+          const chip = document.querySelector(`#tcm-chip-${tongueMap[k]} .tcm-chip[onclick*="'${v}'"]`);
+          if (chip) chip.click();
+        });
+      }
+    });
+    
+    // 舌苔颜色和质地
+    if (summary.tongue_coating_color) {
+      const coatingMap = { '薄白':'薄白', '白':'白', '薄黄':'薄黄', '黄':'黄', '灰':'灰', '黑':'黑' };
+      const coatingVal = summary.tongue_coating_color;
+      Object.keys(coatingMap).forEach(k => {
+        if (coatingVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-coating_color .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    if (summary.tongue_coating_texture) {
+      const textureMap = { '薄':'薄', '厚':'厚', '腻':'腻', '剥':'剥', '无苔':'无苔' };
+      const textureVal = summary.tongue_coating_texture;
+      Object.keys(textureMap).forEach(k => {
+        if (textureVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-coating_texture .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    
+    // 舌下络脉
+    if (summary.sublingual_veins) {
+      const subMap = { '正常':'正常', '瘀点':'瘀点', '青紫':'青紫', '曲张':'曲张' };
+      const subVal = summary.sublingual_veins;
+      Object.keys(subMap).forEach(k => {
+        if (subVal.includes(k)) {
+          const chip = document.querySelector(`#tcm-chip-sublingual .tcm-chip[onclick*="'${k}'"]`);
+          if (chip) chip.click();
+        }
+      });
+    }
+    
+    // 脉象备注
+    const pulseNotes = [];
+    if (summary.pulse_left) pulseNotes.push('左手: ' + summary.pulse_left);
+    if (summary.pulse_right) pulseNotes.push('右手: ' + summary.pulse_right);
+    if (summary.pulse_overall) pulseNotes.push('整体: ' + summary.pulse_overall);
+    if (pulseNotes.length > 0) {
+      const pulseEl = document.getElementById('tcm-pulse_notes');
+      if (pulseEl) {
+        pulseEl.value = pulseNotes.join('；');
+        pulseEl.style.backgroundColor = '#e8f5e9';
+      }
+    }
+    
+    alert('✅ AI归纳完成！已自动填入各字段，请检查确认。');
   } catch(e) {
+    console.error('[AI归纳] 错误:', e);
     alert('AI归纳失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
-async tcmSaveInitial() {
+async tcmSaveInitial(opts = {}) {
+  const { silent = false } = opts;
   const p = this.tcmCurrentPatient;
-  if (!p) { alert('请先选择患者'); return; }
+  if (!p) { if (!silent) alert('请先选择患者'); return false; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
-  if (!chief) { alert('请填写主诉'); return; }
+  if (!chief) { if (!silent) alert('请填写主诉'); return false; }
   
   const sel = this.tcmSelectedOptions || {};
   const data = {
@@ -15658,17 +15886,17 @@ async tcmSaveInitial() {
     allergy_history: document.getElementById('tcm-allergy_history').value.trim(),
     family_history: document.getElementById('tcm-family_history').value.trim(),
     menstrual_history: document.getElementById('tcm-menstrual_history').value.trim(),
-    emotional_status: sel.emotional_status || '',
-    dietary_regular: sel.dietary_regular || '',
-    dietary_preference: sel.dietary_preference || [],
-    sleep_quality: sel.sleep_quality || '',
-    work_stress: sel.work_stress || '',
-    exercise_habits: sel.exercise_habits || '',
-    emotional_status_detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '',
-    dietary_preference_detail: (document.getElementById('tcm-dietary_preference-detail') || {}).value || '',
-    sleep_quality_detail: (document.getElementById('tcm-sleep_quality-detail') || {}).value || '',
-    work_stress_detail: (document.getElementById('tcm-work_stress-detail') || {}).value || '',
-    exercise_habits_detail: (document.getElementById('tcm-exercise_habits-detail') || {}).value || '',
+    // 🆕 修复：tcm_consultations 表实际是 JSONB 嵌套结构（emotional_status/dietary_habits/sleep_quality/work_stress/exercise_habits 都是 JSONB 对象）
+    // 之前扁平字段（dietary_regular / dietary_preference / *_detail）在实际表中不存在，导致 INSERT 400 失败但前端误报"已保存"
+    emotional_status: { main: sel.emotional_status || '', detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '' },
+    dietary_habits: {
+      regular: sel.dietary_regular || '',
+      preference: sel.dietary_preference || [],
+      detail: (document.getElementById('tcm-dietary_preference-detail') || {}).value || ''
+    },
+    sleep_quality: { main: sel.sleep_quality || '', detail: (document.getElementById('tcm-sleep_quality-detail') || {}).value || '' },
+    work_stress: { main: sel.work_stress || '', detail: (document.getElementById('tcm-work_stress-detail') || {}).value || '' },
+    exercise_habits: { main: sel.exercise_habits || '', detail: (document.getElementById('tcm-exercise_habits-detail') || {}).value || '' },
     living_environment: document.getElementById('tcm-living_environment').value.trim(),
     other_notes: document.getElementById('tcm-other_notes').value.trim(),
     tongue: {
@@ -15703,9 +15931,11 @@ async tcmSaveInitial() {
     }
     // Mark prescription completed
     await CloudBaseManager.completePrescriptionScale(p.name, p.phone, 'tcm_consultation');
-    alert('初诊记录已保存');
+    if (!silent) alert('初诊记录已保存');
+    return true;
   } catch(e) {
-    alert('保存失败: ' + e.message);
+    if (!silent) alert('保存失败: ' + e.message);
+    return false;
   }
 },
 
@@ -15772,14 +16002,22 @@ tcmAutoDifferentiate() {
   }
 },
 
-async tcmAIDiagnosis() {
+async tcmAIDiagnosis(e) {
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
   if (!chief) { alert('请先填写主诉'); return; }
-  
-  const btn = event.target.closest('button');
-  const orig = btn.innerHTML; btn.innerHTML = '⏳ 辨证论治中...'; btn.disabled = true;
+
+  // 🆕 防御性：自动先保存初诊记录（无弹窗）——这样"确认方案并存档"就能直接走
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    const saved = await this.tcmSaveInitial({ silent: true });
+    if (!saved) { alert('请先填写主诉并保存初诊记录'); return; }
+  }
+
+  // 修复：async 函数 await 后 event 失效，必须用参数 e
+  const btn = (e && e.target) ? e.target.closest('button') : null;
+  const orig = btn ? btn.innerHTML : '⏳ 辨证论治中...';
+  if (btn) { btn.innerHTML = '⏳ 辨证论治中...'; btn.disabled = true; }
 
   const sel = this.tcmSelectedOptions || {};
   const consultData = `主诉: ${chief}
@@ -15798,14 +16036,27 @@ async tcmAIDiagnosis() {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const prompt = '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用JSON格式返回以下字段：syndrome（证型）、pathogenesis（病机分析）、treatment_principle（治法）、main_formula（主方名称及组成）、modification（加减变化）、acupuncture（针灸建议）、lifestyle（生活调护建议）、prognosis（预后判断）。每个字段用专业但易懂的语言。\n\n患者四诊数据：\n' + consultData;
-    const content = await this.callCozeBot(prompt);
+    const prompt = TCM_PROMPT_PREAMBLE + '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
+    // 医学深度任务：保留 V3（辨证论治需要顶级能力）
+    const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
     let diagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); diagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { diagnosis = { syndrome: content }; }
     
     // Save AI diagnosis
     if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
       CloudBaseManager.sb.from('tcm_consultations').update({ai_diagnosis:diagnosis,updated_at:new Date().toISOString()}).eq('id',this.tcmCurrentRecord.id);
+    }
+
+    // 🆕 插入历史记录（每次跑 AI 辨证都存档一份）
+    if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+      await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
+        consultation_id: this.tcmCurrentRecord.id,
+        patient_id: this.tcmCurrentPatient?.id || null,
+        model: 'deepseek-ai/DeepSeek-V3',
+        task_type: 'tcm_diagnosis',
+        diagnosis: diagnosis,
+        prompt_tokens: prompt.length
+      });
     }
 
     // Render
@@ -15822,28 +16073,458 @@ async tcmAIDiagnosis() {
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
       let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:11px;color:var(--color-gray);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
+      // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
+      const toStr = (v) => {
+        if (v == null) return '';
+        if (typeof v === 'string') return v;
+        if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+        if (typeof v === 'object') {
+          if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+          if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+          if (v.name || v.formula_name) return v.name || v.formula_name;
+          return Object.values(v).map(toStr).filter(Boolean).join('；');
+        }
+        return String(v);
+      };
       sections.forEach(s => {
-        if(diagnosis[s.key]) {
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${diagnosis[s.key]}</div></div>`;
+        const val = toStr(diagnosis[s.key]);
+        if(val) {
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
         }
       });
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
       h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
-      h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis()">🔄 重新生成</button>';
-      h += '</div></div>';
+      h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成</button>';
+      h += '</div>';
+      // 🆕 历史记录面板占位（异步加载）
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        h += '<div id="tcm-history-panel"></div>';
+      }
+      // 🆕 AI 探讨/调整方案 对话窗口（折叠面板）
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        h += this.tcmRenderDialoguePanel();
+      }
+      h += '</div>';
       container.innerHTML = h;
+      // 🆕 异步加载历史
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        this.tcmLoadAndRenderHistory(this.tcmCurrentRecord.id);
+      }
     }
   } catch(e) {
     alert('AI辨证论治失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
+// 🆕 加载并渲染 AI 辨证历史记录
+async tcmLoadAndRenderHistory(consultId) {
+  const panel = document.getElementById('tcm-history-panel');
+  if (!panel) return;
+
+  const { data: history, error } = await CloudBaseManager.sb
+    .from('tcm_ai_diagnosis_history')
+    .select('*')
+    .eq('consultation_id', consultId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { console.warn('加载历史失败:', error); panel.outerHTML = ''; return; }
+  if (!history || !history.length) { panel.outerHTML = ''; return; }
+
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') return Object.values(v).map(toStr).filter(Boolean).join('；');
+    return String(v);
+  };
+
+  let h = `<div class="tcm-ai-section" style="margin-top:16px;background:#f9f7fc;border-left-color:#9b87ce;">
+    <div class="tcm-ai-section-title">📜 历史记录 (${history.length} 条)</div>
+    <div style="margin-top:8px;">`;
+
+  history.forEach((item, idx) => {
+    const d = item.diagnosis || {};
+    const syndrome = toStr(d.syndrome).substring(0, 60) || '(无证型)';
+    const main = toStr(d.main_formula).substring(0, 80) || '(无主方)';
+    const time = new Date(item.created_at).toLocaleString('zh-CN', { hour12: false });
+    const isCurrent = idx === 0;
+    h += `<div style="padding:8px;margin:6px 0;background:#fff;border:1px solid #e0dff5;border-radius:6px;${isCurrent ? 'border-left:3px solid #7B68AE;' : ''}">
+      <div style="font-size:12px;color:#5A4D7A;font-weight:600;">${isCurrent ? '🆕 最新' : 'V' + (history.length - idx)} · ${time} · <code style="font-size:11px;">${item.model}</code></div>
+      <div style="font-size:13px;margin-top:4px;"><strong>证型：</strong>${syndrome}</div>
+      <div style="font-size:12px;color:#666;margin-top:2px;"><strong>主方：</strong>${main}</div>
+      <button class="btn btn-outline btn-sm" style="margin-top:6px;font-size:11px;" onclick="AdminApp.tcmRestoreFromHistory(${item.id})">📥 加载此版本</button>
+    </div>`;
+  });
+
+  h += '</div></div>';
+  panel.outerHTML = h;
+},
+
+// 🆕 从历史记录加载指定版本到 AI 辨证结果区
+async tcmRestoreFromHistory(historyId) {
+  const { data, error } = await CloudBaseManager.sb
+    .from('tcm_ai_diagnosis_history')
+    .select('*')
+    .eq('id', historyId)
+    .single();
+  if (error || !data) { alert('加载历史版本失败'); return; }
+
+  // 🆕 应用前先弹预览 modal（带"取消"按钮），用户确认后才覆盖 AI 辨证结果区
+  // 根因：2026-06-07 20:46 公主陛下要求"已加载历史版本"弹窗要能取消
+  // 旧逻辑：直接覆盖 AI 辨证结果区 + 弹 alert；用户想取消时已被覆盖
+  // 新逻辑：先弹预览 modal（时间/模型/证型/主方摘要），用户点"应用"才覆盖，点"取消"啥也不做
+  const confirmed = await this._showHistoryPreviewModal(data);
+  if (!confirmed) return;  // 用户取消，啥也不做
+
+  const container = document.getElementById('tcm-ai-result');
+  if (!container) return;
+
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') {
+      if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+      if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+      if (v.name || v.formula_name) return v.name || v.formula_name;
+      return Object.values(v).map(toStr).filter(Boolean).join('；');
+    }
+    return String(v);
+  };
+
+  const sections = [
+    { key: 'syndrome', title: '🎯 证型', icon: '🎯' },
+    { key: 'pathogenesis', title: '🔬 病机分析', icon: '🔬' },
+    { key: 'treatment_principle', title: '⚖️ 治法', icon: '⚖️' },
+    { key: 'main_formula', title: '💊 主方', icon: '💊' },
+    { key: 'modification', title: '📝 加减', icon: '📝' },
+    { key: 'acupuncture', title: '🪡 针灸建议', icon: '🪡' },
+    { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
+    { key: 'prognosis', title: '📈 预后', icon: '📈' }
+  ];
+  const sourceTime = new Date(data.created_at).toLocaleString('zh-CN', { hour12: false });
+  let h = `<div class="tcm-ai-result">
+    <h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3>
+    <p style="font-size:11px;color:#7B5A00;background:#fff8e0;padding:6px 10px;border-radius:4px;margin-bottom:12px;">
+      📜 已加载历史版本 · ${sourceTime} · ${data.model}
+    </p>`;
+  sections.forEach(s => {
+    const val = toStr(data.diagnosis[s.key]);
+    if(val) {
+      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
+    }
+  });
+  h += '<div style="margin-top:12px;display:flex;gap:8px;">';
+  h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成新版本</button>';
+  h += '</div>';
+  h += '<div id="tcm-history-panel"></div>';
+  // 🆕 AI 探讨/调整方案 对话窗口（折叠面板）
+  if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+    h += this.tcmRenderDialoguePanel();
+  }
+  h += '</div>';
+  container.innerHTML = h;
+
+  this.tcmLoadAndRenderHistory(this.tcmCurrentRecord?.id);
+
+  // 🆕 改用自定义 modal 通知（带"取消"），用户可选择应用此版本或放弃
+  // 旧版：alert(`✅ 已加载历史版本...`) — 浏览器原生 alert 只能"确定"，无法取消
+  await this._showHistoryLoadedToast(sourceTime, data.model);
+},
+
+// 🆕 历史版本加载完成提示（轻量 toast，3 秒自动消失，无须操作）
+async _showHistoryLoadedToast(sourceTime, model) {
+  const id = 'tcm-history-loaded-toast';
+  document.getElementById(id)?.remove();
+  const toast = document.createElement('div');
+  toast.id = id;
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#5A4D7A;color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:99999;font-size:13px;max-width:360px;animation:fadeInUp 0.3s ease-out;';
+  toast.innerHTML = `✅ 已加载历史版本<br><span style="font-size:11px;opacity:0.85;">${sourceTime} · ${model}</span><br><span style="font-size:11px;opacity:0.85;">如要存为正式方案，点"✅ 确认方案并存档"</span>`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 4000);
+},
+
+// 🆕 历史版本预览 modal（应用前确认，带"取消"按钮）
+// 返回 Promise<boolean>：true=用户点"应用此版本"，false=用户点"取消"或点背景
+_showHistoryPreviewModal(data) {
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') {
+      if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+      if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+      if (v.name || v.formula_name) return v.name || v.formula_name;
+      return Object.values(v).map(toStr).filter(Boolean).join('；');
+    }
+    return String(v);
+  };
+  const syndrome = toStr(data.diagnosis.syndrome).substring(0, 80) || '(无证型)';
+  const main = toStr(data.diagnosis.main_formula).substring(0, 100) || '(无主方)';
+  const treat = toStr(data.diagnosis.treatment_principle).substring(0, 80) || '(无治法)';
+  const sourceTime = new Date(data.created_at).toLocaleString('zh-CN', { hour12: false });
+
+  const modalId = 'tcm-history-preview-modal';
+  document.getElementById(modalId)?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = modalId;
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:99999;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <h3 style="margin:0 0 12px;color:var(--color-primary);font-size:18px;">📜 历史版本预览</h3>
+      <div style="font-size:12px;color:#666;margin-bottom:14px;">
+        <div><strong>时间：</strong>${sourceTime}</div>
+        <div><strong>模型：</strong><code style="font-size:11px;background:#f0eef5;padding:1px 5px;border-radius:3px;">${data.model}</code></div>
+      </div>
+      <div style="background:#f8f6fa;padding:12px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+        <div><strong>🎯 证型：</strong>${syndrome}</div>
+        <div><strong>⚖️ 治法：</strong>${treat}</div>
+        <div><strong>💊 主方：</strong>${main}</div>
+      </div>
+      <p style="font-size:12px;color:#999;margin:0 0 16px;">应用后将覆盖当前 AI 辨证结果区。如要存为正式方案，请用 "✅ 确认方案并存档"。</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" id="tcm-modal-cancel" style="min-width:80px;">取消</button>
+        <button class="btn btn-primary btn-sm" id="tcm-modal-confirm" style="min-width:120px;">✅ 应用此版本</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  return new Promise((resolve) => {
+    const cleanup = (val) => { modal.remove(); resolve(val); };
+    document.getElementById('tcm-modal-cancel').onclick = () => cleanup(false);
+    document.getElementById('tcm-modal-confirm').onclick = () => cleanup(true);
+    modal.onclick = (e) => { if (e.target === modal) cleanup(false); };  // 点背景=取消
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); cleanup(false); }
+    });
+  });
+},
+
 async tcmConfirmDiagnosis() {
-  if(!this.tcmCurrentRecord||!this.tcmCurrentRecord.id){alert('请先保存初诊记录');return;}
+  // 🆕 防御性：自动先保存（无弹窗）
+  if(!this.tcmCurrentRecord||!this.tcmCurrentRecord.id){
+    const saved = await this.tcmSaveInitial({ silent: true });
+    if(!saved){alert('请先填写主诉并保存初诊记录');return;}
+  }
   await CloudBaseManager.sb.from('tcm_consultations').update({diagnosis_confirmed:true,updated_at:new Date().toISOString()}).eq('id',this.tcmCurrentRecord.id);
   alert('方案已确认并存档');
+},
+
+// ========== 🆕 AI 探讨/调整方案 对话窗口 ==========
+tcmRenderDialoguePanel() {
+  return `
+    <div class="tcm-dialogue-panel" style="margin-top:16px;border:1px dashed #9b87ce;border-radius:8px;background:#fdfcff;overflow:hidden;">
+      <div onclick="AdminApp.tcmToggleDialoguePanel()" style="padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;background:#f5f3fa;">
+        <span style="font-weight:600;color:#5A4D7A;font-size:14px;">💬 AI 探讨 / 调整方案</span>
+        <span id="tcm-dialogue-toggle-icon" style="color:#5A4D7A;font-size:14px;">▶</span>
+      </div>
+      <div id="tcm-dialogue-body" style="display:none;padding:12px 16px;">
+        <div id="tcm-dialogue-messages" style="max-height:400px;overflow-y:auto;margin-bottom:12px;min-height:60px;">
+          <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节<br>（如：方中附子能否减半？/ 患者兼有 X 症状应如何加减？）</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <textarea id="tcm-dialogue-input" class="tcm-textarea" rows="2" placeholder="输入你想探讨的细节..." style="flex:1;margin-bottom:0;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="AdminApp.tcmDialogueSend()">📤 发送</button>
+          <button class="btn btn-outline btn-sm" onclick="AdminApp.tcmDialogueApply()">📋 应用最终结论到辨证论治</button>
+          <button class="btn btn-outline btn-sm" onclick="AdminApp.tcmToggleDialoguePanel()">收起</button>
+        </div>
+        <div style="font-size:11px;color:#999;margin-top:8px;line-height:1.5;">
+          💡 多轮对话保留上下文，AI 基于完整讨论给出回应<br>
+          💡 讨论结束后点"应用最终结论"——AI 会把对话总结为标准辨证格式，写回上方辨证论治区
+        </div>
+      </div>
+    </div>
+  `;
+},
+
+async tcmToggleDialoguePanel() {
+  const body = document.getElementById('tcm-dialogue-body');
+  const icon = document.getElementById('tcm-dialogue-toggle-icon');
+  if (!body) return;
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    if (icon) icon.textContent = '▼';
+    await this.tcmLoadAndRenderDialogue();
+  } else {
+    body.style.display = 'none';
+    if (icon) icon.textContent = '▶';
+  }
+},
+
+_escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+},
+
+async tcmLoadAndRenderDialogue() {
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) return;
+  const msgBox = document.getElementById('tcm-dialogue-messages');
+  if (!msgBox) return;
+  try {
+    const { data: history, error } = await CloudBaseManager.sb
+      .from('tcm_ai_diagnosis_history')
+      .select('*')
+      .eq('consultation_id', this.tcmCurrentRecord.id)
+      .eq('task_type', 'tcm_dialogue')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    if (!history || !history.length) {
+      msgBox.innerHTML = '<div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节</div>';
+      return;
+    }
+    let h = '';
+    history.forEach(item => {
+      const d = item.diagnosis || {};
+      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background:#fff;border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${this._escapeHtml(d.user)}</div></div>`;
+      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${this._escapeHtml(d.ai)}</div></div>`;
+    });
+    msgBox.innerHTML = h;
+    msgBox.scrollTop = msgBox.scrollHeight;
+  } catch (e) {
+    console.warn('[tcmLoadAndRenderDialogue]', e);
+    msgBox.innerHTML = '<div style="color:#e74c3c;font-size:12px;padding:10px;">加载对话失败: ' + this._escapeHtml(e.message) + '</div>';
+  }
+},
+
+async tcmDialogueSend() {
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    alert('请先保存初诊记录后再使用对话窗口');
+    return;
+  }
+  const input = document.getElementById('tcm-dialogue-input');
+  if (!input) return;
+  const userMsg = input.value.trim();
+  if (!userMsg) { alert('请输入要探讨的内容'); return; }
+
+  // 防御性保存
+  const saved = await this.tcmSaveInitial({ silent: true });
+  if (!saved) return;
+
+  // 找发送按钮（避免锁定其他按钮）
+  const sendBtn = [...document.querySelectorAll('button')].find(b => b.textContent.includes('发送') && b.onclick && b.onclick.toString().includes('tcmDialogueSend'));
+  let origText = '';
+  if (sendBtn) { origText = sendBtn.innerHTML; sendBtn.innerHTML = '⏳ AI 思考中...'; sendBtn.disabled = true; }
+
+  try {
+    // 加载对话历史
+    const { data: history, error: hErr } = await CloudBaseManager.sb
+      .from('tcm_ai_diagnosis_history')
+      .select('*')
+      .eq('consultation_id', this.tcmCurrentRecord.id)
+      .eq('task_type', 'tcm_dialogue')
+      .order('created_at', { ascending: true });
+    if (hErr) throw hErr;
+
+    // 构造 messages（多轮上下文）
+    const messages = [];
+    const chief = (document.getElementById('tcm-chief_complaint') || {}).value || '';
+    const currentAiDiag = this.tcmCurrentRecord.ai_diagnosis || {};
+    const sysContent = TCM_PROMPT_PREAMBLE + `你是归元AI的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
+    messages.push({ role: 'system', content: sysContent });
+    (history || []).forEach(item => {
+      const d = item.diagnosis || {};
+      if (d.user) messages.push({ role: 'user', content: d.user });
+      if (d.ai) messages.push({ role: 'assistant', content: d.ai });
+    });
+    messages.push({ role: 'user', content: userMsg });
+
+    // 调 V3
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) throw new Error('请先配置 DeepSeek API 密钥');
+    const resp = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({ model: 'deepseek-ai/DeepSeek-V3', messages, temperature: 0.3, max_tokens: 1000 })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || data.message || 'API 错误');
+    const aiMsg = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(AI 无响应)';
+
+    // 存一行 history（task_type='tcm_dialogue'）
+    await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
+      consultation_id: this.tcmCurrentRecord.id,
+      patient_id: this.tcmCurrentPatient?.id || null,
+      model: 'deepseek-ai/DeepSeek-V3',
+      task_type: 'tcm_dialogue',
+      diagnosis: { user: userMsg, ai: aiMsg },
+      prompt_tokens: messages.reduce((s, m) => s + (m.content || '').length, 0)
+    });
+
+    input.value = '';
+    await this.tcmLoadAndRenderDialogue();
+  } catch (e) {
+    alert('AI 探讨失败: ' + e.message);
+  } finally {
+    if (sendBtn) { sendBtn.innerHTML = origText; sendBtn.disabled = false; }
+  }
+},
+
+async tcmDialogueApply() {
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    alert('请先保存初诊记录');
+    return;
+  }
+  if (!confirm('应用对话最终结论到辨证论治区？\n当前 AI 辨证结果将被覆盖（保留在历史记录中可回填）。')) return;
+
+  // 防御性保存
+  const saved = await this.tcmSaveInitial({ silent: true });
+  if (!saved) return;
+
+  try {
+    // 加载对话历史
+    const { data: history, error: hErr } = await CloudBaseManager.sb
+      .from('tcm_ai_diagnosis_history')
+      .select('*')
+      .eq('consultation_id', this.tcmCurrentRecord.id)
+      .eq('task_type', 'tcm_dialogue')
+      .order('created_at', { ascending: true });
+    if (hErr) throw hErr;
+    if (!history || !history.length) { alert('没有对话记录可应用，请先与 AI 探讨'); return; }
+
+    // 拼接完整对话
+    let conversation = '';
+    history.forEach(item => {
+      const d = item.diagnosis || {};
+      if (d.user) conversation += '医生：' + d.user + '\n\n';
+      if (d.ai) conversation += 'AI：' + d.ai + '\n\n';
+    });
+
+    // 让 V3 总结为标准诊断 JSON
+    const prompt = TCM_PROMPT_PREAMBLE + '你是一位资深中医师。请根据以下与归元AI探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3');
+    let finalDiagnosis;
+    try { const m = content.match(/\{[\s\S]*\}/); finalDiagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { finalDiagnosis = { syndrome: content }; }
+
+    // 写回 tcm_consultations.ai_diagnosis
+    await CloudBaseManager.sb.from('tcm_consultations')
+      .update({ ai_diagnosis: finalDiagnosis, updated_at: new Date().toISOString() })
+      .eq('id', this.tcmCurrentRecord.id);
+    this.tcmCurrentRecord.ai_diagnosis = finalDiagnosis;
+
+    // 插入一行 history（task_type='tcm_diagnosis'）记录这次应用
+    await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
+      consultation_id: this.tcmCurrentRecord.id,
+      patient_id: this.tcmCurrentPatient?.id || null,
+      model: 'deepseek-ai/DeepSeek-V3',
+      task_type: 'tcm_diagnosis',
+      diagnosis: { ...finalDiagnosis, _from_dialogue: true, _dialogue_rounds: history.length },
+      prompt_tokens: prompt.length
+    });
+
+    // 重新渲染 AI 辨证区
+    await this.tcmAIDiagnosis();
+    alert('✅ 已应用最终结论到辨证论治区\n（可继续调整，或点"✅ 确认方案并存档"结束）');
+  } catch (e) {
+    alert('应用失败: ' + e.message);
+  }
 },
 
 tcmPrint() {
@@ -15908,7 +16589,7 @@ async tcmRenderFollowup() {
   html += '<div id="tcm-rec-status" class="tcm-rec-status">点击开始录音</div>';
   html += '</div>';
   html += '<textarea id="tcm-transcript" class="tcm-textarea" rows="4" placeholder="录音转文字..."></textarea>';
-  html += '<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript()">🤖 AI智能归纳</button></div>';
+  html += '<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript(event)">🤖 AI智能归纳</button></div>';
   html += '</div>';
 
   // 复诊表单
@@ -15970,7 +16651,7 @@ async tcmRenderFollowup() {
   html += '<div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">';
   html += '<button class="btn btn-primary btn-lg" onclick="AdminApp.tcmSaveFollowup()">💾 保存复诊</button>';
   html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAutoDifferentiate()">🔮 自动辨证</button>';
-  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIFollowupAnalysis()">🤖 AI对比分析</button>';
+  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIFollowupAnalysis(event)">🤖 AI对比分析</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmPrint()">🖨️ 打印</button>';
   html += '</div>';
 
@@ -16025,14 +16706,16 @@ async tcmSaveFollowup() {
   } catch(e) { alert('保存失败: ' + e.message); }
 },
 
-async tcmAIFollowupAnalysis() {
+async tcmAIFollowupAnalysis(e) {
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const p = this.tcmCurrentPatient;
   if (!p) return;
-  
-  const btn = event.target.closest('button');
-  const orig = btn.innerHTML; btn.innerHTML = '⏳ 分析中...'; btn.disabled = true;
+
+  // 修复：async 函数中 await 之后 event 会失效，必须用参数 e（虽然此处尚未 await，但保持一致更稳）
+  const btn = (e && e.target) ? e.target.closest('button') : null;
+  const orig = btn ? btn.innerHTML : '⏳ 分析中...';
+  if (btn) { btn.innerHTML = '⏳ 分析中...'; btn.disabled = true; }
 
   try {
     // Get previous records
@@ -16051,7 +16734,8 @@ async tcmAIFollowupAnalysis() {
 副作用：${document.getElementById('fu_side_effects').value.trim()}`;
 
     const cozePrompt = '你是归元AI的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
-    const content = await this.callCozeBot(cozePrompt);
+    // 医学深度任务：保留 V3（对比分析需要顶级能力）
+    const content = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
     let analysis;
     try { const m = content.match(/\{[\s\S]*\}/); analysis = m ? JSON.parse(m[0]) : { treatment_summary: content }; } catch(e) { analysis = { treatment_summary: content }; }
     
@@ -16073,7 +16757,7 @@ async tcmAIFollowupAnalysis() {
   } catch(e) {
     alert('AI对比分析失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
@@ -16190,11 +16874,16 @@ async tcmViewArchiveRecord(id) {
 
 // ========== DeepSeek配置 ==========
 // ========== DeepSeek配置 ==========
-async callCozeBot(prompt) {
-  // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow DeepSeek
+// 双模型策略：高频结构化任务走 Qwen3-8B（永久免费），低频医学深度任务走 DeepSeek-V3（付费）
+// 调用时传 model 参数指定；不传默认 V3
+async callCozeBot(prompt, model) {
+  // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow
   const apiKey = localStorage.getItem('coze_access_token');
   if (!apiKey) throw new Error('请先在设置中配置 DeepSeek API密钥');
-  
+
+  const useModel = model || 'deepseek-ai/DeepSeek-V3';
+  console.log('[AI调用] 模型:', useModel, '| prompt长度:', (prompt||'').length);
+
   const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -16202,17 +16891,17 @@ async callCozeBot(prompt) {
       'Authorization': 'Bearer ' + apiKey
     },
     body: JSON.stringify({
-      model: 'deepseek-ai/DeepSeek-V3',
+      model: useModel,
       messages: [{ role: 'user', content: prompt }],
       stream: false
     })
   });
-  
+
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error('DeepSeek API调用失败: ' + (err.error?.message || response.statusText));
+    throw new Error('AI API调用失败: ' + (err.error?.message || response.statusText) + ' (model=' + useModel + ')');
   }
-  
+
   const result = await response.json();
   return result.choices && result.choices[0] && result.choices[0].message
     ? result.choices[0].message.content
