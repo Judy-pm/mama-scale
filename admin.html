@@ -15504,7 +15504,7 @@ async tcmRenderInitial() {
   html += '</div>';
   html += '<div class="tcm-rec-transcript"><textarea id="tcm-transcript" class="tcm-textarea" rows="5" placeholder="录音转文字将显示在此，也可直接输入..."></textarea></div>';
   html += '<div style="margin-top:8px;display:flex;gap:8px;">';
-  html += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript()">🤖 AI智能归纳</button>';
+  html += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript(event)">🤖 AI智能归纳</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="document.getElementById(\'tcm-transcript\').value=\'\'">清空</button>';
   html += '</div></div>';
 
@@ -15613,7 +15613,7 @@ async tcmRenderInitial() {
   html += '<div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">';
   html += '<button class="btn btn-primary btn-lg" onclick="AdminApp.tcmSaveInitial()">💾 保存初诊记录</button>';
   html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAutoDifferentiate()">🔮 自动辨证</button>';
-  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIDiagnosis()">🤖 AI辨证论治</button>';
+  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIDiagnosis(event)">🤖 AI辨证论治</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmPrint()">🖨️ 打印</button>';
   html += '</div>';
 
@@ -15658,13 +15658,14 @@ previewTonguePhoto(input) {
   }
 },
 
-async tcmAISummarizeTranscript() {
+async tcmAISummarizeTranscript(e) {
   const transcript = document.getElementById('tcm-transcript');
   if (!transcript || !transcript.value.trim()) { alert('请先录音或输入文字'); return; }
   const apiKey = localStorage.getItem('coze_access_token');
   if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
-  
-  const btn = event.target.closest('button');
+
+  // 修复：async 函数中 await 之后 event 会失效，必须用参数 e
+  const btn = (e && e.target) ? e.target.closest('button') : null;
   const orig = btn.innerHTML;
   btn.innerHTML = '⏳ 归纳中...'; btn.disabled = true;
   
@@ -15810,7 +15811,7 @@ ${transcript.value}`;
     console.error('[AI归纳] 错误:', e);
     alert('AI归纳失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
@@ -15952,7 +15953,7 @@ tcmAutoDifferentiate() {
   }
 },
 
-async tcmAIDiagnosis() {
+async tcmAIDiagnosis(e) {
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
@@ -15964,8 +15965,10 @@ async tcmAIDiagnosis() {
     if (!saved) { alert('请先填写主诉并保存初诊记录'); return; }
   }
 
-  const btn = event.target.closest('button');
-  const orig = btn.innerHTML; btn.innerHTML = '⏳ 辨证论治中...'; btn.disabled = true;
+  // 修复：async 函数 await 后 event 失效，必须用参数 e
+  const btn = (e && e.target) ? e.target.closest('button') : null;
+  const orig = btn ? btn.innerHTML : '⏳ 辨证论治中...';
+  if (btn) { btn.innerHTML = '⏳ 辨证论治中...'; btn.disabled = true; }
 
   const sel = this.tcmSelectedOptions || {};
   const consultData = `主诉: ${chief}
@@ -16042,7 +16045,7 @@ async tcmAIDiagnosis() {
       });
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
       h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
-      h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis()">🔄 重新生成</button>';
+      h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成</button>';
       h += '</div>';
       // 🆕 历史记录面板占位（异步加载）
       if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
@@ -16062,7 +16065,7 @@ async tcmAIDiagnosis() {
   } catch(e) {
     alert('AI辨证论治失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
@@ -16160,7 +16163,7 @@ async tcmRestoreFromHistory(historyId) {
   });
   h += '<div style="margin-top:12px;display:flex;gap:8px;">';
   h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
-  h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis()">🔄 重新生成新版本</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成新版本</button>';
   h += '</div>';
   h += '<div id="tcm-history-panel"></div>';
   // 🆕 AI 探讨/调整方案 对话窗口（折叠面板）
@@ -16458,7 +16461,7 @@ async tcmRenderFollowup() {
   html += '<div id="tcm-rec-status" class="tcm-rec-status">点击开始录音</div>';
   html += '</div>';
   html += '<textarea id="tcm-transcript" class="tcm-textarea" rows="4" placeholder="录音转文字..."></textarea>';
-  html += '<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript()">🤖 AI智能归纳</button></div>';
+  html += '<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="AdminApp.tcmAISummarizeTranscript(event)">🤖 AI智能归纳</button></div>';
   html += '</div>';
 
   // 复诊表单
@@ -16520,7 +16523,7 @@ async tcmRenderFollowup() {
   html += '<div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;">';
   html += '<button class="btn btn-primary btn-lg" onclick="AdminApp.tcmSaveFollowup()">💾 保存复诊</button>';
   html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAutoDifferentiate()">🔮 自动辨证</button>';
-  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIFollowupAnalysis()">🤖 AI对比分析</button>';
+  html += '<button class="btn btn-outline btn-lg" onclick="AdminApp.tcmAIFollowupAnalysis(event)">🤖 AI对比分析</button>';
   html += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmPrint()">🖨️ 打印</button>';
   html += '</div>';
 
@@ -16575,14 +16578,16 @@ async tcmSaveFollowup() {
   } catch(e) { alert('保存失败: ' + e.message); }
 },
 
-async tcmAIFollowupAnalysis() {
+async tcmAIFollowupAnalysis(e) {
   const apiKey = localStorage.getItem('coze_access_token');
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const p = this.tcmCurrentPatient;
   if (!p) return;
-  
-  const btn = event.target.closest('button');
-  const orig = btn.innerHTML; btn.innerHTML = '⏳ 分析中...'; btn.disabled = true;
+
+  // 修复：async 函数中 await 之后 event 会失效，必须用参数 e（虽然此处尚未 await，但保持一致更稳）
+  const btn = (e && e.target) ? e.target.closest('button') : null;
+  const orig = btn ? btn.innerHTML : '⏳ 分析中...';
+  if (btn) { btn.innerHTML = '⏳ 分析中...'; btn.disabled = true; }
 
   try {
     // Get previous records
@@ -16624,7 +16629,7 @@ async tcmAIFollowupAnalysis() {
   } catch(e) {
     alert('AI对比分析失败: ' + e.message);
   } finally {
-    btn.innerHTML = orig; btn.disabled = false;
+    if (btn) { btn.innerHTML = orig; btn.disabled = false; }
   }
 },
 
