@@ -808,6 +808,10 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   padding: 20px;
   margin-bottom: 16px;
 }
+/* 🆕 公主陛下 8 次反馈"AI 辨证论治字体颜色太浅"，2026-06-08 07:43 整体加深 */
+.tcm-ai-result h3, .tcm-ai-result h4 {
+  color: var(--color-primary-dark) !important;  /* 标题：#7B68AE → #5A4D7A 加深 */
+}
 .tcm-ai-section {
   margin-bottom: 14px;
   padding: 10px 14px;
@@ -16072,7 +16076,7 @@ async tcmAIDiagnosis(e) {
         { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
-      let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:11px;color:var(--color-gray);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
+      let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:12px;color:var(--color-text);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
       // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
       const toStr = (v) => {
         if (v == null) return '';
