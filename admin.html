@@ -15541,15 +15541,31 @@ async tcmRenderInitial() {
     { id: 'exercise_habits', label: '运动习惯', opts: ['无','偶尔','每周1-2次','每周3次以上'], multi: false }
   ];
 
+  // 🆕 兼容：实际表用 JSONB 嵌套，扁平字段（dietary_regular / *_detail）是旧 schema
+  const _nested = existingData ? {
+    emotional_status: existingData.emotional_status?.main ?? existingData.emotional_status,
+    emotional_status_detail: existingData.emotional_status?.detail ?? existingData.emotional_status_detail,
+    dietary_regular: existingData.dietary_habits?.regular ?? existingData.dietary_regular,
+    dietary_preference: existingData.dietary_habits?.preference ?? existingData.dietary_preference,
+    dietary_preference_detail: existingData.dietary_habits?.detail ?? existingData.dietary_preference_detail,
+    sleep_quality: existingData.sleep_quality?.main ?? existingData.sleep_quality,
+    sleep_quality_detail: existingData.sleep_quality?.detail ?? existingData.sleep_quality_detail,
+    work_stress: existingData.work_stress?.main ?? existingData.work_stress,
+    work_stress_detail: existingData.work_stress?.detail ?? existingData.work_stress_detail,
+    exercise_habits: existingData.exercise_habits?.main ?? existingData.exercise_habits,
+    exercise_habits_detail: existingData.exercise_habits?.detail ?? existingData.exercise_habits_detail
+  } : {};
+
   lifestyleSelects.forEach(s => {
-    const existingVal = existingData && existingData[s.id] ? existingData[s.id] : (s.multi ? [] : '');
+    const existingVal = _nested[s.id] !== undefined && _nested[s.id] !== null ? _nested[s.id] : (s.multi ? [] : '');
     html += `<div class="tcm-field"><label>${s.label}</label><div class="tcm-chip-group" id="tcm-chip-${s.id}">`;
     s.opts.forEach(v => {
       const isActive = s.multi ? (Array.isArray(existingVal) && existingVal.includes(v)) : existingVal === v;
       html += `<div class="tcm-chip${isActive ? ' active' : ''}" onclick="AdminApp.tcmChipSelect('${s.id}','${v}',${s.multi},this)">${v}</div>`;
     });
     html += '</div>';
-    html += `<textarea class="tcm-textarea" id="tcm-${s.id}-detail" rows="1" placeholder="补充说明..." style="min-height:40px;">${existingData && existingData[s.id + '_detail'] ? existingData[s.id + '_detail'] : ''}</textarea>`;
+    const _detailVal = _nested[s.id + '_detail'] || '';
+    html += `<textarea class="tcm-textarea" id="tcm-${s.id}-detail" rows="1" placeholder="补充说明..." style="min-height:40px;">${_detailVal}</textarea>`;
     html += '</div>';
   });
 
@@ -15620,14 +15636,33 @@ async tcmRenderInitial() {
   // Init chip state from existing data
   this.tcmSelectedOptions = {};
   if (existingData) {
+    // 🆕 兼容：实际表用 JSONB 嵌套，扁平字段（dietary_regular / *_detail）是旧 schema
+    const nested = {
+      emotional_status: existingData.emotional_status?.main ?? existingData.emotional_status,
+      emotional_status_detail: existingData.emotional_status?.detail ?? existingData.emotional_status_detail,
+      dietary_regular: existingData.dietary_habits?.regular ?? existingData.dietary_regular,
+      dietary_preference: existingData.dietary_habits?.preference ?? existingData.dietary_preference,
+      dietary_preference_detail: existingData.dietary_habits?.detail ?? existingData.dietary_preference_detail,
+      sleep_quality: existingData.sleep_quality?.main ?? existingData.sleep_quality,
+      sleep_quality_detail: existingData.sleep_quality?.detail ?? existingData.sleep_quality_detail,
+      work_stress: existingData.work_stress?.main ?? existingData.work_stress,
+      work_stress_detail: existingData.work_stress?.detail ?? existingData.work_stress_detail,
+      exercise_habits: existingData.exercise_habits?.main ?? existingData.exercise_habits,
+      exercise_habits_detail: existingData.exercise_habits?.detail ?? existingData.exercise_habits_detail
+    };
     // Restore lifestyle selects
     lifestyleSelects.forEach(s => {
-      const val = existingData[s.id];
+      const val = nested[s.id] !== undefined ? nested[s.id] : existingData[s.id];
       this.tcmSelectedOptions[s.id] = val || (s.multi ? [] : '');
     });
     // Restore tongue/pulse
     tongueConfig.forEach(c => { this.tcmSelectedOptions[c.id] = existingTongue[c.id] || (c.multi ? [] : ''); });
     pulseConfig.forEach(c => { this.tcmSelectedOptions[c.id] = existingPulse[c.id] || (c.multi ? [] : ''); });
+    // 把 detail 也回填到 tcmSelectedOptions，方便后续 tcmSaveInitial 读取（如果用户再编辑时）
+    lifestyleSelects.forEach(s => {
+      const detailKey = s.id + '_detail';
+      if (nested[detailKey]) this.tcmSelectedOptions[detailKey] = nested[detailKey];
+    });
   }
 
   return html;
@@ -15837,17 +15872,17 @@ async tcmSaveInitial(opts = {}) {
     allergy_history: document.getElementById('tcm-allergy_history').value.trim(),
     family_history: document.getElementById('tcm-family_history').value.trim(),
     menstrual_history: document.getElementById('tcm-menstrual_history').value.trim(),
-    emotional_status: sel.emotional_status || '',
-    dietary_regular: sel.dietary_regular || '',
-    dietary_preference: sel.dietary_preference || [],
-    sleep_quality: sel.sleep_quality || '',
-    work_stress: sel.work_stress || '',
-    exercise_habits: sel.exercise_habits || '',
-    emotional_status_detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '',
-    dietary_preference_detail: (document.getElementById('tcm-dietary_preference-detail') || {}).value || '',
-    sleep_quality_detail: (document.getElementById('tcm-sleep_quality-detail') || {}).value || '',
-    work_stress_detail: (document.getElementById('tcm-work_stress-detail') || {}).value || '',
-    exercise_habits_detail: (document.getElementById('tcm-exercise_habits-detail') || {}).value || '',
+    // 🆕 修复：tcm_consultations 表实际是 JSONB 嵌套结构（emotional_status/dietary_habits/sleep_quality/work_stress/exercise_habits 都是 JSONB 对象）
+    // 之前扁平字段（dietary_regular / dietary_preference / *_detail）在实际表中不存在，导致 INSERT 400 失败但前端误报"已保存"
+    emotional_status: { main: sel.emotional_status || '', detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '' },
+    dietary_habits: {
+      regular: sel.dietary_regular || '',
+      preference: sel.dietary_preference || [],
+      detail: (document.getElementById('tcm-dietary_preference-detail') || {}).value || ''
+    },
+    sleep_quality: { main: sel.sleep_quality || '', detail: (document.getElementById('tcm-sleep_quality-detail') || {}).value || '' },
+    work_stress: { main: sel.work_stress || '', detail: (document.getElementById('tcm-work_stress-detail') || {}).value || '' },
+    exercise_habits: { main: sel.exercise_habits || '', detail: (document.getElementById('tcm-exercise_habits-detail') || {}).value || '' },
     living_environment: document.getElementById('tcm-living_environment').value.trim(),
     other_notes: document.getElementById('tcm-other_notes').value.trim(),
     tongue: {
