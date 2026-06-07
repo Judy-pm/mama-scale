@@ -15958,6 +15958,18 @@ async tcmAIDiagnosis() {
       CloudBaseManager.sb.from('tcm_consultations').update({ai_diagnosis:diagnosis,updated_at:new Date().toISOString()}).eq('id',this.tcmCurrentRecord.id);
     }
 
+    // 🆕 插入历史记录（每次跑 AI 辨证都存档一份）
+    if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+      await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
+        consultation_id: this.tcmCurrentRecord.id,
+        patient_id: this.tcmCurrentPatient?.id || null,
+        model: 'deepseek-ai/DeepSeek-V3',
+        task_type: 'tcm_diagnosis',
+        diagnosis: diagnosis,
+        prompt_tokens: prompt.length
+      });
+    }
+
     // Render
     const container = document.getElementById('tcm-ai-result');
     if(container) {
@@ -15994,14 +16006,128 @@ async tcmAIDiagnosis() {
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
       h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
       h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis()">🔄 重新生成</button>';
-      h += '</div></div>';
+      h += '</div>';
+      // 🆕 历史记录面板占位（异步加载）
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        h += '<div id="tcm-history-panel"></div>';
+      }
+      h += '</div>';
       container.innerHTML = h;
+      // 🆕 异步加载历史
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        this.tcmLoadAndRenderHistory(this.tcmCurrentRecord.id);
+      }
     }
   } catch(e) {
     alert('AI辨证论治失败: ' + e.message);
   } finally {
     btn.innerHTML = orig; btn.disabled = false;
   }
+},
+
+// 🆕 加载并渲染 AI 辨证历史记录
+async tcmLoadAndRenderHistory(consultId) {
+  const panel = document.getElementById('tcm-history-panel');
+  if (!panel) return;
+
+  const { data: history, error } = await CloudBaseManager.sb
+    .from('tcm_ai_diagnosis_history')
+    .select('*')
+    .eq('consultation_id', consultId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { console.warn('加载历史失败:', error); panel.outerHTML = ''; return; }
+  if (!history || !history.length) { panel.outerHTML = ''; return; }
+
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') return Object.values(v).map(toStr).filter(Boolean).join('；');
+    return String(v);
+  };
+
+  let h = `<div class="tcm-ai-section" style="margin-top:16px;background:#f9f7fc;border-left-color:#9b87ce;">
+    <div class="tcm-ai-section-title">📜 历史记录 (${history.length} 条)</div>
+    <div style="margin-top:8px;">`;
+
+  history.forEach((item, idx) => {
+    const d = item.diagnosis || {};
+    const syndrome = toStr(d.syndrome).substring(0, 60) || '(无证型)';
+    const main = toStr(d.main_formula).substring(0, 80) || '(无主方)';
+    const time = new Date(item.created_at).toLocaleString('zh-CN', { hour12: false });
+    const isCurrent = idx === 0;
+    h += `<div style="padding:8px;margin:6px 0;background:#fff;border:1px solid #e0dff5;border-radius:6px;${isCurrent ? 'border-left:3px solid #7B68AE;' : ''}">
+      <div style="font-size:12px;color:#5A4D7A;font-weight:600;">${isCurrent ? '🆕 最新' : 'V' + (history.length - idx)} · ${time} · <code style="font-size:11px;">${item.model}</code></div>
+      <div style="font-size:13px;margin-top:4px;"><strong>证型：</strong>${syndrome}</div>
+      <div style="font-size:12px;color:#666;margin-top:2px;"><strong>主方：</strong>${main}</div>
+      <button class="btn btn-outline btn-sm" style="margin-top:6px;font-size:11px;" onclick="AdminApp.tcmRestoreFromHistory(${item.id})">📥 加载此版本</button>
+    </div>`;
+  });
+
+  h += '</div></div>';
+  panel.outerHTML = h;
+},
+
+// 🆕 从历史记录加载指定版本到 AI 辨证结果区
+async tcmRestoreFromHistory(historyId) {
+  const { data, error } = await CloudBaseManager.sb
+    .from('tcm_ai_diagnosis_history')
+    .select('*')
+    .eq('id', historyId)
+    .single();
+  if (error || !data) { alert('加载历史版本失败'); return; }
+
+  const container = document.getElementById('tcm-ai-result');
+  if (!container) return;
+
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') {
+      if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+      if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+      if (v.name || v.formula_name) return v.name || v.formula_name;
+      return Object.values(v).map(toStr).filter(Boolean).join('；');
+    }
+    return String(v);
+  };
+
+  const sections = [
+    { key: 'syndrome', title: '🎯 证型', icon: '🎯' },
+    { key: 'pathogenesis', title: '🔬 病机分析', icon: '🔬' },
+    { key: 'treatment_principle', title: '⚖️ 治法', icon: '⚖️' },
+    { key: 'main_formula', title: '💊 主方', icon: '💊' },
+    { key: 'modification', title: '📝 加减', icon: '📝' },
+    { key: 'acupuncture', title: '🪡 针灸建议', icon: '🪡' },
+    { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
+    { key: 'prognosis', title: '📈 预后', icon: '📈' }
+  ];
+  const sourceTime = new Date(data.created_at).toLocaleString('zh-CN', { hour12: false });
+  let h = `<div class="tcm-ai-result">
+    <h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3>
+    <p style="font-size:11px;color:#7B5A00;background:#fff8e0;padding:6px 10px;border-radius:4px;margin-bottom:12px;">
+      📜 已加载历史版本 · ${sourceTime} · ${data.model}
+    </p>`;
+  sections.forEach(s => {
+    const val = toStr(data.diagnosis[s.key]);
+    if(val) {
+      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
+    }
+  });
+  h += '<div style="margin-top:12px;display:flex;gap:8px;">';
+  h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis()">🔄 重新生成新版本</button>';
+  h += '</div>';
+  h += '<div id="tcm-history-panel"></div>';
+  h += '</div>';
+  container.innerHTML = h;
+
+  this.tcmLoadAndRenderHistory(this.tcmCurrentRecord?.id);
+
+  alert(`✅ 已加载历史版本\n时间：${sourceTime}\n模型：${data.model}\n\n如要存为正式方案，点"✅ 确认方案并存档"`);
 },
 
 async tcmConfirmDiagnosis() {
