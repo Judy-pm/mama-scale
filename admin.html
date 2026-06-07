@@ -15814,11 +15814,12 @@ ${transcript.value}`;
   }
 },
 
-async tcmSaveInitial() {
+async tcmSaveInitial(opts = {}) {
+  const { silent = false } = opts;
   const p = this.tcmCurrentPatient;
-  if (!p) { alert('请先选择患者'); return; }
+  if (!p) { if (!silent) alert('请先选择患者'); return false; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
-  if (!chief) { alert('请填写主诉'); return; }
+  if (!chief) { if (!silent) alert('请填写主诉'); return false; }
   
   const sel = this.tcmSelectedOptions || {};
   const data = {
@@ -15880,9 +15881,11 @@ async tcmSaveInitial() {
     }
     // Mark prescription completed
     await CloudBaseManager.completePrescriptionScale(p.name, p.phone, 'tcm_consultation');
-    alert('初诊记录已保存');
+    if (!silent) alert('初诊记录已保存');
+    return true;
   } catch(e) {
-    alert('保存失败: ' + e.message);
+    if (!silent) alert('保存失败: ' + e.message);
+    return false;
   }
 },
 
@@ -15954,7 +15957,13 @@ async tcmAIDiagnosis() {
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 DeepSeek API密钥'); return; }
   const chief = document.getElementById('tcm-chief_complaint').value.trim();
   if (!chief) { alert('请先填写主诉'); return; }
-  
+
+  // 🆕 防御性：自动先保存初诊记录（无弹窗）——这样"确认方案并存档"就能直接走
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    const saved = await this.tcmSaveInitial({ silent: true });
+    if (!saved) { alert('请先填写主诉并保存初诊记录'); return; }
+  }
+
   const btn = event.target.closest('button');
   const orig = btn.innerHTML; btn.innerHTML = '⏳ 辨证论治中...'; btn.disabled = true;
 
@@ -16159,7 +16168,11 @@ async tcmRestoreFromHistory(historyId) {
 },
 
 async tcmConfirmDiagnosis() {
-  if(!this.tcmCurrentRecord||!this.tcmCurrentRecord.id){alert('请先保存初诊记录');return;}
+  // 🆕 防御性：自动先保存（无弹窗）
+  if(!this.tcmCurrentRecord||!this.tcmCurrentRecord.id){
+    const saved = await this.tcmSaveInitial({ silent: true });
+    if(!saved){alert('请先填写主诉并保存初诊记录');return;}
+  }
   await CloudBaseManager.sb.from('tcm_consultations').update({diagnosis_confirmed:true,updated_at:new Date().toISOString()}).eq('id',this.tcmCurrentRecord.id);
   alert('方案已确认并存档');
 },
