@@ -12725,6 +12725,150 @@ function doChangePwd() {
 //   v2 → v3 沿用项：角色设定/速查表/十九畏十八反分类别混用/避开表内冲突药对
 const TCM_PROMPT_PREAMBLE = '\n【中医配伍禁忌与临床回答规范（必须严格遵守）】\n【角色】你是武汉市妇幼保健院女性抗衰门诊的资深中医师，30 年临床经验，所有回答以《中国药典》和《伤寒论》《金匮要略》等经典为准。\n【速查表·十九畏 9对】硫黄-朴硝 / 水银-砒霜 / 狼毒-密陀僧 / 巴豆-牵牛 / 丁香-郁金 / 川乌草乌-犀角 / 牙硝-三棱 / 官桂-石脂 / 人参-五灵脂。\n【速查表·十八反 3组】(1)甘草-甘遂/大戟/芫花/海藻 (2)藜芦-人参/丹参/玄参/沙参/细辛/芍药 (3)乌头(川乌/草乌/附子)-贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄-旋覆花合用：致心率失常的现代药理警示（动物实验+临床报道）；旋覆花绒毛刺激咽喉需包煎。\n【回答流程】1.【分析】先判断问题类型（配伍禁忌/剂量煎服/特殊人群/临床诊断）2.【依据】查上述速查表+经典方剂，不要凭直觉 3.【结论】给出明确答案 3.5【补充】如适用，补充临床表现/方剂组成/煎服法/古籍出处/关键药对等关键信息，让答案更完整 4.【不确定项】如有不明确，明确说"建议医生面诊"或"建议参考《中国药典》" 5.【置信度】自评本次回答的确定性——高/中/低 + 1 句话说明（高=有药典/经典明确依据；中=基于证型推断；低=仅凭一般原则），让医生一眼看到你犹豫的地方。\n【5条铁律】(1)严格依据速查表，不要凭直觉联想 (2)患者所问组合若不在表内，明确答"未见该组合在传统十九畏/十八反中的明确记载" (3)十九畏和十八反是两个不同体系，不要混用——硫黄-朴硝是十九畏，不是十八反 (4)禁止编造任何具体数字（剂量克数/煎服分钟/毒性倍数/监测频率/服药天数等）。在以下软场景下，无药典/文献明确依据时必须答"具体时间因人而异，建议医生面诊"或"建议参考最新版《中国药典》"，禁止给具体小时数/克数/倍数/天数——软场景包括：饮食间隔（如"服药后几小时喝绿豆汤"）、煎服时长（如"附子先煎几分钟"）、监测频率（如"INR 多久查一次"）、起效时间（如"几天见效"）、症状缓解时间（如"疼痛多久缓解"） (5)开方时自动避开表内冲突药对。\n';
 
+// 🆕 v3.1.0 共享指令块：任务2+3 自动补充识别 + 会话共识识别
+const TCM_MEMORY_INSTRUCTION = `
+
+【三层记忆 - 任务 3】
+以下是医生和 AI 之前达成的共识，请严格遵守：
+
+{{CLINICAL_RULES}}
+
+{{PATIENT_RULES}}
+
+{{SESSION_RULES}}
+
+【自动补充识别 - 任务 2】
+本轮对话中如果医生补充了主诉/现病史/舌象/脉象/体征/既往史等信息，
+请在自然回复末尾输出 JSON 块（用于前端弹窗确认是否写入病历）：
+```json
+{"supplements": [
+  {"field": "chief_complaint", "value": "睡眠浅", "confidence": 0.9, "source_quote": "她说最近睡眠浅"},
+  {"field": "present_illness", "value": "夜尿 2 次", "confidence": 0.85, "source_quote": "夜尿 2 次"}
+]}
+```
+field 可选值：chief_complaint（主诉）/ present_illness（現病史）/ tongue（舌象）/ pulse（脉象）/ signs（体征）/ past_history（既往史）
+如果本轮没有补充，输出 {"supplements": []}
+注意：只输出本轮医生明确表达的新信息，不要重复已有病历内容。
+
+【会话共识识别 - 任务 3】
+本轮对话中如果识别到"医生和 AI 达成共识"（如"该患者用右归丸"、"附子先煎 1.5h"），
+请在自然回复末尾输出 JSON 块（用于前端弹窗确认是否记住）：
+```json
+{"doctor_agreements": [
+  {"content": "附子先煎 1.5h", "scope": "session", "reason": "医生主动要求"},
+  {"content": "该患者避免用麻黄", "scope": "patient", "reason": "基于过敏史"}
+]}
+```
+scope: session = 仅本次会话 / patient = 该患者长期
+如果本轮没有共识，输出 {"doctor_agreements": []}
+注意：只输出医生明确表达且 AI 也同意的规则，不要编造。
+`;
+
+// ========== v3.1.0 三层记忆系统函数 ==========
+// 全局临床铁律（医生手动维护，存全局）
+function coze_get_clinical_rules() {
+  try { return JSON.parse(localStorage.getItem('coze_clinical_rules') || '[]'); }
+  catch(e) { return []; }
+}
+function coze_set_clinical_rules(rules) {
+  localStorage.setItem('coze_clinical_rules', JSON.stringify(rules));
+}
+
+// 病历级规则（按 patientId 存）
+function coze_get_patient_rules(patientId) {
+  try { return JSON.parse(localStorage.getItem('coze_patient_rules_' + (patientId || 'none')) || '[]'); }
+  catch(e) { return []; }
+}
+function coze_set_patient_rules(patientId, rules) {
+  localStorage.setItem('coze_patient_rules_' + (patientId || 'none'), JSON.stringify(rules));
+}
+
+// 会话级规则（当前对话临时）
+function coze_get_session_rules() {
+  try { return JSON.parse(localStorage.getItem('coze_session_rules') || '[]'); }
+  catch(e) { return []; }
+}
+function coze_set_session_rules(rules) {
+  localStorage.setItem('coze_session_rules', JSON.stringify(rules));
+}
+
+// 解析 AI 回复末尾的 supplements JSON 块（任务 2）
+function tcmExtractSupplements(aiResponse) {
+  try {
+    const match = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+    if (!match) return [];
+    const obj = JSON.parse(match[1]);
+    if (!obj.supplements || !Array.isArray(obj.supplements)) return [];
+    return obj.supplements.filter(s => s.field && s.value && s.confidence >= 0.7);
+  } catch(e) { return []; }
+}
+
+// 解析 AI 回复末尾的 doctor_agreements JSON 块（任务 3）
+function tcmExtractAgreements(aiResponse) {
+  try {
+    const match = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+    if (!match) return [];
+    const obj = JSON.parse(match[1]);
+    if (!obj.doctor_agreements || !Array.isArray(obj.doctor_agreements)) return [];
+    return obj.doctor_agreements.filter(a => a.content && a.scope);
+  } catch(e) { return []; }
+}
+
+// 拼接三层记忆到 prompt（任务 3）
+function tcmBuildMemoryPrompt(patientId) {
+  const rules = coze_get_clinical_rules();
+  const patientRules = coze_get_patient_rules(patientId);
+  const sessionRules = coze_get_session_rules();
+  
+  let clinicalPart = '';
+  if (rules.length > 0) {
+    clinicalPart = rules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
+  } else {
+    clinicalPart = '（暂无全局铁律，可通过「设置」→「三层记忆管理」添加）';
+  }
+  
+  let patientPart = '';
+  if (patientRules.length > 0) {
+    patientPart = patientRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
+  } else {
+    patientPart = '（暂无本患者特异规则）';
+  }
+  
+  let sessionPart = '';
+  if (sessionRules.length > 0) {
+    sessionPart = sessionRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
+  } else {
+    sessionPart = '（暂无本会话共识）';
+  }
+  
+  return TCM_MEMORY_INSTRUCTION
+    .replace('{{CLINICAL_RULES}}', clinicalPart)
+    .replace('{{PATIENT_RULES}}', patientPart)
+    .replace('{{SESSION_RULES}}', sessionPart);
+}
+
+// 预填公主陛下的常用临床铁律示例（首次使用时自动填入）
+function coze_init_sample_rules() {
+  const existing = coze_get_clinical_rules();
+  if (existing.length > 0) return; // 已有数据不覆盖
+  
+  const samples = [
+    { id: 'sr1', content: '精简用药，优先 12 味以内', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr2', content: '辨证优先看舌象，舌象不符时以舌象为准', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr3', content: '先通后补，通道不通不补', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr4', content: '老年人用药量减半，70岁以上再减', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr5', content: '避免用动物药，除非必要（如僵蚕替代全蝎）', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr6', content: '附子质量不稳定，先煎 1.5h 以上', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr7', content: '肝病患者避开有肝毒性中药（何首乌等）', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr8', content: '备孕期和孕妇禁用活血化瘀药', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr9', content: '经期停用攻下药和活血药', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
+    { id: 'sr10', content: '儿童用药不超过成人 1/3 量', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() }
+  ];
+  coze_set_clinical_rules(samples);
+}
+// 首次加载时检查并预填示例
+coze_init_sample_rules();
+
 const AdminApp = {
   async init() {
     const ok = await CloudBaseManager.init();
@@ -14658,8 +14802,171 @@ const AdminApp = {
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
+
+        <div class="info-card">
+          <h4>🧠 三层记忆管理 <span style="font-size:12px;font-weight:normal;color:var(--color-gray);">（v3.1.0 任务 3）</span></h4>
+
+          <!-- 全局临床铁律 -->
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-weight:600;">我的全局临床铁律</div>
+              <button class="btn btn-outline btn-sm" onclick="AdminApp._tcmLoadRulesUI();AdminApp._tcmAddGlobalRule()">+ 新增</button>
+            </div>
+            <div id="coze-global-rules-list" style="max-height:200px;overflow-y:auto;">
+              <div style="font-size:13px;color:var(--color-gray);text-align:center;padding:20px;">加载中...</div>
+            </div>
+          </div>
+
+          <!-- 本患者特异规则 -->
+          <div style="margin-bottom:16px;" id="coze-patient-rules-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-weight:600;">本患者特异医嘱 <span id="coze-patient-name" style="font-weight:normal;font-size:12px;color:var(--color-gray);"></span></div>
+              <button class="btn btn-outline btn-sm" onclick="AdminApp._tcmLoadRulesUI();AdminApp._tcmAddPatientRule()">+ 新增</button>
+            </div>
+            <div id="coze-patient-rules-list" style="max-height:150px;overflow-y:auto;">
+              <div style="font-size:13px;color:var(--color-gray);text-align:center;padding:20px;">请先打开患者病历</div>
+            </div>
+          </div>
+
+          <!-- 本会话共识 -->
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-weight:600;">本次会话共识 <span style="font-weight:normal;font-size:12px;color:var(--color-gray);">（关闭页面后自动清除）</span></div>
+              <button class="btn btn-outline btn-sm" onclick="AdminApp._tcmLoadRulesUI();AdminApp._tcmAddSessionRule()">+ 新增</button>
+            </div>
+            <div id="coze-session-rules-list" style="max-height:150px;overflow-y:auto;">
+              <div style="font-size:13px;color:var(--color-gray);text-align:center;padding:20px;">加载中...</div>
+            </div>
+          </div>
+        </div>
       </div>
     `;
+    // 🆕 v3.1.0 任务 3：加载三层记忆规则列表
+    setTimeout(() => AdminApp._tcmLoadRulesUI(), 50);
+  },
+
+  // 🆕 v3.1.0 三层记忆管理：加载规则列表（调用此方法刷新显示）
+  _tcmLoadRulesUI() {
+    // 加载全局规则
+    const globalRules = coze_get_clinical_rules();
+    const globalList = document.getElementById('coze-global-rules-list');
+    if (globalList) {
+      if (globalRules.length === 0) {
+        globalList.innerHTML = '<div style="font-size:13px;color:var(--color-gray);text-align:center;padding:12px;">暂无全局铁律（可新增，或由 AI 补充）</div>';
+      } else {
+        globalList.innerHTML = globalRules.map((r, i) => '<div style="padding:8px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;"><div style="flex:1;font-size:13px;">' + (i+1) + '. ' + r.content + '</div><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="AdminApp._tcmEditGlobalRule(' + i + ')">编辑</button><button class="btn btn-outline btn-sm" style="color:var(--color-red);" onclick="AdminApp._tcmDeleteGlobalRule(' + i + ')">删除</button></div></div>').join('');
+      }
+    }
+    // 加载患者规则
+    const patientId = this.tcmCurrentPatient?.id;
+    const patientRules = coze_get_patient_rules(patientId);
+    const patientNameEl = document.getElementById('coze-patient-name');
+    if (patientNameEl) patientNameEl.textContent = patientId ? '(ID: ' + patientId.substr(0,8) + '...)' : '';
+    const patientList = document.getElementById('coze-patient-rules-list');
+    if (patientList) {
+      if (!patientId) {
+        patientList.innerHTML = '<div style="font-size:13px;color:var(--color-gray);text-align:center;padding:12px;">请先打开患者病历</div>';
+      } else if (patientRules.length === 0) {
+        patientList.innerHTML = '<div style="font-size:13px;color:var(--color-gray);text-align:center;padding:12px;">暂无本患者特异规则</div>';
+      } else {
+        patientList.innerHTML = patientRules.map((r, i) => '<div style="padding:8px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;"><div style="flex:1;font-size:13px;">' + (i+1) + '. ' + r.content + '</div><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="AdminApp._tcmEditPatientRule(' + i + ')">编辑</button><button class="btn btn-outline btn-sm" style="color:var(--color-red);" onclick="AdminApp._tcmDeletePatientRule(' + i + ')">删除</button></div></div>').join('');
+      }
+    }
+    // 加载会话规则
+    const sessionRules = coze_get_session_rules();
+    const sessionList = document.getElementById('coze-session-rules-list');
+    if (sessionList) {
+      if (sessionRules.length === 0) {
+        sessionList.innerHTML = '<div style="font-size:13px;color:var(--color-gray);text-align:center;padding:12px;">暂无本会话共识</div>';
+      } else {
+        sessionList.innerHTML = sessionRules.map((r, i) => '<div style="padding:8px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;"><div style="flex:1;font-size:13px;">' + (i+1) + '. ' + r.content + '</div><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm" onclick="AdminApp._tcmDeleteSessionRule(' + i + ')">删除</button></div></div>').join('');
+      }
+    }
+  },
+
+  // 🆕 v3.1.0 新增全局规则
+  _tcmAddGlobalRule() {
+    const content = prompt('请输入新的全局临床铁律：');
+    if (!content || !content.trim()) return;
+    const rules = coze_get_clinical_rules();
+    rules.push({ id: 'r_' + Date.now(), content: content.trim(), scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() });
+    coze_set_clinical_rules(rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 编辑全局规则
+  _tcmEditGlobalRule(index) {
+    const rules = coze_get_clinical_rules();
+    if (!rules[index]) return;
+    const content = prompt('编辑全局临床铁律：', rules[index].content);
+    if (content === null) return;
+    rules[index].content = content.trim();
+    coze_set_clinical_rules(rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 删除全局规则
+  _tcmDeleteGlobalRule(index) {
+    if (!confirm('确定删除这条全局铁律？')) return;
+    const rules = coze_get_clinical_rules();
+    rules.splice(index, 1);
+    coze_set_clinical_rules(rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 新增患者规则
+  _tcmAddPatientRule() {
+    const patientId = this.tcmCurrentPatient?.id;
+    if (!patientId) { alert('请先打开患者病历'); return; }
+    const content = prompt('请输入本患者特异医嘱：');
+    if (!content || !content.trim()) return;
+    const rules = coze_get_patient_rules(patientId);
+    rules.push({ id: 'r_' + Date.now(), content: content.trim(), scope: 'patient', source: 'doctor_manual', created_at: new Date().toISOString() });
+    coze_set_patient_rules(patientId, rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 编辑患者规则
+  _tcmEditPatientRule(index) {
+    const patientId = this.tcmCurrentPatient?.id;
+    if (!patientId) return;
+    const rules = coze_get_patient_rules(patientId);
+    if (!rules[index]) return;
+    const content = prompt('编辑本患者特异医嘱：', rules[index].content);
+    if (content === null) return;
+    rules[index].content = content.trim();
+    coze_set_patient_rules(patientId, rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 删除患者规则
+  _tcmDeletePatientRule(index) {
+    if (!confirm('确定删除这条患者特异医嘱？')) return;
+    const patientId = this.tcmCurrentPatient?.id;
+    if (!patientId) return;
+    const rules = coze_get_patient_rules(patientId);
+    rules.splice(index, 1);
+    coze_set_patient_rules(patientId, rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 新增会话规则
+  _tcmAddSessionRule() {
+    const content = prompt('请输入本次会话共识：');
+    if (!content || !content.trim()) return;
+    const rules = coze_get_session_rules();
+    rules.push({ id: 'r_' + Date.now(), content: content.trim(), scope: 'session', source: 'session_consensus', created_at: new Date().toISOString() });
+    coze_set_session_rules(rules);
+    this._tcmLoadRulesUI();
+  },
+
+  // 🆕 v3.1.0 删除会话规则
+  _tcmDeleteSessionRule(index) {
+    if (!confirm('确定删除这条会话共识？')) return;
+    const rules = coze_get_session_rules();
+    rules.splice(index, 1);
+    coze_set_session_rules(rules);
+    this._tcmLoadRulesUI();
   },
 
   copyPatientSQL() {
@@ -15683,7 +15990,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 配色升级版本 v3.0.9-aesthetic-rebrand-2116（A 克制紫现代感 + 17 处品牌名全改"抗衰中心助手" + Dark 模式 GitHub Dark 风格 + 23 处 inline color 改回 var() 让主题接管，公主陛下反馈"丑/不洋气"全面改造）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 配色升级版本 v3.1.0-memory-system（A 克制紫现代感 + 17 处品牌名全改"抗衰中心助手" + Dark 模式 GitHub Dark 风格 + 23 处 inline color 改回 var() 让主题接管，公主陛下反馈"丑/不洋气"全面改造）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16087,7 +16394,12 @@ async tcmAIDiagnosis(e) {
   try {
     const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
     // 🆕 2026-06-08 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素（背景：C2 在 1.0 温度下漏脾虚）
-    const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
+    // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
+    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
+    // 清理末尾 JSON 块用于展示
+    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    // 触发弹窗
+    this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmAIDiagnosis');
     let diagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); diagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { diagnosis = { syndrome: content }; }
     
@@ -16476,7 +16788,9 @@ async tcmDialogueSend() {
     const messages = [];
     const chief = (document.getElementById('tcm-chief_complaint') || {}).value || '';
     const currentAiDiag = this.tcmCurrentRecord.ai_diagnosis || {};
-    const sysContent = TCM_PROMPT_PREAMBLE + `你是抗衰中心助手的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
+    // 🆕 v3.1.0 任务 3：拼接三层记忆到 system prompt
+    const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
+    const sysContent = TCM_PROMPT_PREAMBLE + memoryPrompt + `你是抗衰中心助手的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
     messages.push({ role: 'system', content: sysContent });
     (history || []).forEach(item => {
       const d = item.diagnosis || {};
@@ -16495,7 +16809,11 @@ async tcmDialogueSend() {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error?.message || data.message || 'API 错误');
-    const aiMsg = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(AI 无响应)';
+    const rawAiMsg = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(AI 无响应)';
+    // 🆕 v3.1.0 任务 2+3：清理末尾 JSON 块，触发弹窗
+    const aiMsg = rawAiMsg.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    // 触发弹窗
+    setTimeout(() => this._tcmHandleSupplementsAndAgreements(rawAiMsg, 'tcmDialogueSend'), 100);
 
     // 存一行 history（task_type='tcm_dialogue'）
     await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
@@ -16546,10 +16864,15 @@ async tcmDialogueApply() {
       if (d.ai) conversation += 'AI：' + d.ai + '\n\n';
     });
 
+    // 🆕 v3.1.0 任务 3：拼接三层记忆到 prompt
+    const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
     // 让 V3 总结为标准诊断 JSON
-    const prompt = TCM_PROMPT_PREAMBLE + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
     // 🆕 2026-06-08 温度分层：应用最终结论 0.3，开方要严谨少自由发挥
-    const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
+    // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
+    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
+    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmDialogueApply');
     let finalDiagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); finalDiagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { finalDiagnosis = { syndrome: content }; }
 
@@ -16784,9 +17107,14 @@ async tcmAIFollowupAnalysis(e) {
 服药情况：${document.getElementById('fu_medication_compliance').value.trim()}
 副作用：${document.getElementById('fu_side_effects').value.trim()}`;
 
-    const cozePrompt = '你是抗衰中心助手的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
+    // 🆕 v3.1.0 任务 3：拼接三层记忆到 prompt
+    const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
+    const cozePrompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是抗衰中心助手的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
     // 医学深度任务：保留 V3（对比分析需要顶级能力）
-    const content = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
+    // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
+    const rawContent = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
+    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmAIFollowupAnalysis');
     let analysis;
     try { const m = content.match(/\{[\s\S]*\}/); analysis = m ? JSON.parse(m[0]) : { treatment_summary: content }; } catch(e) { analysis = { treatment_summary: content }; }
     
@@ -16922,6 +17250,250 @@ async tcmViewArchiveRecord(id) {
   } catch(e) {
     alert('加载记录失败');
   }
+},
+
+// ========== v3.1.0 任务 2+3 处理函数 ==========
+// 处理 AI 回复中的 supplements（任务 2）和 agreements（任务 3）
+async _tcmHandleSupplementsAndAgreements(rawAIResponse, source) {
+  // 🆕 v3.1.0 任务 2：提取 supplements
+  const supplements = tcmExtractSupplements(rawAIResponse);
+  // 🆕 v3.1.0 任务 3：提取 agreements
+  const agreements = tcmExtractAgreements(rawAIResponse);
+  
+  // 如果没有需要处理的，直接返回
+  if ((!supplements || supplements.length === 0) && (!agreements || agreements.length === 0)) {
+    return;
+  }
+  
+  // 确保有病历打开才弹窗（避免污染其他病历）
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    console.log('[三层记忆] 无当前病历，跳过弹窗');
+    return;
+  }
+  
+  // 🆕 任务 2：弹窗确认 supplements
+  if (supplements && supplements.length > 0) {
+    this._tcmShowSupplementModal(supplements);
+  }
+  
+  // 🆕 任务 3：弹窗确认 agreements
+  if (agreements && agreements.length > 0) {
+    this._tcmShowAgreementModal(agreements);
+  }
+},
+
+// 🆕 v3.1.0 任务 2：补充到病历弹窗
+async _tcmShowSupplementModal(supplements) {
+  // 构建弹窗 HTML
+  const containerId = 'tcm-supplement-modal';
+  let existing = document.getElementById(containerId);
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = containerId;
+  overlay.className = 'modal-overlay show';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  
+  const fieldLabels = {
+    chief_complaint: '主诉',
+    present_illness: '现病史',
+    tongue: '舌象',
+    pulse: '脉象',
+    signs: '体征',
+    past_history: '既往史'
+  };
+  
+  let itemsHtml = supplements.map((s, i) => `
+    <div style="padding:12px;border-bottom:1px solid var(--color-border);display:flex;align-items:flex-start;gap:12px;">
+      <input type="checkbox" id="supp-${i}" checked style="margin-top:4px;">
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--color-primary);">
+          ${fieldLabels[s.field] || s.field}：${s.value}
+        </div>
+        <div style="font-size:12px;color:var(--color-gray);margin-top:4px;">
+          置信度：${Math.round(s.confidence * 100)}% | 来源："${s.source_quote || ''}"
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  overlay.innerHTML = `
+    <div style="background:var(--color-bg);border-radius:12px;max-width:500px;width:90%;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--color-border);">
+        <h3 style="margin:0;font-size:18px;color:var(--color-text);">💡 检测到可能的补充</h3>
+        <p style="margin:4px 0 0 0;font-size:13px;color:var(--color-gray);">来自本轮对话，请确认是否写入病历</p>
+      </div>
+      <div style="max-height:400px;overflow-y:auto;">
+        ${itemsHtml}
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid var(--color-border);display:flex;gap:12px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">跳过本次</button>
+        <button class="btn btn-primary" onclick="AdminApp._tcmConfirmSupplements()">确认补充</button>
+      </div>
+    </div>
+  `;
+  
+  // 存储当前 supplements 以供确认时使用
+  window._tcmCurrentSupplements = supplements;
+  
+  document.body.appendChild(overlay);
+},
+
+// 🆕 v3.1.0 任务 2：确认补充，写入 Supabase
+async _tcmConfirmSupplements() {
+  const modal = document.getElementById('tcm-supplement-modal');
+  if (modal) modal.remove();
+  
+  const supplements = window._tcmCurrentSupplements || [];
+  if (supplements.length === 0) return;
+  
+  // 获取选中的 supplements
+  const selected = [];
+  supplements.forEach((s, i) => {
+    const checkbox = document.getElementById(`supp-${i}`);
+    if (checkbox && checkbox.checked) {
+      selected.push(s);
+    }
+  });
+  
+  if (selected.length === 0) return;
+  
+  // 写入 Supabase
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) return;
+  
+  const updateData = {};
+  selected.forEach(s => {
+    // 合并到现有值（如果是 present_illness 等字段）
+    const existing = this.tcmCurrentRecord[s.field] || '';
+    if (existing) {
+      updateData[s.field] = existing + '\n' + s.value;
+    } else {
+      updateData[s.field] = s.value;
+    }
+  });
+  
+  try {
+    await CloudBaseManager.sb.from('tcm_consultations')
+      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .eq('id', this.tcmCurrentRecord.id);
+    
+    // 更新本地缓存
+    Object.assign(this.tcmCurrentRecord, updateData);
+    
+    // 回填表单
+    selected.forEach(s => {
+      const el = document.getElementById('tcm-' + s.field);
+      if (el) {
+        const existing = el.value.trim();
+        el.value = existing ? existing + '\n' + s.value : s.value;
+      }
+    });
+    
+    alert('✅ 已补充 ' + selected.length + ' 项到病历');
+  } catch(e) {
+    alert('补充失败: ' + e.message);
+  }
+  
+  window._tcmCurrentSupplements = null;
+},
+
+// 🆕 v3.1.0 任务 3：会话共识弹窗
+async _tcmShowAgreementModal(agreements) {
+  const containerId = 'tcm-agreement-modal';
+  let existing = document.getElementById(containerId);
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = containerId;
+  overlay.className = 'modal-overlay show';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  
+  const scopeLabels = { session: '会话级', patient: '患者级' };
+  
+  let itemsHtml = agreements.map((a, i) => `
+    <div style="padding:12px;border-bottom:1px solid var(--color-border);display:flex;align-items:flex-start;gap:12px;">
+      <input type="checkbox" id="agree-${i}" checked style="margin-top:4px;">
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--color-primary);">
+          ${a.content}
+        </div>
+        <div style="font-size:12px;color:var(--color-gray);margin-top:4px;">
+          ${scopeLabels[a.scope] || a.scope} | ${a.reason || ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  overlay.innerHTML = `
+    <div style="background:var(--color-bg);border-radius:12px;max-width:500px;width:90%;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--color-border);">
+        <h3 style="margin:0;font-size:18px;color:var(--color-text);">🧠 AI 识别到本次共识</h3>
+        <p style="margin:4px 0 0 0;font-size:13px;color:var(--color-gray);">识别到医生与 AI 达成的共识，请确认是否记住</p>
+      </div>
+      <div style="max-height:400px;overflow-y:auto;">
+        ${itemsHtml}
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid var(--color-border);display:flex;gap:12px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">本次不记</button>
+        <button class="btn btn-primary" onclick="AdminApp._tcmConfirmAgreements()">✓ 全部记住</button>
+      </div>
+    </div>
+  `;
+  
+  // 存储当前 agreements 以供确认时使用
+  window._tcmCurrentAgreements = agreements;
+  
+  document.body.appendChild(overlay);
+},
+
+// 🆕 v3.1.0 任务 3：确认共识，写入 localStorage
+async _tcmConfirmAgreements() {
+  const modal = document.getElementById('tcm-agreement-modal');
+  if (modal) modal.remove();
+  
+  const agreements = window._tcmCurrentAgreements || [];
+  if (agreements.length === 0) return;
+  
+  // 获取选中的 agreements
+  const selected = [];
+  agreements.forEach((a, i) => {
+    const checkbox = document.getElementById(`agree-${i}`);
+    if (checkbox && checkbox.checked) {
+      selected.push(a);
+    }
+  });
+  
+  if (selected.length === 0) return;
+  
+  const patientId = this.tcmCurrentPatient?.id;
+  const now = new Date().toISOString();
+  
+  // 分别处理会话级和患者级规则
+  selected.forEach(a => {
+    const rule = {
+      id: 'r_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      content: a.content,
+      scope: a.scope,
+      reason: a.reason || '',
+      source: 'session_consensus',
+      created_at: now
+    };
+    
+    if (a.scope === 'patient') {
+      // 患者级规则
+      const patientRules = coze_get_patient_rules(patientId);
+      patientRules.push(rule);
+      coze_set_patient_rules(patientId, patientRules);
+    } else {
+      // 会话级规则
+      const sessionRules = coze_get_session_rules();
+      sessionRules.push(rule);
+      coze_set_session_rules(sessionRules);
+    }
+  });
+  
+  alert('✅ 已记住 ' + selected.length + ' 条共识规则');
+  window._tcmCurrentAgreements = null;
 },
 
 // ========== DeepSeek配置 ==========
