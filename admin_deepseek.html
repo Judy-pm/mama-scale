@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>归元AI - 管理后台</title>
+  <title>抗衰中心助手 - 管理后台</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237B68AE'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'%3E归%3C/text%3E%3C/svg%3E" />
   <style>
-/* ========== 归元AI管理平台 - 主样式 ========== */
+/* ========== 抗衰中心助手管理平台 - 主样式 ========== */
 
 :root {
   --color-primary: #7B68AE;
@@ -613,18 +613,23 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   .patient-avatar { width: 36px; height: 36px; font-size: 14px; border-radius: 10px; }
 }
 
-/* 微信兼容 + 🆕 反相策略（2026-06-08 08:02 公主陛下 9 次反馈字浅） */
+/* 🆕 2026-06-08 v3.0.9 配色 A 克制紫现代感：Dark 模式 GitHub Dark 风格 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #1a1a2e;
-    --color-white: #16213e;
-    --color-text: #e0e0e0;
-    --color-text-secondary: #a0a0a0;
-    --color-border: #2a2a4a;
-    --color-gray: #8a8a8a;            /* 🆕 灰文字深色模式变深，避免"白底浅字" */
-    --color-primary: #9b87ce;          /* 🆕 品牌色深色模式更亮 */
-    --color-primary-light: #b8a4e0;    /* 🆕 */
-    --color-primary-bg: #2a2a4a;       /* 🆕 浅紫背景深色模式变深 */
+    --color-bg: #0D1117;
+    --color-white: #161B22;
+    --color-text: #E6EDF3;
+    --color-text-secondary: #8B949E;
+    --color-border: #30363D;
+    --color-gray: #6E7681;
+    --color-primary: #A78BFA;
+    --color-primary-light: #C4B5FD;
+    --color-primary-dark: #C4B5FD;
+    --color-primary-bg: #1E1B2E;
+    --sidebar-bg: #0D1117;
+    --sidebar-text: #E6EDF3;
+    --sidebar-active: rgba(167, 139, 250, 0.15);
+    --sidebar-hover: rgba(167, 139, 250, 0.06);
   }
 }
 
@@ -832,7 +837,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .tcm-ai-section-content {
   font-size: 14px;
-  color: #000000 !important;  /* 🆕 强制纯黑 #000（最强对比） */
+  color: var(--color-text) !important;  /* 🆕 v3.0.9 配色 A：让主题接管（深色模式黑字糊） */
   line-height: 1.7;
   white-space: pre-wrap;
   background: transparent !important;
@@ -850,7 +855,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .tcm-ai-section-content em,
 .tcm-ai-section-content b,
 .tcm-ai-section-content i {
-  color: #000000 !important;
+  color: var(--color-text) !important;
   background: transparent !important;
 }
 
@@ -862,14 +867,14 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .tcm-ai-result .tcm-ai-section *,
 .tcm-ai-result .tcm-ai-section-content,
 .tcm-ai-result .tcm-ai-section-content * {
-  color: #000000 !important;
-  background: #ffffff !important;
+  color: var(--color-text) !important;
+  background: var(--color-white) !important;
   opacity: 1 !important;
   visibility: visible !important;
-  -webkit-text-fill-color: #000000 !important;  /* 防 Safari gradient text 黑魔法 */
+  -webkit-text-fill-color: var(--color-text) !important;  /* 🆕 v3.0.9 改：跟随主题 */
 }
 .tcm-ai-result .tcm-ai-section-title {
-  color: #5A4D7A !important;  /* 小标题保留深紫色 */
+  color: var(--color-primary-dark) !important;  /* 🆕 v3.0.9 改：跟随主题 */
 }
 
 /* 对比视图 */
@@ -1331,7 +1336,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon">🧬</div>
         <div>
-          <div class="sidebar-brand-name">归元AI</div>
+          <div class="sidebar-brand-name">抗衰中心助手</div>
           <div class="sidebar-brand-sub">健康管理平台</div>
         </div>
       </div>
@@ -13677,7 +13682,7 @@ const AdminApp = {
         </div>
         <div class="ai-main">
           <div class="ai-main-header">
-            <h4 id="ai-conv-title">归元AI 智能助手</h4>
+            <h4 id="ai-conv-title">抗衰中心助手 智能助手</h4>
             <div style="font-size:12px;color:var(--color-gray);" id="ai-coze-status"></div>
           </div>
           <div class="ai-chat-messages" id="ai-chat-messages">
@@ -13700,7 +13705,7 @@ const AdminApp = {
       <div class="ai-welcome-page">
         <div style="text-align:center;margin-bottom:24px;">
           <div style="font-size:40px;margin-bottom:8px;">🤖</div>
-          <h3 style="color:var(--color-primary-dark);font-size:18px;">归元AI 智能助手</h3>
+          <h3 style="color:var(--color-primary-dark);font-size:18px;">抗衰中心助手 智能助手</h3>
           <p style="color:var(--color-text-secondary);font-size:14px;">基于功能医学知识，为您提供智能分析与健康管理建议</p>
         </div>
         <div class="ai-prompt-tabs">
@@ -13819,7 +13824,7 @@ const AdminApp = {
     this._aiMessages = [];
     const msgEl = document.getElementById('ai-chat-messages');
     if (msgEl) msgEl.innerHTML = this._renderAIWelcome();
-    document.getElementById('ai-conv-title').textContent = '归元AI 智能助手';
+    document.getElementById('ai-conv-title').textContent = '抗衰中心助手 智能助手';
     // Update sidebar
     const listEl = document.getElementById('ai-conv-list');
     if (listEl) listEl.innerHTML = this._renderAIConvList();
@@ -14648,7 +14653,7 @@ const AdminApp = {
         
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
-          <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">归元AI 健康管理平台</div></div>
+          <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">抗衰中心助手 健康管理平台</div></div>
           <div class="info-row"><div class="info-label">版本</div><div class="info-value">2.1.0 AI工作台+健康计划</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
@@ -15299,7 +15304,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
 
   ckRenderRpt(rec){
     const ip=rec.interpretation,ovl=this.ckLR(ip.overall_score);
-    let h=`<div class="ck-rpt"><div class="ck-rpt-header"><h2>🧬 归元AI · 体检解读报告</h2><p style="color:#999;font-size:12px;margin-top:4px">固本归元 · 科学抗衰</p></div>`;
+    let h=`<div class="ck-rpt"><div class="ck-rpt-header"><h2>🧬 抗衰中心助手 · 体检解读报告</h2><p style="color:#999;font-size:12px;margin-top:4px">固本归元 · 科学抗衰</p></div>`;
     h+=`<div class="ck-rpt-patient"><div><span style="color:#666">姓名：</span><strong>${rec.patient_name}</strong></div><div><span style="color:#666">性别：</span><strong>${rec.patient_gender}</strong></div><div><span style="color:#666">年龄：</span><strong>${rec.patient_age}岁</strong></div><div><span style="color:#666">日期：</span><strong>${rec.checkup_date}</strong></div><div><span style="color:#666">套餐：</span><strong>${rec.package_name||'—'}</strong></div><div><span style="color:#666">解读：</span><strong>${new Date(ip.interpreted_at).toLocaleString('zh-CN')}</strong></div></div>`;
     h+=`<div style="text-align:center;margin:20px 0"><div style="font-size:56px;font-weight:700;color:${ovl.c}">${Math.round(ip.overall_score)}</div><div style="font-size:12px;color:#999">综合健康评分</div><div style="font-size:18px;color:${ovl.c};margin-top:4px">${ovl.e} ${ovl.t}</div></div>`;
     h+='<h3 style="font-size:15px;color:var(--color-primary-dark);margin:16px 0 10px">📊 各维度评分</h3>';
@@ -15308,8 +15313,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(abn.length){h+='<div style="font-size:12px;color:#E74C3C;margin-top:4px;line-height:1.6">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:12px;color:#27AE60">✅ 各项正常</div>';
     h+='</div>'});
     if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
-    h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入归元AI评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
-    h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">归元AI · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
+    h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入抗衰中心助手评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
+    h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">抗衰中心助手 · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
     document.getElementById('ck-reportContent').innerHTML=h;
     setTimeout(()=>{const qe=document.getElementById('ck-qrcode');if(qe){qe.innerHTML='';try{new QRCode(qe,{text:'https://judy-pm.github.io/mama-scale/',width:128,height:128,colorDark:'#5B4A8A',colorLight:'#ffffff'})}catch(e){qe.innerHTML='<p style="font-size:11px;color:#999">二维码生成失败</p>'}}},100);
   },
@@ -15678,7 +15683,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.8-full-color-1225（v3.0.7 漏了病历详情/对比区/复诊数据/辨证h4的字体，这次全量 inline 黑色兜底覆盖到 tcmViewArchiveRecord + tcmRenderFollowupAssessment + AI 辨证大标题 h3）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 配色升级版本 v3.0.9-aesthetic-rebrand-2116（A 克制紫现代感 + 17 处品牌名全改"抗衰中心助手" + Dark 模式 GitHub Dark 风格 + 23 处 inline color 改回 var() 让主题接管，公主陛下反馈"丑/不洋气"全面改造）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16080,7 +16085,7 @@ async tcmAIDiagnosis(e) {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const prompt = TCM_PROMPT_PREAMBLE + '你现在是归元AI的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
+    const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
     // 🆕 2026-06-08 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素（背景：C2 在 1.0 温度下漏脾虚）
     const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
     let diagnosis;
@@ -16116,7 +16121,7 @@ async tcmAIDiagnosis(e) {
         { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
-      let h = '<div class="tcm-ai-result"><h3 style="color:#7B68AE !important;">🤖 AI辨证论治</h3><p style="font-size:12px;color:#000000 !important;margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
+      let h = '<div class="tcm-ai-result"><h3 style="color: var(--color-primary) !important;">🤖 AI辨证论治</h3><p style="font-size:12px;color:#000000 !important;margin-bottom:12px;">由抗衰中心助手生成，仅供医生参考</p>';
       // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
       const toStr = (v) => {
         if (v == null) return '';
@@ -16133,7 +16138,7 @@ async tcmAIDiagnosis(e) {
       sections.forEach(s => {
         const val = toStr(diagnosis[s.key]);
         if(val) {
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${val}</div></div>`;
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${val}</div></div>`;
         }
       });
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
@@ -16258,7 +16263,7 @@ async tcmRestoreFromHistory(historyId) {
   sections.forEach(s => {
     const val = toStr(data.diagnosis[s.key]);
     if(val) {
-      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${val}</div></div>`;
+      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${val}</div></div>`;
     }
   });
   h += '<div style="margin-top:12px;display:flex;gap:8px;">';
@@ -16427,8 +16432,8 @@ async tcmLoadAndRenderDialogue() {
     let h = '';
     history.forEach(item => {
       const d = item.diagnosis || {};
-      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color:#000000 !important;background:transparent;">${this._escapeHtml(d.user)}</div></div>`;
-      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color:#000000 !important;background:transparent;">${this._escapeHtml(d.ai)}</div></div>`;
+      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.user)}</div></div>`;
+      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.ai)}</div></div>`;
     });
     msgBox.innerHTML = h;
     msgBox.scrollTop = msgBox.scrollHeight;
@@ -16471,7 +16476,7 @@ async tcmDialogueSend() {
     const messages = [];
     const chief = (document.getElementById('tcm-chief_complaint') || {}).value || '';
     const currentAiDiag = this.tcmCurrentRecord.ai_diagnosis || {};
-    const sysContent = TCM_PROMPT_PREAMBLE + `你是归元AI的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
+    const sysContent = TCM_PROMPT_PREAMBLE + `你是抗衰中心助手的中医辨证论治助手。当前患者主诉：${chief.trim() || '(未填)'}。当前 AI 辨证初稿：${JSON.stringify(currentAiDiag)}。请与医生探讨方案细节，给出专业、循证、严谨的中医诊疗建议。回答简明扼要，500字以内。如需调整方子，请明确说明加减哪些药、剂量。`;
     messages.push({ role: 'system', content: sysContent });
     (history || []).forEach(item => {
       const d = item.diagnosis || {};
@@ -16542,7 +16547,7 @@ async tcmDialogueApply() {
     });
 
     // 让 V3 总结为标准诊断 JSON
-    const prompt = TCM_PROMPT_PREAMBLE + '你是一位资深中医师。请根据以下与归元AI探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    const prompt = TCM_PROMPT_PREAMBLE + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
     // 🆕 2026-06-08 温度分层：应用最终结论 0.3，开方要严谨少自由发挥
     const content = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
     let finalDiagnosis;
@@ -16607,17 +16612,17 @@ async tcmRenderFollowup() {
     return '<div style="text-align:center;padding:60px;color:var(--color-gray);">该患者尚无初诊记录，请先完成初诊</div>';
   }
 
-  // 🆕 v3.0.8-full-color-1225：上次诊疗记录对比区全量 inline color 兜底
+  // 🆕 v3.0.9-aesthetic-rebrand-2116：上次诊疗记录对比区全量 inline color 兜底
   // 对比区 - 上次记录
   html += '<div class="tcm-section">';
   html += '<div class="tcm-section-title">📊 上次诊疗记录对比</div>';
   html += '<div class="tcm-compare">';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次主诉</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.chief_complaint || '-') + '</div></div>';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次舌象</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.tongue ? JSON.stringify(prevRecord.tongue).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次主诉</div><div style="color: var(--color-text) !important;background: transparent;">' + (prevRecord.chief_complaint || '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次舌象</div><div style="color: var(--color-text) !important;background: transparent;">' + (prevRecord.tongue ? JSON.stringify(prevRecord.tongue).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
   html += '</div>';
   html += '<div class="tcm-compare">';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次脉象</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.pulse ? JSON.stringify(prevRecord.pulse).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次证型</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.syndrome_differentiation ? prevRecord.syndrome_differentiation.primary : (prevRecord.ai_diagnosis ? prevRecord.ai_diagnosis.syndrome : '-')) + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次脉象</div><div style="color: var(--color-text) !important;background: transparent;">' + (prevRecord.pulse ? JSON.stringify(prevRecord.pulse).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次证型</div><div style="color: var(--color-text) !important;background: transparent;">' + (prevRecord.syndrome_differentiation ? prevRecord.syndrome_differentiation.primary : (prevRecord.ai_diagnosis ? prevRecord.ai_diagnosis.syndrome : '-')) + '</div></div>';
   html += '</div>';
   if (prevRecord.ai_diagnosis) {
     html += '<div style="margin-top:8px;padding:10px;background:var(--color-primary-bg);border-radius:8px;font-size:13px;color:#000000 !important;">';
@@ -16779,7 +16784,7 @@ async tcmAIFollowupAnalysis(e) {
 服药情况：${document.getElementById('fu_medication_compliance').value.trim()}
 副作用：${document.getElementById('fu_side_effects').value.trim()}`;
 
-    const cozePrompt = '你是归元AI的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
+    const cozePrompt = '你是抗衰中心助手的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
     // 医学深度任务：保留 V3（对比分析需要顶级能力）
     const content = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
     let analysis;
@@ -16795,7 +16800,7 @@ async tcmAIFollowupAnalysis(e) {
       ];
       let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI对比分析</h3>';
       sections.forEach(s => {
-        if(analysis[s.key]) h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${analysis[s.key]}</div></div>`;
+        if(analysis[s.key]) h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${analysis[s.key]}</div></div>`;
       });
       h += '</div>';
       container.innerHTML = h;
@@ -16865,24 +16870,24 @@ async tcmViewArchiveRecord(id) {
     let h = '<div class="tcm-section" style="margin-top:16px;">';
     h += `<div class="tcm-section-title">${typeLabel} · ${date}</div>`;
     
-    // 🆕 v3.0.8-full-color-1225：病历详情显示区全量 inline color 兜底（公主陛下反馈现病史浅色）
+    // 🆕 v3.0.9-aesthetic-rebrand-2116：病历详情显示区全量 inline color 兜底（公主陛下反馈现病史浅色）
     // Basic info
-    h += `<div class="tcm-field"><label>主诉</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.chief_complaint||'-'}</div></div>`;
-    if (r.present_illness) h += `<div class="tcm-field"><label>现病史/症状变化</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.present_illness}</div></div>`;
-    if (r.medication_history) h += `<div class="tcm-field"><label>用药史/服药情况</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.medication_history}</div></div>`;
-    if (r.allergy_history) h += `<div class="tcm-field"><label>过敏/不良反应</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.allergy_history}</div></div>`;
+    h += `<div class="tcm-field"><label>主诉</label><div style="white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${r.chief_complaint||'-'}</div></div>`;
+    if (r.present_illness) h += `<div class="tcm-field"><label>现病史/症状变化</label><div style="white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${r.present_illness}</div></div>`;
+    if (r.medication_history) h += `<div class="tcm-field"><label>用药史/服药情况</label><div style="white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${r.medication_history}</div></div>`;
+    if (r.allergy_history) h += `<div class="tcm-field"><label>过敏/不良反应</label><div style="white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${r.allergy_history}</div></div>`;
 
     // Tongue & Pulse
-    if (r.tongue) h += `<div class="tcm-field"><label>舌象</label><div style="color:#000000 !important;background:transparent;">${JSON.stringify(r.tongue).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
-    if (r.pulse) h += `<div class="tcm-field"><label>脉象</label><div style="color:#000000 !important;background:transparent;">${JSON.stringify(r.pulse).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
+    if (r.tongue) h += `<div class="tcm-field"><label>舌象</label><div style="color: var(--color-text) !important;background: transparent;">${JSON.stringify(r.tongue).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
+    if (r.pulse) h += `<div class="tcm-field"><label>脉象</label><div style="color: var(--color-text) !important;background: transparent;">${JSON.stringify(r.pulse).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
 
     // Syndrome
     if (r.syndrome_differentiation) {
       h += '<div class="tcm-syndrome-card">';
-      h += `<h4 style="color:#E67E22 !important;">🔮 辨证</h4>`;
-      h += `<div class="tcm-syndrome-primary" style="color:#000000 !important;background:transparent;">${r.syndrome_differentiation.primary}</div>`;
+      h += `<h4 style="color: var(--color-orange) !important;">🔮 辨证</h4>`;
+      h += `<div class="tcm-syndrome-primary" style="color: var(--color-text) !important;background: transparent;">${r.syndrome_differentiation.primary}</div>`;
       if (r.syndrome_differentiation.secondary && r.syndrome_differentiation.secondary.length)
-        h += `<div style="color:#000000 !important;background:transparent;">兼证：${r.syndrome_differentiation.secondary.join('、')}</div>`;
+        h += `<div style="color: var(--color-text) !important;background: transparent;">兼证：${r.syndrome_differentiation.secondary.join('、')}</div>`;
       h += '</div>';
     }
 
@@ -16895,10 +16900,10 @@ async tcmViewArchiveRecord(id) {
         { key: 'modification', title: '加减' },
         { key: 'lifestyle', title: '生活调护' }
       ];
-      h += '<div class="tcm-ai-result"><h4 style="color:#7B68AE !important;">🤖 AI辨证论治</h4>';
+      h += '<div class="tcm-ai-result"><h4 style="color: var(--color-primary) !important;">🤖 AI辨证论治</h4>';
       sections.forEach(s => {
         if (r.ai_diagnosis[s.key])
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${r.ai_diagnosis[s.key]}</div></div>`;
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${r.ai_diagnosis[s.key]}</div></div>`;
       });
       h += '</div>';
     }
@@ -16907,8 +16912,8 @@ async tcmViewArchiveRecord(id) {
     if (r.followup_data) {
       h += '<div style="padding:10px;background:var(--color-primary-bg);border-radius:8px;color:#000000 !important;">';
       h += '<strong>复诊数据：</strong>';
-      if (r.followup_data.current_symptoms) h += `<div style="color:#000000 !important;background:transparent;">当前症状：${r.followup_data.current_symptoms}</div>`;
-      if (r.followup_data.symptom_change) h += `<div style="color:#000000 !important;background:transparent;">症状变化：${r.followup_data.symptom_change}</div>`;
+      if (r.followup_data.current_symptoms) h += `<div style="color: var(--color-text) !important;background: transparent;">当前症状：${r.followup_data.current_symptoms}</div>`;
+      if (r.followup_data.symptom_change) h += `<div style="color: var(--color-text) !important;background: transparent;">症状变化：${r.followup_data.symptom_change}</div>`;
       h += '</div>';
     }
     
@@ -16969,7 +16974,7 @@ configCozeSettings() {
   if(key===null) return;
   if(key.trim() && key.trim().startsWith('sk-')){
     localStorage.setItem('coze_access_token', key.trim());
-    alert('DeepSeek API密钥配置成功！归元AI现已免费使用。');
+    alert('DeepSeek API密钥配置成功！抗衰中心助手现已免费使用。');
   } else if(!key.trim()) {
     localStorage.removeItem('coze_access_token');
     alert('已清除API密钥');
