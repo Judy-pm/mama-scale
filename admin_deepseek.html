@@ -815,21 +815,23 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .tcm-ai-section {
   margin-bottom: 14px;
   padding: 10px 14px;
-  background: white;
+  background: #ffffff !important;  /* 🆕 强制白底，不受深色模式影响 */
   border-radius: 8px;
   border-left: 3px solid var(--color-primary);
 }
 .tcm-ai-section-title {
   font-weight: 700;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-dark) !important;  /* 🆕 强制深紫 #5A4D7A */
+  background: transparent !important;
   margin-bottom: 6px;
   font-size: 14px;
 }
 .tcm-ai-section-content {
   font-size: 14px;
-  color: var(--color-text);
+  color: #1a1a1a !important;  /* 🆕 强制深色 #1a1a1a（接近纯黑），不受 --color-text 变量影响 */
   line-height: 1.7;
   white-space: pre-wrap;
+  background: transparent !important;
 }
 
 /* 对比视图 */
