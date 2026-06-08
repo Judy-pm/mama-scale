@@ -15678,7 +15678,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.6-inline-color-1208（上一版 ID 选择器没匹配上，这次 inline 强制黑色，看到小字 = 新版到位）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.7-inline-color-1208（v3.0.6 漏了 AI 探讨窗口的字体，这次 inline 强制黑色覆盖到 tcmLoadAndRenderDialogue）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16427,8 +16427,8 @@ async tcmLoadAndRenderDialogue() {
     let h = '';
     history.forEach(item => {
       const d = item.diagnosis || {};
-      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${this._escapeHtml(d.user)}</div></div>`;
-      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${this._escapeHtml(d.ai)}</div></div>`;
+      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color:#000000 !important;background:transparent;">${this._escapeHtml(d.user)}</div></div>`;
+      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color:#000000 !important;background:transparent;">${this._escapeHtml(d.ai)}</div></div>`;
     });
     msgBox.innerHTML = h;
     msgBox.scrollTop = msgBox.scrollHeight;
