@@ -832,9 +832,25 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .tcm-ai-section-content {
   font-size: 14px;
-  color: #1a1a1a !important;  /* 🆕 强制深色 #1a1a1a（接近纯黑），不受 --color-text 变量影响 */
+  color: #000000 !important;  /* 🆕 强制纯黑 #000（最强对比） */
   line-height: 1.7;
   white-space: pre-wrap;
+  background: transparent !important;
+  opacity: 1 !important;  /* 🆕 防止父级 opacity 影响 */
+  font-weight: 500;       /* 🆕 中等字重，更易读 */
+}
+/* 🆕 公主陛下 10 次反馈"内容字浅"（2026-06-08 09:08）—— 强制覆盖 val 里可能嵌套的 HTML 标签 */
+.tcm-ai-section-content,
+.tcm-ai-section-content *,
+.tcm-ai-section-content span,
+.tcm-ai-section-content div,
+.tcm-ai-section-content p,
+.tcm-ai-section-content font,
+.tcm-ai-section-content strong,
+.tcm-ai-section-content em,
+.tcm-ai-section-content b,
+.tcm-ai-section-content i {
+  color: #000000 !important;
   background: transparent !important;
 }
 
