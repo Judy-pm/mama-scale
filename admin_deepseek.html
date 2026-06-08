@@ -1316,7 +1316,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     <div class="login-box">
       <div class="login-logo">🧬</div>
       <div class="login-title">抗衰中心助手</div>
-      <div class="login-subtitle">功能医学健康管理平台</div>
+      <div class="login-subtitle">健康管理平台</div>
       <div class="form-group">
         <label>管理密码</label>
         <input type="password" id="admin-login-pwd" class="form-input" placeholder="请输入管理密码" />
@@ -1459,11 +1459,11 @@ textarea.form-input { resize: vertical; min-height: 80px; }
           <div class="placeholder-page">
             <div class="placeholder-icon">📚</div>
             <div class="placeholder-title">知识库</div>
-            <div class="placeholder-desc">功能医学知识体系，量表解读参考，健康方案模板库。</div>
+            <div class="placeholder-desc">专业知识体系，量表解读参考，健康方案模板库。</div>
             <div class="placeholder-features">
               <h4>预期功能</h4>
               <ul>
-                <li>功能医学知识体系管理</li>
+                <li>专业知识体系管理</li>
                 <li>量表解读参考库</li>
                 <li>健康方案模板</li>
                 <li>常见问题与解答</li>
@@ -12740,12 +12740,12 @@ const TCM_MEMORY_INSTRUCTION = `
 【自动补充识别 - 任务 2】
 本轮对话中如果医生补充了主诉/现病史/舌象/脉象/体征/既往史等信息，
 请在自然回复末尾输出 JSON 块（用于前端弹窗确认是否写入病历）：
-```json
+【JSON块】
 {"supplements": [
   {"field": "chief_complaint", "value": "睡眠浅", "confidence": 0.9, "source_quote": "她说最近睡眠浅"},
   {"field": "present_illness", "value": "夜尿 2 次", "confidence": 0.85, "source_quote": "夜尿 2 次"}
 ]}
-```
+【/JSON块】
 field 可选值：chief_complaint（主诉）/ present_illness（現病史）/ tongue（舌象）/ pulse（脉象）/ signs（体征）/ past_history（既往史）
 如果本轮没有补充，输出 {"supplements": []}
 注意：只输出本轮医生明确表达的新信息，不要重复已有病历内容。
@@ -12753,12 +12753,12 @@ field 可选值：chief_complaint（主诉）/ present_illness（現病史）/ t
 【会话共识识别 - 任务 3】
 本轮对话中如果识别到"医生和 AI 达成共识"（如"该患者用右归丸"、"附子先煎 1.5h"），
 请在自然回复末尾输出 JSON 块（用于前端弹窗确认是否记住）：
-```json
+【JSON块】
 {"doctor_agreements": [
   {"content": "附子先煎 1.5h", "scope": "session", "reason": "医生主动要求"},
   {"content": "该患者避免用麻黄", "scope": "patient", "reason": "基于过敏史"}
 ]}
-```
+【/JSON块】
 scope: session = 仅本次会话 / patient = 该患者长期
 如果本轮没有共识，输出 {"doctor_agreements": []}
 注意：只输出医生明确表达且 AI 也同意的规则，不要编造。
@@ -12795,7 +12795,7 @@ function coze_set_session_rules(rules) {
 // 解析 AI 回复末尾的 supplements JSON 块（任务 2）
 function tcmExtractSupplements(aiResponse) {
   try {
-    const match = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+    const match = aiResponse.match(/【JSON块】\s*([\s\S]*?)\s*【/JSON块】/);
     if (!match) return [];
     const obj = JSON.parse(match[1]);
     if (!obj.supplements || !Array.isArray(obj.supplements)) return [];
@@ -12806,7 +12806,7 @@ function tcmExtractSupplements(aiResponse) {
 // 解析 AI 回复末尾的 doctor_agreements JSON 块（任务 3）
 function tcmExtractAgreements(aiResponse) {
   try {
-    const match = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+    const match = aiResponse.match(/【JSON块】\s*([\s\S]*?)\s*【/JSON块】/);
     if (!match) return [];
     const obj = JSON.parse(match[1]);
     if (!obj.doctor_agreements || !Array.isArray(obj.doctor_agreements)) return [];
@@ -13850,7 +13850,7 @@ const AdminApp = {
         <div style="text-align:center;margin-bottom:24px;">
           <div style="font-size:40px;margin-bottom:8px;">🤖</div>
           <h3 style="color:var(--color-primary-dark);font-size:18px;">抗衰中心助手 智能助手</h3>
-          <p style="color:var(--color-text-secondary);font-size:14px;">基于功能医学知识，为您提供智能分析与健康管理建议</p>
+          <p style="color:var(--color-text-secondary);font-size:14px;">基于中医知识，为您提供智能分析与健康管理建议</p>
         </div>
         <div class="ai-prompt-tabs">
           <div class="ai-prompt-tab active" onclick="AdminApp._switchPromptTab('quick',this)">快速提示</div>
@@ -13884,9 +13884,9 @@ const AdminApp = {
       { icon: '📊', title: '分析患者报告', desc: '综合分析评估结果', prompt: '请帮我分析患者的评估报告数据，给出综合健康评估和关键风险提示' },
       { icon: '📋', title: '生成健康计划', desc: '制定个性化方案', prompt: '请根据患者的评估数据，生成一份个性化的健康管理计划，包含营养、运动、生活方式建议' },
       { icon: '🧬', title: '解读体检指标', desc: '解读异常指标风险', prompt: '请帮我解读以下体检指标，分析异常项的健康风险和改善建议：' },
-      { icon: '🥗', title: '营养方案建议', desc: '定制营养干预', prompt: '请根据功能医学原则，为该患者制定营养干预方案，包含营养素补充和饮食建议' },
+      { icon: '🥗', title: '营养方案建议', desc: '定制营养干预', prompt: '请根据中医原则，为该患者制定营养干预方案，包含营养素补充和饮食建议' },
       { icon: '💬', title: '随访话术生成', desc: '个性化沟通内容', prompt: '请生成一段针对该患者的随访话术，包含关怀问候、症状追踪和依从性检查' },
-      { icon: '❓', title: '知识问答', desc: '功能医学问答', prompt: '请回答以下功能医学相关问题：' }
+      { icon: '❓', title: '知识问答', desc: '知识问答', prompt: '请回答以下医学相关问题：' }
     ];
     return '<div class="ai-prompt-grid">' + prompts.map(p => `
       <div class="ai-prompt-btn" onclick="AdminApp.aiSendPrompt('${p.prompt.replace(/'/g, "\'")}')">
@@ -13898,9 +13898,9 @@ const AdminApp = {
 
   _renderWorkflowPrompts() {
     const workflows = [
-      { icon: '📋', title: '健康计划制定流程', desc: '评估→方案→执行→追踪', prompt: '请按照功能医学健康计划制定流程，从评估、方案设计、执行到追踪，为我系统化地制定健康计划' },
+      { icon: '📋', title: '健康计划制定流程', desc: '评估→方案→执行→追踪', prompt: '请按照健康计划制定流程，从评估、方案设计、执行到追踪，为我系统化地制定健康计划' },
       { icon: '💊', title: '药物营养素相互作用', desc: '安全用药指导', prompt: '请分析以下药物与营养素的相互作用，包括影响吸收、代谢的潜在风险和调整建议：' },
-      { icon: '🔄', title: '功能医学5R修复', desc: 'Remove/Replace/Reinoculate/Repair/Rebalance', prompt: '请按照功能医学5R肠道修复方案（去除、替代、再接种、修复、再平衡），为该患者制定肠道修复计划' },
+      { icon: '🔄', title: '5R修复', desc: 'Remove/Replace/Reinoculate/Repair/Rebalance', prompt: '请按照5R肠道修复方案（去除、替代、再接种、修复、再平衡），为该患者制定肠道修复计划' },
       { icon: '☯️', title: '中医辨证论治', desc: '四诊合参辨证', prompt: '请根据中医辨证论治原则，对该患者进行辨证分析，给出证型、治法、方药和生活调护建议' },
       { icon: '⏳', title: '抗衰方案设计', desc: '系统化抗衰管理', prompt: '请为该患者设计系统化的抗衰方案，涵盖激素平衡、营养优化、运动处方、睡眠管理和压力调节' }
     ];
@@ -14022,7 +14022,7 @@ const AdminApp = {
     // Bold
     content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     // Code blocks
-    content = content.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+    content = content.replace(/【/JSON块】([\s\S]*?)【/JSON块】/g, '<pre>$1</pre>');
     // Inline code
     content = content.replace(/`(.+?)`/g, '<code>$1</code>');
     // Line breaks
@@ -15990,7 +15990,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 配色升级版本 v3.1.0-memory-system（A 克制紫现代感 + 17 处品牌名全改"抗衰中心助手" + Dark 模式 GitHub Dark 风格 + 23 处 inline color 改回 var() 让主题接管，公主陛下反馈"丑/不洋气"全面改造）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 配色升级版本 v3.1.1-bugfix（A 克制紫现代感 + 17 处品牌名全改"抗衰中心助手" + Dark 模式 GitHub Dark 风格 + 23 处 inline color 改回 var() 让主题接管，公主陛下反馈"丑/不洋气"全面改造）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16392,12 +16392,12 @@ async tcmAIDiagnosis(e) {
 脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
 
   try {
-    const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医+功能医学诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
+    const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用【JSON块】【/JSON块】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
     // 🆕 2026-06-08 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素（背景：C2 在 1.0 温度下漏脾虚）
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
     const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
     // 清理末尾 JSON 块用于展示
-    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【/JSON块】\s*$/, '').trim();
     // 触发弹窗
     this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmAIDiagnosis');
     let diagnosis;
@@ -16811,7 +16811,7 @@ async tcmDialogueSend() {
     if (!resp.ok) throw new Error(data.error?.message || data.message || 'API 错误');
     const rawAiMsg = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(AI 无响应)';
     // 🆕 v3.1.0 任务 2+3：清理末尾 JSON 块，触发弹窗
-    const aiMsg = rawAiMsg.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    const aiMsg = rawAiMsg.replace(/【JSON块】\s*[\s\S]*?【/JSON块】\s*$/, '').trim();
     // 触发弹窗
     setTimeout(() => this._tcmHandleSupplementsAndAgreements(rawAiMsg, 'tcmDialogueSend'), 100);
 
@@ -16867,11 +16867,11 @@ async tcmDialogueApply() {
     // 🆕 v3.1.0 任务 3：拼接三层记忆到 prompt
     const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
     // 让 V3 总结为标准诊断 JSON
-    const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用```json```代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用【JSON块】【/JSON块】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
     // 🆕 2026-06-08 温度分层：应用最终结论 0.3，开方要严谨少自由发挥
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
     const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
-    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【/JSON块】\s*$/, '').trim();
     this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmDialogueApply');
     let finalDiagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); finalDiagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { finalDiagnosis = { syndrome: content }; }
@@ -17109,11 +17109,11 @@ async tcmAIFollowupAnalysis(e) {
 
     // 🆕 v3.1.0 任务 3：拼接三层记忆到 prompt
     const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
-    const cozePrompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是抗衰中心助手的中医+功能医学诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
+    const cozePrompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是抗衰中心助手的中医诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
     // 医学深度任务：保留 V3（对比分析需要顶级能力）
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
     const rawContent = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
-    const content = rawContent.replace(/```json\s*[\s\S]*?```\s*$/, '').trim();
+    const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【/JSON块】\s*$/, '').trim();
     this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmAIFollowupAnalysis');
     let analysis;
     try { const m = content.match(/\{[\s\S]*\}/); analysis = m ? JSON.parse(m[0]) : { treatment_summary: content }; } catch(e) { analysis = { treatment_summary: content }; }
