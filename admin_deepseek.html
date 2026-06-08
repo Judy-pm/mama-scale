@@ -15678,7 +15678,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.7-inline-color-1208（v3.0.6 漏了 AI 探讨窗口的字体，这次 inline 强制黑色覆盖到 tcmLoadAndRenderDialogue）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.8-full-color-1225（v3.0.7 漏了病历详情/对比区/复诊数据/辨证h4的字体，这次全量 inline 黑色兜底覆盖到 tcmViewArchiveRecord + tcmRenderFollowupAssessment + AI 辨证大标题 h3）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16116,7 +16116,7 @@ async tcmAIDiagnosis(e) {
         { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
-      let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3><p style="font-size:12px;color:var(--color-text);margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
+      let h = '<div class="tcm-ai-result"><h3 style="color:#7B68AE !important;">🤖 AI辨证论治</h3><p style="font-size:12px;color:#000000 !important;margin-bottom:12px;">由归元AI生成，仅供医生参考</p>';
       // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
       const toStr = (v) => {
         if (v == null) return '';
@@ -16607,19 +16607,20 @@ async tcmRenderFollowup() {
     return '<div style="text-align:center;padding:60px;color:var(--color-gray);">该患者尚无初诊记录，请先完成初诊</div>';
   }
 
+  // 🆕 v3.0.8-full-color-1225：上次诊疗记录对比区全量 inline color 兜底
   // 对比区 - 上次记录
   html += '<div class="tcm-section">';
   html += '<div class="tcm-section-title">📊 上次诊疗记录对比</div>';
   html += '<div class="tcm-compare">';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次主诉</div><div>' + (prevRecord.chief_complaint || '-') + '</div></div>';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次舌象</div><div>' + (prevRecord.tongue ? JSON.stringify(prevRecord.tongue).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次主诉</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.chief_complaint || '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次舌象</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.tongue ? JSON.stringify(prevRecord.tongue).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
   html += '</div>';
   html += '<div class="tcm-compare">';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次脉象</div><div>' + (prevRecord.pulse ? JSON.stringify(prevRecord.pulse).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
-  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次证型</div><div>' + (prevRecord.syndrome_differentiation ? prevRecord.syndrome_differentiation.primary : (prevRecord.ai_diagnosis ? prevRecord.ai_diagnosis.syndrome : '-')) + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次脉象</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.pulse ? JSON.stringify(prevRecord.pulse).replace(/"/g,'').replace(/[{}[\]]/g,'') : '-') + '</div></div>';
+  html += '<div class="tcm-compare-col"><div class="tcm-compare-label">上次证型</div><div style="color:#000000 !important;background:transparent;">' + (prevRecord.syndrome_differentiation ? prevRecord.syndrome_differentiation.primary : (prevRecord.ai_diagnosis ? prevRecord.ai_diagnosis.syndrome : '-')) + '</div></div>';
   html += '</div>';
   if (prevRecord.ai_diagnosis) {
-    html += '<div style="margin-top:8px;padding:10px;background:var(--color-primary-bg);border-radius:8px;font-size:13px;">';
+    html += '<div style="margin-top:8px;padding:10px;background:var(--color-primary-bg);border-radius:8px;font-size:13px;color:#000000 !important;">';
     html += '<strong>上次主方：</strong>' + (prevRecord.ai_diagnosis.main_formula || '-') + '<br>';
     html += '<strong>上次治法：</strong>' + (prevRecord.ai_diagnosis.treatment_principle || '-');
     html += '</div>';
@@ -16864,27 +16865,28 @@ async tcmViewArchiveRecord(id) {
     let h = '<div class="tcm-section" style="margin-top:16px;">';
     h += `<div class="tcm-section-title">${typeLabel} · ${date}</div>`;
     
+    // 🆕 v3.0.8-full-color-1225：病历详情显示区全量 inline color 兜底（公主陛下反馈现病史浅色）
     // Basic info
-    h += `<div class="tcm-field"><label>主诉</label><div style="white-space:pre-wrap;">${r.chief_complaint||'-'}</div></div>`;
-    if (r.present_illness) h += `<div class="tcm-field"><label>现病史/症状变化</label><div style="white-space:pre-wrap;">${r.present_illness}</div></div>`;
-    if (r.medication_history) h += `<div class="tcm-field"><label>用药史/服药情况</label><div style="white-space:pre-wrap;">${r.medication_history}</div></div>`;
-    if (r.allergy_history) h += `<div class="tcm-field"><label>过敏/不良反应</label><div style="white-space:pre-wrap;">${r.allergy_history}</div></div>`;
-    
+    h += `<div class="tcm-field"><label>主诉</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.chief_complaint||'-'}</div></div>`;
+    if (r.present_illness) h += `<div class="tcm-field"><label>现病史/症状变化</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.present_illness}</div></div>`;
+    if (r.medication_history) h += `<div class="tcm-field"><label>用药史/服药情况</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.medication_history}</div></div>`;
+    if (r.allergy_history) h += `<div class="tcm-field"><label>过敏/不良反应</label><div style="white-space:pre-wrap;color:#000000 !important;background:transparent;">${r.allergy_history}</div></div>`;
+
     // Tongue & Pulse
-    if (r.tongue) h += `<div class="tcm-field"><label>舌象</label><div>${JSON.stringify(r.tongue).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
-    if (r.pulse) h += `<div class="tcm-field"><label>脉象</label><div>${JSON.stringify(r.pulse).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
-    
+    if (r.tongue) h += `<div class="tcm-field"><label>舌象</label><div style="color:#000000 !important;background:transparent;">${JSON.stringify(r.tongue).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
+    if (r.pulse) h += `<div class="tcm-field"><label>脉象</label><div style="color:#000000 !important;background:transparent;">${JSON.stringify(r.pulse).replace(/"/g,'').replace(/[{}[\]]/g,' ')}</div></div>`;
+
     // Syndrome
     if (r.syndrome_differentiation) {
       h += '<div class="tcm-syndrome-card">';
-      h += `<h4 style="color:var(--color-orange);">🔮 辨证</h4>`;
-      h += `<div class="tcm-syndrome-primary">${r.syndrome_differentiation.primary}</div>`;
+      h += `<h4 style="color:#E67E22 !important;">🔮 辨证</h4>`;
+      h += `<div class="tcm-syndrome-primary" style="color:#000000 !important;background:transparent;">${r.syndrome_differentiation.primary}</div>`;
       if (r.syndrome_differentiation.secondary && r.syndrome_differentiation.secondary.length)
-        h += `<div>兼证：${r.syndrome_differentiation.secondary.join('、')}</div>`;
+        h += `<div style="color:#000000 !important;background:transparent;">兼证：${r.syndrome_differentiation.secondary.join('、')}</div>`;
       h += '</div>';
     }
-    
-    // AI Diagnosis
+
+    // AI Diagnosis（v3.0.7 已修 tcm-ai-section-content；v3.0.8 补 h4 兜底）
     if (r.ai_diagnosis) {
       const sections = [
         { key: 'syndrome', title: '证型' },
@@ -16893,7 +16895,7 @@ async tcmViewArchiveRecord(id) {
         { key: 'modification', title: '加减' },
         { key: 'lifestyle', title: '生活调护' }
       ];
-      h += '<div class="tcm-ai-result"><h4 style="color:var(--color-primary);">🤖 AI辨证论治</h4>';
+      h += '<div class="tcm-ai-result"><h4 style="color:#7B68AE !important;">🤖 AI辨证论治</h4>';
       sections.forEach(s => {
         if (r.ai_diagnosis[s.key])
           h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${r.ai_diagnosis[s.key]}</div></div>`;
@@ -16903,10 +16905,10 @@ async tcmViewArchiveRecord(id) {
     
     // Followup data
     if (r.followup_data) {
-      h += '<div style="padding:10px;background:var(--color-primary-bg);border-radius:8px;">';
+      h += '<div style="padding:10px;background:var(--color-primary-bg);border-radius:8px;color:#000000 !important;">';
       h += '<strong>复诊数据：</strong>';
-      if (r.followup_data.current_symptoms) h += `<div>当前症状：${r.followup_data.current_symptoms}</div>`;
-      if (r.followup_data.symptom_change) h += `<div>症状变化：${r.followup_data.symptom_change}</div>`;
+      if (r.followup_data.current_symptoms) h += `<div style="color:#000000 !important;background:transparent;">当前症状：${r.followup_data.current_symptoms}</div>`;
+      if (r.followup_data.symptom_change) h += `<div style="color:#000000 !important;background:transparent;">症状变化：${r.followup_data.symptom_change}</div>`;
       h += '</div>';
     }
     
