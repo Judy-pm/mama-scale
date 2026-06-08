@@ -854,19 +854,21 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   background: transparent !important;
 }
 
-/* 🆕 终极修复（2026-06-08 11:10）—— 公主陛下 2 次反馈"字还是浅"——
-   用 #tcm-ai-result ID 选择器 + 后代选择器 + !important + !important，强制覆盖任何内联样式 */
-#tcm-ai-result .tcm-ai-section,
-#tcm-ai-result .tcm-ai-section *,
-#tcm-ai-result .tcm-ai-section-content,
-#tcm-ai-result .tcm-ai-section-content * {
+/* 🆕 终极终极修复（2026-06-08 12:10）—— 公主陛下 12 次反馈"小标题下还是浅色"
+   根因发现：AI 内容实际渲染在 <div class="tcm-ai-result"> 内（class 不是 id），
+   上一轮 #tcm-ai-result ID 选择器只匹配了外层空容器，完全没生效。
+   这次改用 .tcm-ai-result class 选择器（匹配实际内容）+ JS 模板里同时加 inline !important color 兜底 */
+.tcm-ai-result .tcm-ai-section,
+.tcm-ai-result .tcm-ai-section *,
+.tcm-ai-result .tcm-ai-section-content,
+.tcm-ai-result .tcm-ai-section-content * {
   color: #000000 !important;
   background: #ffffff !important;
   opacity: 1 !important;
   visibility: visible !important;
   -webkit-text-fill-color: #000000 !important;  /* 防 Safari gradient text 黑魔法 */
 }
-#tcm-ai-result .tcm-ai-section-title {
+.tcm-ai-result .tcm-ai-section-title {
   color: #5A4D7A !important;  /* 小标题保留深紫色 */
 }
 
@@ -15676,7 +15678,7 @@ async tcmRenderInitial() {
   html += '<div id="tcm-syndrome-result"></div>';
 
   // 🆕 v3 法律提示（2026-06-08）：AI 辨证按钮上方明示"仅供参考，以医生判断为准"
-  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.5-final-1109（如果你看到这行小字 = 已拿到新版本）</span></div>';
+  html += '<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:6px;padding:10px 14px;margin:16px 0 8px 0;font-size:13px;color:#5D4037;line-height:1.6;">⚠️ <strong>AI 辨证仅供参考，最终方案以医生临床判断为准。</strong>所有证型/方药/剂量均需医生结合临床实际复核。<br><span style="font-size:10px;color:#999;">🆕 字体修复版本 v3.0.6-inline-color-1208（上一版 ID 选择器没匹配上，这次 inline 强制黑色，看到小字 = 新版到位）</span></div>';
 
   // AI辨证论治
   html += '<div id="tcm-ai-result"></div>';
@@ -16131,7 +16133,7 @@ async tcmAIDiagnosis(e) {
       sections.forEach(s => {
         const val = toStr(diagnosis[s.key]);
         if(val) {
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${val}</div></div>`;
         }
       });
       h += '<div style="margin-top:12px;display:flex;gap:8px;">';
@@ -16256,7 +16258,7 @@ async tcmRestoreFromHistory(historyId) {
   sections.forEach(s => {
     const val = toStr(data.diagnosis[s.key]);
     if(val) {
-      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content">${val}</div></div>`;
+      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${val}</div></div>`;
     }
   });
   h += '<div style="margin-top:12px;display:flex;gap:8px;">';
@@ -16791,7 +16793,7 @@ async tcmAIFollowupAnalysis(e) {
       ];
       let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">🤖 AI对比分析</h3>';
       sections.forEach(s => {
-        if(analysis[s.key]) h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content">${analysis[s.key]}</div></div>`;
+        if(analysis[s.key]) h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${analysis[s.key]}</div></div>`;
       });
       h += '</div>';
       container.innerHTML = h;
@@ -16893,7 +16895,7 @@ async tcmViewArchiveRecord(id) {
       h += '<div class="tcm-ai-result"><h4 style="color:var(--color-primary);">🤖 AI辨证论治</h4>';
       sections.forEach(s => {
         if (r.ai_diagnosis[s.key])
-          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content">${r.ai_diagnosis[s.key]}</div></div>`;
+          h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.title}</div><div class="tcm-ai-section-content" style="color:#000000 !important;background:transparent;">${r.ai_diagnosis[s.key]}</div></div>`;
       });
       h += '</div>';
     }
