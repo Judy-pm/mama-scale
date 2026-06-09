@@ -1760,6 +1760,30 @@ const CloudBaseManager = {
     }
   },
 
+  // 🆕 v3.1.6 直接从 patients 表读所有患者（修复"新建患者下拉找不到"——assessments 分组读不到纯 patients 记录）
+  async getPatientsFromTable() {
+    if (!supabaseClient) return null;
+    try {
+      const { data, error } = await supabaseClient
+        .from('patients')
+        .select('name, phone, age, gender, created_at')
+        .order('created_at', { ascending: false })
+        .limit(2000);
+      if (error) throw error;
+      return (data || []).filter(p => p.name).map(p => ({
+        name: p.name,
+        phone: p.phone || '',
+        age: p.age,
+        gender: p.gender,
+        createTime: p.created_at,
+        lastVisit: p.created_at
+      }));
+    } catch (e) {
+      console.warn('[Supabase] 读 patients 表失败:', e.message);
+      return null;
+    }
+  },
+
   // 从云数据库读取单个患者的评估记录
   async getPatientFromCloud(name, phone) {
     if (!supabaseClient) return null;
@@ -12630,12 +12654,26 @@ async function saveNewPatient() {
       const { data, error } = await supabaseClient.from('patients').insert(patient);
       if (error) throw error;
       alert('客户创建成功！');
+      // 🆕 v3.1.6 兜底写本地缓存,即使下拉从云端拉失败,本地也有
+      try { StorageManager.savePatient(patient); } catch(e) { console.warn('本地缓存写入失败:', e); }
       closeNewPatientModal();
       if (currentPage === 'patients') AdminApp.renderPatients();
       if (currentPage === 'dashboard') AdminApp.renderDashboard();
-      // 🆕 v3.1.5 修复"中医诊疗页新建患者下拉找不到": 创建后强制刷新中医诊疗页患者下拉
-      if (currentPage === 'consultation' && AdminApp.tcmLoadPatientSelect) {
+      // 🆕 v3.1.6 修复"中医诊疗页新建患者下拉找不到": 强制刷新中医诊疗页患者下拉
+      // v3.1.5 这段没生效是因为 saveNewPatient 写入 patients 表,但下拉只读 assessments 分组——v3.1.6 已合并数据源
+      if (AdminApp.tcmLoadPatientSelect) {
         AdminApp.tcmLoadPatientSelect();
+        // 顺便把刚创建的患者选为当前患者(避免公主还要再点一次下拉)
+        if (AdminApp.tcmSelectPatient) {
+          const sel = document.getElementById('tcm-patient-select');
+          if (sel) {
+            const targetVal = JSON.stringify({ name: patient.name, phone: patient.phone || '' });
+            for (let i = 0; i < sel.options.length; i++) {
+              if (sel.options[i].value === targetVal) { sel.selectedIndex = i; break; }
+            }
+            AdminApp.tcmCurrentPatient = { name: patient.name, phone: patient.phone || '' };
+          }
+        }
       }
     } catch (e) {
       console.warn('[Supabase] 创建患者失败:', e.message);
@@ -13428,10 +13466,13 @@ const AdminApp = {
   },
 
   _renderPdTCM(name, phone) {
+    // 🆕 v3.1.6 改用 _tcmEnterConsultation 带参跳转,自动选中该患者(用 dataset 防 XSS)
+    const safeName = (name || '').replace(/"/g, '&quot;');
+    const safePhone = (phone || '').replace(/"/g, '&quot;');
     return `<div class="info-card">
       <h4>🏥 中医诊疗</h4>
-      <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:16px;">跳转至中医诊疗模块查看该患者的诊疗记录</p>
-      <button class="btn btn-primary" onclick="switchPage('consultation',document.querySelector('[data-page=consultation]'))">进入中医诊疗</button>
+      <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:16px;">跳转至中医诊疗模块并自动选中该患者</p>
+      <button class="btn btn-primary" data-tcm-name="${safeName}" data-tcm-phone="${safePhone}" onclick="AdminApp._tcmEnterConsultation(this.dataset.tcmName, this.dataset.tcmPhone)">进入中医诊疗</button>
     </div>`;
   },
 
@@ -15680,12 +15721,24 @@ switchTCMTab(tab) {
 async tcmLoadPatientSelect() {
   const sel = document.getElementById('tcm-patient-select');
   if (!sel) return;
+  // 清空旧 options（保留第一项"-- 选择患者 --"）
+  while (sel.options.length > 1) sel.remove(1);
   try {
-    const cloudPatients = await CloudBaseManager.getAllPatientsFromCloud();
-    const patients = cloudPatients || StorageManager.getPatients();
+    // 🆕 v3.1.6 合并 3 个数据源: assessments 分组 + patients 表直读 + 本地缓存
+    // 旧版只读 assessments 分组,新建但没做评估的患者永远看不到——这是 v3.1.5 没修干净的根本原因
+    const [assessmentPatients, tablePatients, localPatients] = await Promise.all([
+      CloudBaseManager.getAllPatientsFromCloud().catch(() => null),
+      CloudBaseManager.getPatientsFromTable().catch(() => null),
+      Promise.resolve(StorageManager.getPatients())
+    ]);
+    const all = [
+      ...(assessmentPatients || []),
+      ...(tablePatients || []),
+      ...(localPatients || [])
+    ];
     const uniqueMap = {};
-    patients.forEach(p => {
-      if (p.name) uniqueMap[p.name + '_' + p.phone] = p;
+    all.forEach(p => {
+      if (p.name) uniqueMap[p.name + '_' + (p.phone || '')] = p;
     });
     Object.values(uniqueMap).sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(p => {
       const opt = document.createElement('option');
@@ -15708,6 +15761,16 @@ tcmSelectPatient() {
   const val = sel.value;
   this.tcmCurrentPatient = val ? JSON.parse(val) : null;
   this.tcmCurrentRecord = null;
+},
+
+// 🆕 v3.1.6 从客户详情页"中医诊疗" tab 一键跳转并自动选中该患者
+// 旧版 onclick 直接 switchPage 漏传 name/phone,跳过去下拉空——公主要求"转过去自动显示客户姓名"
+_tcmEnterConsultation(name, phone) {
+  if (!name) { alert('缺少患者姓名'); return; }
+  this.tcmCurrentPatient = { name, phone: phone || '' };
+  this.tcmTab = 'initial'; // 跳到"初诊"tab
+  this.tcmCurrentRecord = null;
+  switchPage('consultation', document.querySelector('[data-page=consultation]'));
 },
 
 // ========== 录音功能（硅基流动SenseVoice免费转写）==========
