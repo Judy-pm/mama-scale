@@ -15770,16 +15770,57 @@ tcmSelectPatient() {
   const val = sel.value;
   this.tcmCurrentPatient = val ? JSON.parse(val) : null;
   this.tcmCurrentRecord = null;
+  // 🆕 v3.1.8 关键修复：从云端加载该患者最新的 consultation（不重置为 null 再 INSERT）
+  // 旧逻辑：tcmCurrentRecord = null 后,tcmSaveInitial 触发 INSERT 新 consultation
+  //       旧 consultation 下的 3 条 tcm_dialogue 历史"全失"——这是"历史对话没按真实记录"的根因
+  if (this.tcmCurrentPatient && this.tcmCurrentPatient.name) {
+    CloudBaseManager.sb.from('tcm_consultations')
+      .select('*')
+      .eq('patient_name', this.tcmCurrentPatient.name)
+      .eq('patient_phone', this.tcmCurrentPatient.phone || '')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data[0]) {
+          this.tcmCurrentRecord = data[0];
+          console.log('[tcmSelectPatient] 加载现有 consultation:', this.tcmCurrentRecord.id);
+          // 🆕 触发重渲染 dialogue 历史
+          if (typeof this.tcmLoadAndRenderDialogue === 'function') {
+            setTimeout(() => this.tcmLoadAndRenderDialogue(), 50);
+          }
+        }
+      })
+      .catch(e => console.warn('加载 consultation 失败:', e));
+  }
 },
 
 // 🆕 v3.1.6 从客户详情页"中医诊疗" tab 一键跳转并自动选中该患者
 // 旧版 onclick 直接 switchPage 漏传 name/phone,跳过去下拉空——公主要求"转过去自动显示客户姓名"
+// 🆕 v3.1.8: 跳转后从云端加载该患者最新 consultation,避免 INSERT 新 consultation 切走旧 dialogue 历史
 _tcmEnterConsultation(name, phone) {
   if (!name) { alert('缺少患者姓名'); return; }
   this.tcmCurrentPatient = { name, phone: phone || '' };
   this.tcmTab = 'initial'; // 跳到"初诊"tab
   this.tcmCurrentRecord = null;
   switchPage('consultation', document.querySelector('[data-page=consultation]'));
+  // 🆕 v3.1.8: 异步从云端加载该患者最新 consultation（不阻塞跳转）
+  if (this.tcmCurrentPatient && this.tcmCurrentPatient.name) {
+    CloudBaseManager.sb.from('tcm_consultations')
+      .select('*')
+      .eq('patient_name', this.tcmCurrentPatient.name)
+      .eq('patient_phone', this.tcmCurrentPatient.phone || '')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data[0]) {
+          this.tcmCurrentRecord = data[0];
+          console.log('[_tcmEnterConsultation] 加载现有 consultation:', this.tcmCurrentRecord.id);
+          // 重渲染以显示历史
+          this.renderConsultation();
+        }
+      })
+      .catch(e => console.warn('加载 consultation 失败:', e));
+  }
 },
 
 // ========== 录音功能（硅基流动SenseVoice免费转写）==========
@@ -15975,7 +16016,7 @@ async tcmRenderInitial() {
 
   // 生活方式 - 选择型
   const lifestyleSelects = [
-    { id: 'emotional_status', label: '情绪状态', opts: ['平和','偏焦虑','偏抑郁','焦虑+抑郁','易怒','其他'], multi: false },
+    { id: 'emotional_status', label: '情绪状态', opts: ['平和','偏焦虑','偏抑郁','焦虑+抑郁','易怒','其他'], multi: true },
     { id: 'dietary_regular', label: '饮食规律', opts: ['规律','不规律'], multi: false },
     { id: 'dietary_preference', label: '饮食偏好', opts: ['清淡','辛辣','油腻','甜食','生冷'], multi: true },
     { id: 'sleep_quality', label: '睡眠质量', opts: ['良好','一般','入睡困难','易醒','多梦','失眠'], multi: false },
@@ -16321,7 +16362,9 @@ async tcmSaveInitial(opts = {}) {
     menstrual_history: document.getElementById('tcm-menstrual_history').value.trim(),
     // 🆕 修复：tcm_consultations 表实际是 JSONB 嵌套结构（emotional_status/dietary_habits/sleep_quality/work_stress/exercise_habits 都是 JSONB 对象）
     // 之前扁平字段（dietary_regular / dietary_preference / *_detail）在实际表中不存在，导致 INSERT 400 失败但前端误报"已保存"
-    emotional_status: { main: sel.emotional_status || '', detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '' },
+    // 🆕 v3.1.8 修复: emotional_status 现在是 multi=true, sel.emotional_status 是数组
+    // 存到 JSONB main 字段需要 join 成字符串,避免存数组导致 Supabase 报错
+    emotional_status: { main: Array.isArray(sel.emotional_status) ? sel.emotional_status.join('、') : (sel.emotional_status || ''), detail: (document.getElementById('tcm-emotional_status-detail') || {}).value || '' },
     dietary_habits: {
       regular: sel.dietary_regular || '',
       preference: sel.dietary_preference || [],
@@ -16547,6 +16590,11 @@ async tcmAIDiagnosis(e) {
       // 🆕 异步加载历史
       if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
         this.tcmLoadAndRenderHistory(this.tcmCurrentRecord.id);
+      }
+      // 🆕 v3.1.8: AI 探讨/调整方案 对话历史在 AI 辨证论治完成时也自动加载
+      // 旧逻辑: dialogue 历史只在用户展开折叠面板时(toggle)才加载,刷新页面看不到完整对话
+      if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+        setTimeout(() => { if (typeof this.tcmLoadAndRenderDialogue === 'function') this.tcmLoadAndRenderDialogue(); }, 200);
       }
     }
   } catch(e) {
@@ -16802,7 +16850,11 @@ _escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 },
 
-async tcmLoadAndRenderDialogue() {
+async tcmLoadAndRenderDialogue(opts = {}) {
+  // 🆕 v3.1.8: 修复"历史对话只显示最后一轮"——默认不滚到底,让公主从头看完整对话
+  // 旧逻辑: msgBox.scrollTop = msgBox.scrollHeight 强制滚到底,前几轮被滚出视口
+  // 新逻辑: tcmDialogueSend 后传 scrollToBottom: true 才滚到底,刷新/展开时从头显示
+  const { scrollToBottom = false } = opts;
   if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) return;
   const msgBox = document.getElementById('tcm-dialogue-messages');
   if (!msgBox) return;
@@ -16825,7 +16877,8 @@ async tcmLoadAndRenderDialogue() {
       if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:var(--color-primary-bg);border-left:3px solid var(--color-primary-light);border-radius:4px;"><div style="font-size:11px;color:var(--color-primary);font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.ai)}</div></div>`;
     });
     msgBox.innerHTML = h;
-    msgBox.scrollTop = msgBox.scrollHeight;
+    // 🆕 v3.1.8: 按需滚到底（公主发送新消息时才滚,刷新/展开时从头看）
+    if (scrollToBottom) msgBox.scrollTop = msgBox.scrollHeight;
   } catch (e) {
     console.warn('[tcmLoadAndRenderDialogue]', e);
     msgBox.innerHTML = '<div style="color:#e74c3c;font-size:12px;padding:10px;">加载对话失败: ' + this._escapeHtml(e.message) + '</div>';
@@ -16903,7 +16956,8 @@ async tcmDialogueSend() {
     });
 
     input.value = '';
-    await this.tcmLoadAndRenderDialogue();
+    // 🆕 v3.1.8: 发送新消息后滚到底（让公主看到新消息）
+    await this.tcmLoadAndRenderDialogue({ scrollToBottom: true });
   } catch (e) {
     alert('AI 探讨失败: ' + e.message);
   } finally {
@@ -16944,12 +16998,16 @@ async tcmDialogueApply() {
     // 🆕 v3.1.0 任务 3：拼接三层记忆到 prompt
     const memoryPrompt = tcmBuildMemoryPrompt(this.tcmCurrentPatient?.id);
     // 让 V3 总结为标准诊断 JSON
-    const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论（综合医生与 AI 共同认可的方案）。\n\n对话内容：\n' + conversation + '\n请用**纯JSON格式**返回（不要用【JSON块】【ENDJSON】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁10g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）';
+    // 🆕 v3.1.8: 极严格 prompt —— 强制 V3 遵循对话中已确认的最终方案,严禁自由发挥换方
+    // 根因: v3.1.7 之前 prompt 没强调,V3 在温度 0.3 仍然自由发挥生成了"肾虚血瘀/毓麟珠合苍附导痰汤"
+    //       覆盖了公主和 AI 多轮对话达成一致的"助孕方(排卵期专用)"——公主 16:23 反馈
+    const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论。\n\n【⚠️ 关键约束 ⚠️】\n1. 上述对话中，医生和 AI 已经经过多轮讨论，并**已经明确确认最终方案**（通常是对话最后一轮被医生明确认可的方剂）\n2. main_formula 字段**必须严格遵循对话中已确认的最终方剂**——**严禁换方、严禁自由发挥新方子、严禁重新辨证**\n3. 其他字段（syndrome/pathogenesis/treatment_principle/modification/acupuncture/lifestyle/prognosis）也要**严格围绕该最终方剂**展开\n4. 如果对话中存在多个版本的方剂，**以医生最后明确确认的那一版为准**\n\n请用**纯JSON格式**返回（不要用【JSON块】【ENDJSON】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。**直接使用对话中已确认的最终方剂，不要换方**）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n对话内容：\n' + conversation;
     // 🆕 2026-06-08 温度分层：应用最终结论 0.3，开方要严谨少自由发挥
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
     const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
     const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【ENDJSON】\s*$/, '').trim();
-    this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmDialogueApply');
+    // 🆕 v3.1.8: await 处理弹窗（避免 race condition 导致后续 update 没执行）
+    await this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmDialogueApply');
     let finalDiagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); finalDiagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { finalDiagnosis = { syndrome: content }; }
 
