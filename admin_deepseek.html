@@ -721,10 +721,19 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   border-radius: 10px;
   font-size: 14px;
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-white);  /* 🆕 v3.1.7: 改 var(--color-white) 接管(深色模式=#161B22,浅色模式=#FFFFFF,始终高对比) */
   font-family: inherit;
 }
 .tcm-input:focus { outline: none; border-color: var(--color-primary); background: var(--color-white); }
+
+/* 🆕 v3.1.7 AI 归纳病史高亮: 用类名替代内联 style,深浅色双模式自适应,确保文字与背景对比度 */
+.tcm-textarea.ai-filled,
+.tcm-input.ai-filled {
+  background-color: rgba(39, 174, 96, 0.15) !important;  /* 绿色 15% 透明,深浅模式都合适 */
+  border-color: var(--color-green) !important;
+  color: var(--color-text) !important;  /* 强制 var(--color-text) 确保深色模式字亮 */
+  transition: background-color 0.3s;
+}
 
 .tcm-chip-group {
   display: flex;
@@ -16212,7 +16221,7 @@ ${transcript.value}`;
       const el = document.getElementById('tcm-' + fieldMap[k]);
       if (el && summary[k]) {
         el.value = summary[k];
-        el.style.backgroundColor = '#e8f5e9'; // 浅绿色提示已填充
+        el.classList.add('ai-filled');
       }
     });
     
@@ -16274,7 +16283,8 @@ ${transcript.value}`;
       const pulseEl = document.getElementById('tcm-pulse_notes');
       if (pulseEl) {
         pulseEl.value = pulseNotes.join('；');
-        pulseEl.style.backgroundColor = '#e8f5e9';
+        // 🆕 v3.1.7 用 classList 替代内联 style
+        pulseEl.classList.add('ai-filled');
       }
     }
     
@@ -16747,14 +16757,14 @@ async tcmConfirmDiagnosis() {
 // ========== 🆕 AI 探讨/调整方案 对话窗口 ==========
 tcmRenderDialoguePanel() {
   return `
-    <div class="tcm-dialogue-panel" style="margin-top:16px;border:1px dashed #9b87ce;border-radius:8px;background:#fdfcff;overflow:hidden;">
-      <div onclick="AdminApp.tcmToggleDialoguePanel()" style="padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;background:#f5f3fa;">
-        <span style="font-weight:600;color:#5A4D7A;font-size:14px;">💬 AI 探讨 / 调整方案</span>
-        <span id="tcm-dialogue-toggle-icon" style="color:#5A4D7A;font-size:14px;">▶</span>
+    <div class="tcm-dialogue-panel" style="margin-top:16px;border:1px dashed var(--color-primary-light);border-radius:8px;background:var(--color-white);overflow:hidden;">
+      <div onclick="AdminApp.tcmToggleDialoguePanel()" style="padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;background:var(--color-bg);">
+        <span style="font-weight:600;color:var(--color-primary);font-size:14px;">💬 AI 探讨 / 调整方案</span>
+        <span id="tcm-dialogue-toggle-icon" style="color:var(--color-primary);font-size:14px;">▶</span>
       </div>
       <div id="tcm-dialogue-body" style="display:none;padding:12px 16px;">
         <div id="tcm-dialogue-messages" style="max-height:400px;overflow-y:auto;margin-bottom:12px;min-height:60px;">
-          <div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节<br>（如：方中附子能否减半？/ 患者兼有 X 症状应如何加减？）</div>
+          <div style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节<br>（如：方中附子能否减半？/ 患者兼有 X 症状应如何加减？）</div>
         </div>
         <div style="display:flex;gap:8px;">
           <textarea id="tcm-dialogue-input" class="tcm-textarea" rows="2" placeholder="输入你想探讨的细节..." style="flex:1;margin-bottom:0;"></textarea>
@@ -16764,7 +16774,7 @@ tcmRenderDialoguePanel() {
           <button class="btn btn-outline btn-sm" onclick="AdminApp.tcmDialogueApply()">📋 应用最终结论到辨证论治</button>
           <button class="btn btn-outline btn-sm" onclick="AdminApp.tcmToggleDialoguePanel()">收起</button>
         </div>
-        <div style="font-size:11px;color:#999;margin-top:8px;line-height:1.5;">
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:8px;line-height:1.5;">
           💡 多轮对话保留上下文，AI 基于完整讨论给出回应<br>
           💡 讨论结束后点"应用最终结论"——AI 会把对话总结为标准辨证格式，写回上方辨证论治区
         </div>
@@ -16805,14 +16815,14 @@ async tcmLoadAndRenderDialogue() {
       .order('created_at', { ascending: true });
     if (error) throw error;
     if (!history || !history.length) {
-      msgBox.innerHTML = '<div style="text-align:center;color:#999;font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节</div>';
+      msgBox.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:20px 0;">点击"发送"开始与 AI 探讨方案细节</div>';
       return;
     }
     let h = '';
     history.forEach(item => {
       const d = item.diagnosis || {};
-      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid #7B68AE;border-radius:4px;"><div style="font-size:11px;color:#7B68AE;font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.user)}</div></div>`;
-      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:#f8f6fc;border-left:3px solid #9b87ce;border-radius:4px;"><div style="font-size:11px;color:#5A4D7A;font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.ai)}</div></div>`;
+      if (d.user) h += `<div style="margin:8px 0;padding:10px 12px;background: var(--color-white);border-left:3px solid var(--color-primary);border-radius:4px;"><div style="font-size:11px;color:var(--color-primary);font-weight:600;margin-bottom:4px;">👨‍⚕️ 医生</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.user)}</div></div>`;
+      if (d.ai) h += `<div style="margin:8px 0;padding:10px 12px;background:var(--color-primary-bg);border-left:3px solid var(--color-primary-light);border-radius:4px;"><div style="font-size:11px;color:var(--color-primary);font-weight:600;margin-bottom:4px;">🤖 AI</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color: var(--color-text) !important;background: transparent;">${this._escapeHtml(d.ai)}</div></div>`;
     });
     msgBox.innerHTML = h;
     msgBox.scrollTop = msgBox.scrollHeight;
