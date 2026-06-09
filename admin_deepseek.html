@@ -709,11 +709,11 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   font-size: 14px;
   line-height: 1.6;
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-white);  /* 🆕 v3.1.5: 改 var(--color-white) 接管(深色模式=#161B22,浅色模式=#FFFFFF,始终高对比) */
   resize: vertical;
   font-family: inherit;
 }
-.tcm-textarea:focus { outline: none; border-color: var(--color-primary); background: var(--color-white); }
+.tcm-textarea:focus { outline: none; border-color: var(--color-primary); background: var(--color-white); box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
 .tcm-input {
   width: 100%;
   padding: 10px 12px;
@@ -1080,7 +1080,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   font-size: 14px; line-height: 1.6; word-break: break-word;
 }
 .ai-msg.assistant .ai-msg-bubble {
-  background: #F0ECF5; color: var(--color-text);
+  background: var(--color-white); color: var(--color-text); border: 1px solid var(--color-border);
   border-top-left-radius: 4px;
 }
 .ai-msg.user .ai-msg-bubble {
@@ -12633,6 +12633,10 @@ async function saveNewPatient() {
       closeNewPatientModal();
       if (currentPage === 'patients') AdminApp.renderPatients();
       if (currentPage === 'dashboard') AdminApp.renderDashboard();
+      // 🆕 v3.1.5 修复"中医诊疗页新建患者下拉找不到": 创建后强制刷新中医诊疗页患者下拉
+      if (currentPage === 'consultation' && AdminApp.tcmLoadPatientSelect) {
+        AdminApp.tcmLoadPatientSelect();
+      }
     } catch (e) {
       console.warn('[Supabase] 创建患者失败:', e.message);
       if (e.message && e.message.includes('does not exist')) {
@@ -12723,7 +12727,7 @@ function doChangePwd() {
 //   2. COT 流程加 3.5【补充】+ 5【置信度自评】（修"回答偏简"+ 加置信度标签）
 //   3. 界面顶部加"⚠️ AI 辨证仅供参考"法律提示（修"医生把关"）
 //   v2 → v3 沿用项：角色设定/速查表/十九畏十八反分类别混用/避开表内冲突药对
-const TCM_PROMPT_PREAMBLE = '\n【中医配伍禁忌与临床回答规范（必须严格遵守）】\n【角色】你是武汉市妇幼保健院女性抗衰门诊的资深中医师，30 年临床经验，所有回答以《中国药典》和《伤寒论》《金匮要略》等经典为准。\n【速查表·十九畏 9对】硫黄-朴硝 / 水银-砒霜 / 狼毒-密陀僧 / 巴豆-牵牛 / 丁香-郁金 / 川乌草乌-犀角 / 牙硝-三棱 / 官桂-石脂 / 人参-五灵脂。\n【速查表·十八反 3组】(1)甘草-甘遂/大戟/芫花/海藻 (2)藜芦-人参/丹参/玄参/沙参/细辛/芍药 (3)乌头(川乌/草乌/附子)-贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄-旋覆花合用：致心率失常的现代药理警示（动物实验+临床报道）；旋覆花绒毛刺激咽喉需包煎。\n【回答流程】1.【分析】先判断问题类型（配伍禁忌/剂量煎服/特殊人群/临床诊断）2.【依据】查上述速查表+经典方剂，不要凭直觉 3.【结论】给出明确答案 3.5【补充】如适用，补充临床表现/方剂组成/煎服法/古籍出处/关键药对等关键信息，让答案更完整 4.【不确定项】如有不明确，明确说"建议医生面诊"或"建议参考《中国药典》" 5.【置信度】自评本次回答的确定性——高/中/低 + 1 句话说明（高=有药典/经典明确依据；中=基于证型推断；低=仅凭一般原则），让医生一眼看到你犹豫的地方。\n【5条铁律】(1)严格依据速查表，不要凭直觉联想 (2)患者所问组合若不在表内，明确答"未见该组合在传统十九畏/十八反中的明确记载" (3)十九畏和十八反是两个不同体系，不要混用——硫黄-朴硝是十九畏，不是十八反 (4)禁止编造任何具体数字（剂量克数/煎服分钟/毒性倍数/监测频率/服药天数等）。在以下软场景下，无药典/文献明确依据时必须答"具体时间因人而异，建议医生面诊"或"建议参考最新版《中国药典》"，禁止给具体小时数/克数/倍数/天数——软场景包括：饮食间隔（如"服药后几小时喝绿豆汤"）、煎服时长（如"附子先煎几分钟"）、监测频率（如"INR 多久查一次"）、起效时间（如"几天见效"）、症状缓解时间（如"疼痛多久缓解"） (5)开方时自动避开表内冲突药对。\n';
+const TCM_PROMPT_PREAMBLE = '\n【中医配伍禁忌与临床回答规范（必须严格遵守）】\n【角色】你是武汉市妇幼保健院女性抗衰门诊的资深中医师，30 年临床经验，所有回答以《中国药典》和《伤寒论》《金匮要略》等经典为准。\n【速查表·十九畏 9对】硫黄-朴硝 / 水银-砒霜 / 狼毒-密陀僧 / 巴豆-牵牛 / 丁香-郁金 / 川乌草乌-犀角 / 牙硝-三棱 / 官桂-石脂 / 人参-五灵脂。\n【速查表·十八反 3组】(1)甘草-甘遂/大戟/芫花/海藻 (2)藜芦-人参/丹参/玄参/沙参/细辛/芍药 (3)乌头(川乌/草乌/附子)-贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄-旋覆花合用：致心率失常的现代药理警示（动物实验+临床报道）；旋覆花绒毛刺激咽喉需包煎。\n【回答流程】1.【分析】先判断问题类型（配伍禁忌/剂量煎服/特殊人群/临床诊断）2.【依据】查上述速查表+经典方剂，不要凭直觉 3.【结论】给出明确答案 3.5【补充】如适用，补充临床表现/方剂组成/煎服法/古籍出处/关键药对等关键信息，让答案更完整 4.【不确定项】如有不明确，明确说"建议医生面诊"或"建议参考《中国药典》" 5.【置信度】自评本次回答的确定性——高/中/低 + 1 句话说明（高=有药典/经典明确依据；中=基于证型推断；低=仅凭一般原则），让医生一眼看到你犹豫的地方。\n【5条铁律】(1)严格依据速查表，不要凭直觉联想 (2)患者所问组合若不在表内，明确答"未见该组合在传统十九畏/十八反中的明确记载" (3)十九畏和十八反是两个不同体系，不要混用——硫黄-朴硝是十九畏，不是十八反 (4)禁止编造任何具体数字（剂量克数/煎服分钟/毒性倍数/监测频率/服药天数等）。在以下软场景下，无药典/文献明确依据时必须答"具体时间因人而异，建议医生面诊"或"建议参考最新版《中国药典》"，禁止给具体小时数/克数/倍数/天数——软场景包括：饮食间隔（如"服药后几小时喝绿豆汤"）、煎服时长（如"附子先煎几分钟"）、监测频率（如"INR 多久查一次"）、起效时间（如"几天见效"）、症状缓解时间（如"疼痛多久缓解"） (5)开方时自动避开表内冲突药对。(6)开方不为药味数设限——方子大小由辨证需要决定，不硬性设 "12 味" 等数字框架（精简用药是好习惯，但应以证型需要为准）。\n';
 
 // 🆕 v3.1.0 共享指令块：任务2+3 自动补充识别 + 会话共识识别
 const TCM_MEMORY_INSTRUCTION = `
@@ -12853,7 +12857,6 @@ function coze_init_sample_rules() {
   if (existing.length > 0) return; // 已有数据不覆盖
   
   const samples = [
-    { id: 'sr1', content: '精简用药，优先 12 味以内', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
     { id: 'sr2', content: '辨证优先看舌象，舌象不符时以舌象为准', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
     { id: 'sr3', content: '先通后补，通道不通不补', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
     { id: 'sr4', content: '老年人用药量减半，70岁以上再减', scope: 'global', source: 'doctor_manual', created_at: new Date().toISOString() },
@@ -15947,40 +15950,42 @@ async tcmRenderInitial() {
   const tongueConfig = [
     { id: 'tongue_color', label: '舌色', opts: ['淡白','淡红','红','绛红','紫暗'], multi: true },
     { id: 'tongue_shape', label: '舌形', opts: ['正常','胖大','瘦薄','齿痕','裂纹','芒刺'], multi: true },
-    { id: 'coating_color', label: '舌苔-颜色', opts: ['薄白','白','薄黄','黄','灰','黑'], multi: false },
-    { id: 'coating_texture', label: '舌苔-质地', opts: ['薄','厚','腻','剥','无苔'], multi: false },
+    { id: 'coating_color', label: '舌苔-颜色', opts: ['薄白','白','薄黄','黄','灰','黑'], multi: true },
+    { id: 'coating_texture', label: '舌苔-质地', opts: ['薄','厚','腻','剥','无苔'], multi: true },
     { id: 'coating_distribution', label: '舌苔-分布', opts: ['全舌','舌根','舌中','舌尖','舌边'], multi: true },
     { id: 'sublingual', label: '舌下络脉', opts: ['正常','瘀点','青紫','曲张'], multi: true }
   ];
   const existingTongue = existingData && existingData.tongue ? existingData.tongue : {};
   tongueConfig.forEach(c => {
     const eVal = existingTongue[c.id] || (c.multi ? [] : '');
+    const _dVal = (existingTongue[c.id + '_detail'] || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     html += `<div class="tcm-field"><label>${c.label}</label><div class="tcm-chip-group" id="tcm-chip-${c.id}">`;
     c.opts.forEach(v => {
       const isActive = c.multi ? (Array.isArray(eVal) && eVal.includes(v)) : eVal === v;
       html += `<div class="tcm-chip${isActive ? ' active' : ''}" onclick="AdminApp.tcmChipSelect('${c.id}','${v}',${c.multi},this)">${v}</div>`;
     });
-    html += '</div></div>';
+    html += `</div><input type="text" class="tcm-input" id="tcm-${c.id}-detail" placeholder="无选项时自主填写..." value="${_dVal}" style="margin-top:6px;font-size:12px;" /></div>`;
   });
   html += `<div class="tcm-field"><label>舌象照片（选填）</label><input type="file" id="tongue-photo" accept="image/*" onchange="AdminApp.previewTonguePhoto(this)" style="display:none;" /><button class="btn btn-outline btn-sm" onclick="document.getElementById('tongue-photo').click()">📷 上传</button><div id="tongue-photo-preview" style="margin-top:8px;"></div></div>`;
   html += `<div class="tcm-field"><label>舌象备注</label><textarea class="tcm-textarea" id="tcm-tongue_notes" rows="2">${existingTongue.notes || ''}</textarea></div>`;
 
   // 脉象
   const pulseConfig = [
-    { id: 'pulse_position', label: '脉位', opts: ['浮','沉','中'], multi: false },
-    { id: 'pulse_rate', label: '脉率', opts: ['迟(<60)','平(60-90)','数(90-120)','疾(>120)'], multi: false },
-    { id: 'pulse_force', label: '脉力', opts: ['虚','实','弱'], multi: false },
+    { id: 'pulse_position', label: '脉位', opts: ['浮','沉','中'], multi: true },
+    { id: 'pulse_rate', label: '脉率', opts: ['迟(<60)','平(60-90)','数(90-120)','疾(>120)'], multi: true },
+    { id: 'pulse_force', label: '脉力', opts: ['虚','实','弱'], multi: true },
     { id: 'pulse_shape', label: '脉形', opts: ['滑','涩','弦','紧','细','洪','濡','微','散','结','代','促'], multi: true }
   ];
   const existingPulse = existingData && existingData.pulse ? existingData.pulse : {};
   pulseConfig.forEach(c => {
     const eVal = existingPulse[c.id] || (c.multi ? [] : '');
+    const _dVal = (existingPulse[c.id + '_detail'] || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     html += `<div class="tcm-field"><label>${c.label}</label><div class="tcm-chip-group" id="tcm-chip-${c.id}">`;
     c.opts.forEach(v => {
       const isActive = c.multi ? (Array.isArray(eVal) && eVal.includes(v)) : eVal === v;
       html += `<div class="tcm-chip${isActive ? ' active' : ''}" onclick="AdminApp.tcmChipSelect('${c.id}','${v}',${c.multi},this)">${v}</div>`;
     });
-    html += '</div></div>';
+    html += `</div><input type="text" class="tcm-input" id="tcm-${c.id}-detail" placeholder="无选项时自主填写..." value="${_dVal}" style="margin-top:6px;font-size:12px;" /></div>`;
   });
   html += `<div class="tcm-field"><label>心率(次/分)</label><input type="number" id="tcm-pulse_bpm" class="tcm-input" style="width:120px;" min="30" max="200" value="${existingPulse.bpm || ''}" /></div>`;
   html += `<div class="tcm-field"><label>脉象备注</label><textarea class="tcm-textarea" id="tcm-pulse_notes" rows="2">${existingPulse.notes || ''}</textarea></div>`;
