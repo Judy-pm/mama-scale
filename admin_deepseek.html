@@ -16083,13 +16083,23 @@ async tcmRenderInitial() {
   html += `<div class="tcm-field"><label>舌象备注</label><textarea class="tcm-textarea" id="tcm-tongue_notes" rows="2">${existingTongue.notes || ''}</textarea></div>`;
 
   // 脉象
+  // 🆕 v3.2.0 脉诊升级 2026-06-10 16:57（公主陛下决策：✅ 脉力脉位合并为 6×3 矩阵）：
+  //   - 删 pulse_position（浮/沉/中三选）+ pulse_force（虚/实/弱三选）两个 chip
+  //   - 改成 18 格矩阵：L|R × 浮中沉 × 寸关尺，每格 0-1 评分（脉有力越强分越高）
+  //   - 保留脉率/脉形 chip + 心率/备注
+  //   - 数据落库新字段 pulse_matrix: { L:{cun,guan,chi:{fu,zhong,chen}}, R:{...} }
   const pulseConfig = [
-    { id: 'pulse_position', label: '脉位', opts: ['浮','沉','中'], multi: true },
     { id: 'pulse_rate', label: '脉率', opts: ['迟(<60)','平(60-90)','数(90-120)','疾(>120)'], multi: true },
-    { id: 'pulse_force', label: '脉力', opts: ['虚','实','弱'], multi: true },
     { id: 'pulse_shape', label: '脉形', opts: ['滑','涩','弦','紧','细','洪','濡','微','散','结','代','促'], multi: true }
   ];
   const existingPulse = existingData && existingData.pulse ? existingData.pulse : {};
+  // 兼容老数据：pulse_matrix 可能不存在，fallback 用 pulse_position + pulse_force 反推
+  const existingMatrix = existingPulse.pulse_matrix || { L: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}}, R: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}} };
+  const hands = ['L','R'];
+  const positions = ['cun','guan','chi'];
+  const depths = ['fu','zhong','chen'];
+  const posLabelMap = { cun: '寸', guan: '关', chi: '尺' };
+  const depthLabelMap = { fu: '浮', zhong: '中', chen: '沉' };
   pulseConfig.forEach(c => {
     const eVal = existingPulse[c.id] || (c.multi ? [] : '');
     const _dVal = (existingPulse[c.id + '_detail'] || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -16100,6 +16110,28 @@ async tcmRenderInitial() {
     });
     html += `</div><input type="text" class="tcm-input" id="tcm-${c.id}-detail" placeholder="无选项时自主填写..." value="${_dVal}" style="margin-top:6px;font-size:12px;" /></div>`;
   });
+  // 🆕 v3.2.0 脉力脉位矩阵：6×3 = 18 个 0-1 评分格（L|R × 浮中沉 × 寸关尺）
+  html += '<div class="tcm-field"><label>脉力脉位</label>';
+  html += '<div style="display:grid;grid-template-columns:36px 1fr;gap:6px;align-items:center;margin-top:4px;">';
+  // 顶部 L | R 表头
+  html += '<div></div>';  // 左上角空
+  html += '<div style="display:grid;grid-template-columns:1fr 16px 1fr;gap:4px;text-align:center;font-weight:700;font-size:15px;color:var(--color-primary);">';
+  html += '<div>L</div><div style="opacity:0.3;">|</div><div>R</div>';
+  html += '</div>';
+  // 3 行（L|R × 浮中沉）
+  positions.forEach(pos => {
+    html += '<div></div>';  // 不显示"寸/关/尺"文字（按图布局但不留文字）
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 16px 1fr 1fr 1fr;gap:3px;">';
+    hands.forEach((hand, hi) => {
+      depths.forEach(dep => {
+        const v = (existingMatrix[hand] && existingMatrix[hand][pos] && existingMatrix[hand][pos][dep] != null) ? existingMatrix[hand][pos][dep] : '';
+        html += '<input type="number" min="0" max="1" step="0.01" class="tcm-input" id="tcm-pulse-mat-'+hand+'-'+pos+'-'+dep+'" value="'+v+'" style="width:100%;padding:4px 2px;text-align:center;font-size:13px;min-width:0;" title="'+hand+' '+posLabelMap[pos]+' '+depthLabelMap[dep]+'" />';
+      });
+      if (hi === 0) html += '<div></div>';  // L 和 R 中间的竖分隔
+    });
+    html += '</div>';
+  });
+  html += '</div></div>';
   html += `<div class="tcm-field"><label>心率(次/分)</label><input type="number" id="tcm-pulse_bpm" class="tcm-input" style="width:120px;" min="30" max="200" value="${existingPulse.bpm || ''}" /></div>`;
   html += `<div class="tcm-field"><label>脉象备注</label><textarea class="tcm-textarea" id="tcm-pulse_notes" rows="2">${existingPulse.notes || ''}</textarea></div>`;
   html += '</div>';
@@ -16386,9 +16418,21 @@ async tcmSaveInitial(opts = {}) {
       photo: document.getElementById('tongue-photo-preview') && document.getElementById('tongue-photo-preview').querySelector('img') ? document.getElementById('tongue-photo-preview').querySelector('img').src : ''
     },
     pulse: {
-      pulse_position: sel.pulse_position || '',
+      // 🆕 v3.2.0 脉力脉位矩阵（18 格 0-1 评分）
+      pulse_matrix: (function() {
+        const mat = { L: {cun:{},guan:{},chi:{}}, R: {cun:{},guan:{},chi:{}} };
+        ['L','R'].forEach(hand => {
+          ['cun','guan','chi'].forEach(pos => {
+            ['fu','zhong','chen'].forEach(dep => {
+              const el = document.getElementById('tcm-pulse-mat-'+hand+'-'+pos+'-'+dep);
+              const v = el && el.value !== '' ? parseFloat(el.value) : null;
+              mat[hand][pos][dep] = (v != null && !isNaN(v)) ? Math.max(0, Math.min(1, v)) : null;
+            });
+          });
+        });
+        return mat;
+      })(),
       pulse_rate: sel.pulse_rate || '',
-      pulse_force: sel.pulse_force || '',
       pulse_shape: sel.pulse_shape || [],
       bpm: (document.getElementById('tcm-pulse_bpm') || {}).value || '',
       notes: (document.getElementById('tcm-pulse_notes') || {}).value || ''
@@ -16422,11 +16466,27 @@ tcmAutoDifferentiate() {
   const tcc = sel.coating_color || '';
   const tct = sel.coating_texture || '';
   const tsl = sel.sublingual || [];
-  const pp = sel.pulse_position || '';
   const pr = sel.pulse_rate || '';
-  const pf = sel.pulse_force || '';
   const ps = sel.pulse_shape || [];
-  
+  // 🆕 v3.2.0 从脉力脉位矩阵反推脉位（哪几层非空）+ 脉力（双寸均值，<0.5=虚/弱，≥0.5=实）
+  const mat = sel.pulse_matrix || {};
+  const _nonEmptyDepths = [];  // 18 格中所有非空评分对应"取法"集合
+  const _depthVals = { fu: [], zhong: [], chen: [] };
+  ['L','R'].forEach(hand => {
+    ['cun','guan','chi'].forEach(pos => {
+      ['fu','zhong','chen'].forEach(dep => {
+        const v = mat[hand] && mat[hand][pos] && mat[hand][pos][dep];
+        if (v != null && !isNaN(v) && v > 0) { _nonEmptyDepths.push(dep); _depthVals[dep].push(v); }
+      });
+    });
+  });
+  const pp = [...new Set(_nonEmptyDepths)].join('/');  // 脉位：从矩阵反推
+  const _cunAvg = (() => {
+    const vs = []; ['L','R'].forEach(h => { const v = mat[h] && mat[h].cun && mat[h].cun.zhong; if (v != null && !isNaN(v)) vs.push(v); });
+    return vs.length ? vs.reduce((a,b)=>a+b,0)/vs.length : null;
+  })();
+  const pf = _cunAvg == null ? '' : (_cunAvg < 0.4 ? '虚' : (_cunAvg < 0.7 ? '弱' : '实'));  // 脉力：从矩阵反推
+
   const results = [];
   if(tc.includes('淡白')&&pp==='沉'&&(pf==='虚'||pf==='弱')&&ps.includes('细'))results.push({name:'气血两虚',ev:'舌淡白+脉沉细弱',c:.9});
   if(tc.includes('淡白')&&pp==='沉'&&pr.includes('迟'))results.push({name:'阳虚',ev:'舌淡+脉沉迟',c:.85});
@@ -16509,7 +16569,22 @@ async tcmAIDiagnosis(e) {
 情绪: ${sel.emotional_status||''}  饮食: ${sel.dietary_regular||''} 偏好:${(sel.dietary_preference||[]).join('/')}
 睡眠: ${sel.sleep_quality||''}  压力: ${sel.work_stress||''}  运动: ${sel.exercise_habits||''}
 舌色: ${(sel.tongue_color||[]).join('/')}  舌形: ${(sel.tongue_shape||[]).join('/')}  苔色: ${sel.coating_color||''}  苔质: ${sel.coating_texture||''}  苔分布: ${(sel.coating_distribution||[]).join('/')}  舌下: ${(sel.sublingual||[]).join('/')}
-脉位: ${sel.pulse_position||''}  脉率: ${sel.pulse_rate||''}  脉力: ${sel.pulse_force||''}  脉形: ${(sel.pulse_shape||[]).join('/')}`;
+脉率: ${sel.pulse_rate||''}  脉形: ${(sel.pulse_shape||[]).join('/')}
+脉力脉位矩阵(L|R×浮中沉×寸关尺,每格0~1): ${(() => {
+  const m = sel.pulse_matrix || {};
+  const lines = [];
+  ['L','R'].forEach(hand => {
+    const row = ['cun','guan','chi'].map(pos => {
+      const cells = ['fu','zhong','chen'].map(dep => {
+        const v = m[hand] && m[hand][pos] && m[hand][pos][dep];
+        return v == null ? '-' : (Math.round(v*100)/100);
+      });
+      return cells.join('|');
+    });
+    lines.push(hand + ': 寸' + row[0] + '  关' + row[1] + '  尺' + row[2]);
+  });
+  return lines.join(' | ');
+})()}`;
 
   try {
     const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用【JSON块】【ENDJSON】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
