@@ -16124,8 +16124,14 @@ async tcmRenderInitial() {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 16px 1fr 1fr 1fr;gap:3px;">';
     hands.forEach((hand, hi) => {
       depths.forEach(dep => {
-        const v = (existingMatrix[hand] && existingMatrix[hand][pos] && existingMatrix[hand][pos][dep] != null) ? existingMatrix[hand][pos][dep] : '';
-        html += '<input type="number" min="0" max="1" step="0.01" class="tcm-input" id="tcm-pulse-mat-'+hand+'-'+pos+'-'+dep+'" value="'+v+'" style="width:100%;padding:4px 2px;text-align:center;font-size:13px;min-width:0;" title="'+hand+' '+posLabelMap[pos]+' '+depthLabelMap[dep]+'" />';
+        // 🆕 v3.2.1 公主 17:22 决策：0-1 步长 0.1（共 10 档：0.1-1）下拉选择
+        const cur = (existingMatrix[hand] && existingMatrix[hand][pos] && existingMatrix[hand][pos][dep] != null) ? existingMatrix[hand][pos][dep] : '';
+        let opts = '<option value=""></option>';
+        for (let i = 1; i <= 10; i++) {
+          const val = (i / 10).toFixed(1);  // 0.1, 0.2, ..., 1.0
+          opts += '<option value="'+val+'"'+(String(cur) === val ? ' selected' : '')+'>'+val+'</option>';
+        }
+        html += '<select class="tcm-input" id="tcm-pulse-mat-'+hand+'-'+pos+'-'+dep+'" style="width:100%;padding:4px 2px;text-align:center;font-size:13px;min-width:0;appearance:auto;" title="'+hand+' '+posLabelMap[pos]+' '+depthLabelMap[dep]+'">'+opts+'</select>';
       });
       if (hi === 0) html += '<div></div>';  // L 和 R 中间的竖分隔
     });
@@ -16419,13 +16425,15 @@ async tcmSaveInitial(opts = {}) {
     },
     pulse: {
       // 🆕 v3.2.0 脉力脉位矩阵（18 格 0-1 评分）
+      // 🆕 v3.2.1 改成 select 下拉（0.1-1 共 10 档），空值存 null
       pulse_matrix: (function() {
         const mat = { L: {cun:{},guan:{},chi:{}}, R: {cun:{},guan:{},chi:{}} };
         ['L','R'].forEach(hand => {
           ['cun','guan','chi'].forEach(pos => {
             ['fu','zhong','chen'].forEach(dep => {
               const el = document.getElementById('tcm-pulse-mat-'+hand+'-'+pos+'-'+dep);
-              const v = el && el.value !== '' ? parseFloat(el.value) : null;
+              const raw = el && el.value !== '' ? el.value : null;
+              const v = raw != null ? parseFloat(raw) : null;
               mat[hand][pos][dep] = (v != null && !isNaN(v)) ? Math.max(0, Math.min(1, v)) : null;
             });
           });
