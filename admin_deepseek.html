@@ -17119,14 +17119,184 @@ async tcmDialogueApply() {
 },
 
 tcmPrint() {
-  const el = document.getElementById('consultation-content');
-  if(!el) return;
-  const w = window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>中医诊疗记录</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px;color:#333;max-width:700px;margin:0 auto}.tcm-section{border:1px solid #e0e0e0;border-radius:8px;padding:14px;margin-bottom:12px}.tcm-section-title{font-weight:700;color:#5A4D7A;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e0e0e0}.tcm-field{margin-bottom:8px}.tcm-field label{font-weight:600;font-size:13px;color:#666}.tcm-ai-section{padding:8px 12px;background:#f8f8f8;border-radius:6px;margin-bottom:6px;border-left:3px solid #7B68AE}.tcm-ai-section-title{font-weight:700;color:#5A4D7A;font-size:13px}.tcm-syndrome-card{background:#FFF8F0;border:1px solid #F39C12;border-radius:8px;padding:12px;margin-bottom:12px}</style></head><body>'+el.innerHTML+'</body></html>');
+  // 🆕 v3.2.2 打印版式重做（2026-06-10 20:03 公主陛下决策：✅ 参考周三仔 V3 报告版式）
+  // 旧版：直接拿 #consultation-content 的 innerHTML，录音/AI对话/按钮全印——白底乱码
+  // 新版：从 this.tcmCurrentRecord（数据库行）取数 + 周三仔 V3 模板
+  //   - 封面居中（深青主色 + 暖铜中医色）
+  //   - 9 大模块：基本信息 / 主诉病史 / 中医四诊 / 辨证论治 / 复诊建议
+  //   - 表格化呈现 + 暖色左边框卡片（中医评估）
+  //   - 脉象矩阵 6×3 格式化输出
+  if (!this.tcmCurrentRecord || !this.tcmCurrentRecord.id) {
+    alert('请先保存诊疗记录再打印');
+    return;
+  }
+  const rec = this.tcmCurrentRecord;
+  const p = this.tcmCurrentPatient || {};
+  const isFollowup = rec.visit_type === 'followup';
+  // 工具函数
+  const esc = s => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const arr2str = a => Array.isArray(a) ? a.filter(Boolean).join('、') : (a || '');
+  const obj2str = o => { if (!o || typeof o !== 'object') return o || ''; const v = o.detail && o.detail !== '' ? o.detail : ''; const m = o.main && o.main !== '' ? o.main : (Array.isArray(o.preference) ? o.preference.join('、') : ''); return [m, v].filter(Boolean).join('（' + (v ? '补充：' + v : '') + '）').replace(/^（/, '').replace(/）$/, '') || '-'; };
+  // 脉象矩阵（v3.2.3：智能合并——填几格就显示几格，三档等值合并成一个）
+  const t = rec.tongue || {};
+  const p_obj = rec.pulse || {};
+  const ai = rec.ai_diagnosis || {};
+  const matrix = p_obj.pulse_matrix || {};
+  // fmtCell(hand, pos) → 合并该位置浮/中/沉三档值
+  //   - 0 值 → '/'
+  //   - 单值 → '0.6'
+  //   - 多值全等 → '0.6'（三档一样，只写一个值）
+  //   - 多值不等 → '0.3/0.6/0.8'（按 浮/中/沉 顺序斜杠分隔）
+  const fmtCell = (hand, pos) => {
+    const cell = matrix[hand] && matrix[hand][pos];
+    if (!cell) return '/';
+    const vals = ['fu', 'zhong', 'chen']
+      .map(d => {
+        const v = cell[d];
+        return (v == null || v === '') ? null : (typeof v === 'number' ? v.toFixed(1) : v);
+      })
+      .filter(v => v !== null);
+    if (vals.length === 0) return '/';
+    if (vals.length === 1) return vals[0];
+    const allEqual = vals.every(v => v === vals[0]);
+    return allEqual ? vals[0] : vals.join('/');
+  };
+  const matrixRows = ['L','R'].map(hand => ({
+    hand,
+    cun: fmtCell(hand, 'cun'),
+    guan: fmtCell(hand, 'guan'),
+    chi: fmtCell(hand, 'chi')
+  }));
+  const visitDate = (rec.created_at || '').slice(0,10);
+  const reportDate = new Date().toISOString().slice(0,10);
+  // 主体
+  let body = '';
+  // 封面
+  body += '<div class="rpt-cover">';
+  body += '<div class="rpt-cover-hosp">武汉市妇幼保健院</div>';
+  body += '<div class="rpt-cover-dept">女性抗衰门诊</div>';
+  body += '<div class="rpt-cover-title">中 医 诊 疗 记 录</div>';
+  body += '<div class="rpt-cover-name">' + esc(p.name || rec.patient_name || '') + '</div>';
+  body += '<div class="rpt-cover-meta">就诊类型：' + (isFollowup ? '复诊' : '初诊') + '　|　就诊日期：' + esc(visitDate) + '</div>';
+  body += '</div>';
+  // 1. 基本信息
+  body += '<h2 class="rpt-h2">一、基本信息</h2>';
+  body += '<table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th">姓名</th><td>' + esc(p.name || rec.patient_name || '') + '</td><th class="rpt-th">电话</th><td>' + esc(p.phone || rec.patient_phone || '') + '</td></tr>';
+  body += '<tr><th class="rpt-th">性别</th><td>' + esc(rec.patient_gender || '-') + '</td><th class="rpt-th">年龄</th><td>' + esc(rec.patient_age ? rec.patient_age + ' 岁' : '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">职业</th><td colspan="3">' + esc(rec.living_environment || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">就诊日期</th><td>' + esc(visitDate) + '</td><th class="rpt-th">报告日期</th><td>' + esc(reportDate) + '</td></tr>';
+  body += '</table>';
+  // 2. 主诉与病史
+  body += '<h2 class="rpt-h2">二、主诉与病史</h2>';
+  body += '<table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th rpt-th-row">主诉</th><td>' + esc(rec.chief_complaint || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">现病史</th><td>' + esc(rec.present_illness || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">既往史</th><td>' + esc(rec.past_history || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">月经史</th><td>' + esc(rec.menstrual_history || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">婚育/家族史</th><td>' + esc(rec.family_history || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">过敏史</th><td>' + esc(rec.allergy_history || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">用药史</th><td>' + esc(rec.medication_history || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">检验结果</th><td>' + esc(rec.lab_results || '-') + '</td></tr>';
+  body += '</table>';
+  // 3. 中医四诊
+  body += '<h2 class="rpt-h2">三、中医四诊</h2>';
+  // 3.1 舌象
+  body += '<div class="rpt-card-tcm"><div class="rpt-card-title">3.1 舌象</div><table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th">舌色</th><td>' + esc(arr2str(t.tongue_color) || '-') + '</td><th class="rpt-th">舌形</th><td>' + esc(arr2str(t.tongue_shape) || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">苔色</th><td>' + esc(arr2str(t.coating_color) || '-') + '</td><th class="rpt-th">苔质</th><td>' + esc(arr2str(t.coating_texture) || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">苔分布</th><td>' + esc(arr2str(t.coating_distribution) || '-') + '</td><th class="rpt-th">舌下络脉</th><td>' + esc(arr2str(t.sublingual) || '-') + '</td></tr>';
+  if (t.notes) body += '<tr><th class="rpt-th">备注</th><td colspan="3">' + esc(t.notes) + '</td></tr>';
+  body += '</table></div>';
+  // 3.2 脉象
+  body += '<div class="rpt-card-tcm"><div class="rpt-card-title">3.2 脉象</div><table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th">脉率</th><td colspan="3">' + esc(arr2str(p_obj.pulse_rate) || '-') + (p_obj.bpm ? '（心率 ' + esc(p_obj.bpm) + ' 次/分）' : '') + '</td></tr>';
+  body += '<tr><th class="rpt-th">脉形</th><td colspan="3">' + esc(arr2str(p_obj.pulse_shape) || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">脉力脉位矩阵</th><td colspan="3">';
+  // v3.2.5 矩阵"最简十字"版式（公主 21:06 决策）：顶行 L/R + 中竖线 + 3 行数值，去掉"寸关尺"标签
+  body += '<div class="pulse-cross-mini">';
+  body += '<div class="pcm-head"><div class="pcm-hand">L</div><div class="pcm-hand">R</div></div>';
+  ['寸','关','尺'].forEach((posName, i) => {
+    const posKey = ['cun','guan','chi'][i];
+    const fv = (v) => v === '/' ? '<span class="rpt-mat-empty">/</span>' : v;
+    body += '<div class="pcm-row"><div class="pcm-val">' + fv(fmtCell('L', posKey)) + '</div><div class="pcm-val">' + fv(fmtCell('R', posKey)) + '</div></div>';
+  });
+  body += '</div></td></tr>';
+  if (p_obj.notes) body += '<tr><th class="rpt-th">备注</th><td colspan="3">' + esc(p_obj.notes) + '</td></tr>';
+  body += '</table></div>';
+  // 3.3 一般情况
+  body += '<div class="rpt-card-tcm"><div class="rpt-card-title">3.3 一般情况</div><table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th">情绪</th><td>' + esc(obj2str(rec.emotional_status) || '-') + '</td><th class="rpt-th">睡眠</th><td>' + esc(obj2str(rec.sleep_quality) || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">饮食</th><td>' + esc(obj2str(rec.dietary_habits) || '-') + '</td><th class="rpt-th">运动</th><td>' + esc(obj2str(rec.exercise_habits) || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th">工作压力</th><td colspan="3">' + esc(obj2str(rec.work_stress) || '-') + '</td></tr>';
+  body += '</table></div>';
+  // 4. 辨证论治
+  body += '<h2 class="rpt-h2 rpt-h2-tcm">四、辨证论治</h2>';
+  body += '<div class="rpt-card-tcm-strong"><table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th rpt-th-tcm">证型</th><td colspan="3"><b class="rpt-syn">' + esc(ai.syndrome || '-') + '</b></td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-tcm">病机</th><td colspan="3">' + esc(ai.pathogenesis || '-') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-tcm">治法</th><td colspan="3">' + esc(ai.treatment_principle || '-') + '</td></tr>';
+  if (ai.modification) body += '<tr><th class="rpt-th rpt-th-tcm">加减</th><td colspan="3">' + esc(ai.modification) + '</td></tr>';
+  // v3.2.4 针灸只写建议方向（公主 20:52 决策）：不暴露 AI 输出的具体穴位，跟"主方不写"同逻辑
+  body += '<tr><th class="rpt-th rpt-th-tcm">针灸</th><td colspan="3"><i>建议配合针灸调理（具体取穴遵医嘱）</i></td></tr>';
+  if (ai.lifestyle) body += '<tr><th class="rpt-th rpt-th-tcm">生活方式</th><td colspan="3">' + esc(ai.lifestyle) + '</td></tr>';
+  if (ai.prognosis) body += '<tr><th class="rpt-th rpt-th-tcm">预后</th><td colspan="3">' + esc(ai.prognosis) + '</td></tr>';
+  body += '</table></div>';
+  // 5. 复诊建议
+  body += '<h2 class="rpt-h2">五、复诊建议</h2>';
+  body += '<table class="rpt-tbl">';
+  body += '<tr><th class="rpt-th rpt-th-row">复诊时间</th><td>' + esc(ai.followup_timing || '遵医嘱') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">需复查项目</th><td>' + esc(ai.recheck_items || '基础体温监测 / B超排卵监测 / 激素六项') + '</td></tr>';
+  body += '<tr><th class="rpt-th rpt-th-row">需观察</th><td>' + esc(ai.observe || '症状、舌脉、月经量色质') + '</td></tr>';
+  body += '</table>';
+  // 6. 医生签名
+  body += '<div class="rpt-sig">';
+  body += '<div class="rpt-sig-row"><span>主治医生：</span><span class="rpt-sig-line"></span></div>';
+  body += '<div class="rpt-sig-row"><span>报告日期：</span><span>' + esc(reportDate) + '</span></div>';
+  body += '</div>';
+  // 7. 警示
+  body += '<div class="rpt-warn">⚠️ 本记录由归元AI辅助生成，仅供医疗参考。最终诊断与处方以主治医生签字为准。<br>抗衰中心助手 · 武汉市妇幼保健院 · 女性抗衰门诊</div>';
+  // 打印样式（周三仔 V3 风格：深青+暖铜+封面居中+表格+暖色卡片+脉象矩阵）
+  const css = 'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#333;max-width:760px;margin:0 auto;padding:20px 30px;line-height:1.7;font-size:13px}' +
+    '.rpt-cover{text-align:center;padding:30px 0 24px;border-bottom:3px double #1B5E7B;margin-bottom:24px}' +
+    '.rpt-cover-hosp{font-size:18px;color:#1B5E7B;font-weight:600;letter-spacing:2px}' +
+    '.rpt-cover-dept{font-size:14px;color:#D4763C;margin-top:4px;letter-spacing:1px}' +
+    '.rpt-cover-title{font-size:28px;color:#1B5E7B;font-weight:700;letter-spacing:8px;margin:20px 0 12px}' +
+    '.rpt-cover-name{font-size:22px;color:#333;font-weight:600;margin:6px 0}' +
+    '.rpt-cover-meta{font-size:12px;color:#666;margin-top:6px}' +
+    '.rpt-h2{font-size:16px;color:#1B5E7B;font-weight:700;margin:20px 0 10px;padding:6px 12px;background:linear-gradient(to right,#EAF4F8,transparent);border-left:4px solid #1B5E7B}' +
+    '.rpt-h2-tcm{color:#D4763C;background:linear-gradient(to right,#FFF3E8,transparent);border-left-color:#D4763C}' +
+    '.rpt-tbl{width:100%;border-collapse:collapse;margin-bottom:10px}' +
+    '.rpt-th{background:#1B5E7B;color:#fff;padding:7px 10px;text-align:left;font-weight:600;width:80px;font-size:12px}' +
+    '.rpt-th-row{width:90px}' +
+    '.rpt-th-tcm{background:#D4763C}' +
+    '.rpt-tbl td{padding:7px 10px;border-bottom:1px solid #e8e8e8;font-size:12px;vertical-align:top}' +
+    '.rpt-tbl tr:nth-child(even) td{background:#F8FAFC}' +
+    '.rpt-card-tcm{margin:10px 0;padding:12px 14px;background:#FFFCF7;border-left:4px solid #D4763C;border-radius:4px}' +
+    '.rpt-card-tcm-strong{margin:10px 0;padding:14px 16px;background:#FFF8F0;border:2px solid #D4763C;border-radius:6px}' +
+    '.rpt-card-title{font-size:14px;font-weight:700;color:#D4763C;margin-bottom:8px;letter-spacing:1px}' +
+    '.pulse-cross-mini{width:100%;max-width:260px;margin:6px auto;border:1.5px solid #1B5E7B;border-radius:4px;overflow:hidden;background:#fff}' +
+    '.pcm-head{display:flex;background:#1B5E7B;color:#fff}' +
+    '.pcm-hand{flex:1;padding:6px 0;text-align:center;font-weight:700;letter-spacing:3px;font-size:13px;position:relative}' +
+    '.pcm-hand:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1px;background:#fff}' +
+    '.pcm-row{display:flex;border-top:1px solid #cce0e8}' +
+    '.pcm-row:first-of-type{border-top:0}' +
+    '.pcm-val{flex:1;padding:7px 4px;text-align:center;font-family:Consolas,Monaco,monospace;font-size:13px;color:#1B5E7B;font-weight:500;position:relative}' +
+    '.pcm-val:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1px;background:#5A4D7A}' +
+    '.rpt-mat-empty{color:#bbb;font-weight:400}' +
+    '.rpt-syn{color:#D4763C;font-size:15px}' +
+    '.rpt-sig{margin-top:30px;padding-top:14px;border-top:1px solid #ccc;font-size:12px}' +
+    '.rpt-sig-row{display:flex;justify-content:flex-end;align-items:baseline;margin-bottom:8px}' +
+    '.rpt-sig-row span:first-child{color:#666;margin-right:6px}' +
+    '.rpt-sig-line{display:inline-block;width:160px;border-bottom:1px solid #333;height:18px}' +
+    '.rpt-warn{margin-top:16px;padding:10px;background:#FFF3E8;border:1px dashed #D4763C;font-size:11px;color:#666;line-height:1.7;text-align:center;border-radius:4px}' +
+    '@media print{.rpt-h2{page-break-after:avoid}.rpt-card-tcm,.rpt-card-tcm-strong{page-break-inside:avoid}body{padding:10px 20px}}';
+  // 打开新窗口
+  const w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>中医诊疗记录 - ' + esc(p.name || '') + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
   w.document.close();
-  setTimeout(()=>w.print(),500);
+  setTimeout(() => w.print(), 500);
 },
-
 // ========== 复诊 ==========
 async tcmRenderFollowup() {
   const p = this.tcmCurrentPatient;
