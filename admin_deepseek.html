@@ -17236,7 +17236,7 @@ tcmPrint() {
   body += '<tr><th class="rpt-th rpt-th-tcm">证型</th><td colspan="3"><b class="rpt-syn">' + esc(ai.syndrome || '-') + '</b></td></tr>';
   body += '<tr><th class="rpt-th rpt-th-tcm">病机</th><td colspan="3">' + esc(ai.pathogenesis || '-') + '</td></tr>';
   body += '<tr><th class="rpt-th rpt-th-tcm">治法</th><td colspan="3">' + esc(ai.treatment_principle || '-') + '</td></tr>';
-  if (ai.modification) body += '<tr><th class="rpt-th rpt-th-tcm">加减</th><td colspan="3">' + esc(ai.modification) + '</td></tr>';
+  // v3.2.6 删"加减"行（公主 21:49 决策）：参考周三仔 V3 3.2"只写治法"——主方已删（v3.2.3）+ 加减再删，辨证论治板块只留证型/病机/治法/针灸/生活方式/预后
   // v3.2.4 针灸只写建议方向（公主 20:52 决策）：不暴露 AI 输出的具体穴位，跟"主方不写"同逻辑
   body += '<tr><th class="rpt-th rpt-th-tcm">针灸</th><td colspan="3"><i>建议配合针灸调理（具体取穴遵医嘱）</i></td></tr>';
   if (ai.lifestyle) body += '<tr><th class="rpt-th rpt-th-tcm">生活方式</th><td colspan="3">' + esc(ai.lifestyle) + '</td></tr>';
@@ -17255,7 +17255,8 @@ tcmPrint() {
   body += '<div class="rpt-sig-row"><span>报告日期：</span><span>' + esc(reportDate) + '</span></div>';
   body += '</div>';
   // 7. 警示
-  body += '<div class="rpt-warn">⚠️ 本记录由归元AI辅助生成，仅供医疗参考。最终诊断与处方以主治医生签字为准。<br>抗衰中心助手 · 武汉市妇幼保健院 · 女性抗衰门诊</div>';
+  // v3.2.6 报告底部"归元AI辅助生成" → "归元辅助生成"（公主 21:49 决策：去 AI 留归元）
+  body += '<div class="rpt-warn">⚠️ 本记录由归元辅助生成，仅供医疗参考。最终诊断与处方以主治医生签字为准。<br>抗衰中心助手 · 武汉市妇幼保健院 · 女性抗衰门诊</div>';
   // 打印样式（周三仔 V3 风格：深青+暖铜+封面居中+表格+暖色卡片+脉象矩阵）
   const css = 'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#333;max-width:760px;margin:0 auto;padding:20px 30px;line-height:1.7;font-size:13px}' +
     '.rpt-cover{text-align:center;padding:30px 0 24px;border-bottom:3px double #1B5E7B;margin-bottom:24px}' +
