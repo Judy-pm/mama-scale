@@ -16765,14 +16765,14 @@ _showHistoryPreviewModal(data) {
       <h3 style="margin:0 0 12px;color:var(--color-primary);font-size:18px;">📜 历史版本预览</h3>
       <div style="font-size:12px;color:#666;margin-bottom:14px;">
         <div><strong>时间：</strong>${sourceTime}</div>
-        <div><strong>模型：</strong><code style="font-size:11px;background:#f0eef5;padding:1px 5px;border-radius:3px;">${data.model}</code></div>
+        <div><strong>模型：</strong><code style="font-size:11px;background:#f0eef5;color:#5A4D7A;padding:1px 5px;border-radius:3px;">${data.model}</code></div>
       </div>
-      <div style="background:#f8f6fa;padding:12px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7;">
-        <div><strong>🎯 证型：</strong>${syndrome}</div>
-        <div><strong>⚖️ 治法：</strong>${treat}</div>
-        <div><strong>💊 主方：</strong>${main}</div>
+      <div style="background:#f8f6fa;color:#2D2D2D;padding:12px;border-radius:8px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+        <div><strong style="color:#5A4D7A;">🎯 证型：</strong>${syndrome}</div>
+        <div><strong style="color:#5A4D7A;">⚖️ 治法：</strong>${treat}</div>
+        <div><strong style="color:#5A4D7A;">💊 主方：</strong>${main}</div>
       </div>
-      <p style="font-size:12px;color:#999;margin:0 0 16px;">应用后将覆盖当前 AI 辨证结果区。如要存为正式方案，请用 "✅ 确认方案并存档"。</p>
+      <p style="font-size:12px;color:#888;margin:0 0 16px;">应用后将覆盖当前 AI 辨证结果区。如要存为正式方案，请用 "✅ 确认方案并存档"。</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-outline btn-sm" id="tcm-modal-cancel" style="min-width:80px;">取消</button>
         <button class="btn btn-primary btn-sm" id="tcm-modal-confirm" style="min-width:120px;">✅ 应用此版本</button>
