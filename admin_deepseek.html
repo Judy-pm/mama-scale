@@ -15333,20 +15333,42 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     }
     html += '</div></div>';
 
-    // Recent reports
-    if(reports.length > 0) {
-      html += '<div class="ck-card"><div class="ck-title">📋 最新体检报告</div>';
-      reports.slice(0, 10).forEach(r => {
+    // 🆕 v3.2.15：体检记录（含搜索 + 风险筛选 + 解读状态 + 查看按钮）
+    // 合并 checkup_reports（新表） + health_checkups（旧表）
+    const allRecords = [];
+    reports.forEach(r => allRecords.push({_src:'new', id:r.id, name:r.person_name, phone:r.person_phone, date:r.report_date, pkg:r.package_name, risk:r.risk_level, hasInterp:!!r.ai_conclusion, conclusion:r.ai_conclusion, created_at:r.created_at}));
+    legacyRecs.forEach(r => allRecords.push({_src:'legacy', id:r.id, name:r.patient_name, phone:r.patient_phone, date:r.checkup_date, pkg:r.package_name, risk:r.interpretation?(r.interpretation.overall_score>=70?'green':r.interpretation.overall_score>=50?'yellow':r.interpretation.overall_score>=30?'orange':'red'):null, hasInterp:!!(r.interpretation||r.report_generated), conclusion:r.interpretation?((r.interpretation.recommendations||[]).map(x=>x.title).join('；')):'', created_at:r.created_at}));
+    // 按 created_at 倒序
+    allRecords.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+    if(allRecords.length > 0) {
+      html += '<div class="ck-card">';
+      html += '<div class="ck-title" onclick="AdminApp.ckTogCard(this)" style="cursor:pointer">📋 体检记录（含搜索）<span class="arrow">▼</span></div>';
+      html += '<div class="ck-body">';
+      // 搜索 + 风险筛选
+      html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">';
+      html += '<input id="ck_dashKw" class="form-input" placeholder="🔍 搜索姓名或手机号" style="flex:1;min-width:160px" oninput="AdminApp.ckDashFilter()">';
+      html += '<select id="ck_dashRisk" class="form-input" style="width:auto" onchange="AdminApp.ckDashFilter()"><option value="">全部风险</option><option value="red">🔴 高危</option><option value="orange">🟠 中高</option><option value="yellow">🟡 关注</option><option value="green">🟢 正常</option></select>';
+      html += '<select id="ck_dashInterp" class="form-input" style="width:auto" onchange="AdminApp.ckDashFilter()"><option value="">全部状态</option><option value="yes">✓ 已解读</option><option value="no">⚪ 未解读</option></select>';
+      html += '</div>';
+      // 列表容器（id 用于前端筛选）
+      html += '<div id="ck_dashList">';
+      allRecords.slice(0, 50).forEach(r => {
         const rlColors = {red:'#E74C3C',orange:'#E67E22',yellow:'#F39C12',green:'#27AE60'};
-        const rlLabels = {red:'高危',orange:'中高',yellow:'关注',green:'正常'};
-        const c = rlColors[r.risk_level]||'#999';
-        const l = rlLabels[r.risk_level]||'未知';
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-border);">`;
-        html += `<div><strong>${r.person_name||'未知'}</strong> <span style="color:var(--color-gray);font-size:12px;">${r.report_date||''} ${r.package_name||''}</span></div>`;
-        html += `<span style="background:${c}20;color:${c};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;">${l}</span>`;
+        const rlLabels = {red:'🔴 高危',orange:'🟠 中高',yellow:'🟡 关注',green:'🟢 正常'};
+        const c = rlColors[r.risk]||'#999';
+        const l = rlLabels[r.risk]||'⚪ 未解读';
+        const interpBadge = r.hasInterp ? '<span style="background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;margin-left:4px">✓ 已解读</span>' : '<span style="background:#F3F4F6;color:#6B7280;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;margin-left:4px">⚪ 未解读</span>';
+        html += `<div class="ck-dash-item" data-kw="${(r.name||'').toLowerCase()} ${(r.phone||'')}" data-risk="${r.risk||''}" data-interp="${r.hasInterp?'yes':'no'}" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--color-border);gap:8px;flex-wrap:wrap">`;
+        html += `<div style="flex:1;min-width:0"><div><strong>${r.name||'未知'}</strong>${interpBadge}<span style="color:var(--color-gray);font-size:12px;margin-left:6px">${r.date||''}</span></div><div style="color:var(--color-gray);font-size:12px;margin-top:2px">${r.pkg||'未填套餐'}${r.phone?' · '+r.phone:''}</div></div>`;
+        html += `<span style="background:${c}20;color:${c};padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap">${l}</span>`;
+        if(r.hasInterp) html += `<button class="btn btn-outline btn-sm" onclick="AdminApp.ckViewRpt('${r.id}')" style="white-space:nowrap">📄 查看报告</button>`;
+        else html += `<button class="btn btn-outline btn-sm" disabled style="opacity:.5;white-space:nowrap" title="该记录未解读">📄 待解读</button>`;
         html += `</div>`;
       });
       html += '</div>';
+      if(allRecords.length > 50) html += `<div style="text-align:center;padding:8px;color:var(--color-gray);font-size:12px">仅显示最近 50 条，共 ${allRecords.length} 条</div>`;
+      html += '</div></div>';
     }
 
     if(total === 0) {
@@ -15354,6 +15376,22 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     }
 
     el.innerHTML = html;
+  },
+
+  // 🆕 v3.2.15：dashboard 列表前端筛选
+  ckDashFilter() {
+    const kw = (document.getElementById('ck_dashKw')?.value||'').trim().toLowerCase();
+    const risk = document.getElementById('ck_dashRisk')?.value||'';
+    const interp = document.getElementById('ck_dashInterp')?.value||'';
+    document.querySelectorAll('.ck-dash-item').forEach(el => {
+      const itemKw = el.getAttribute('data-kw')||'';
+      const itemRisk = el.getAttribute('data-risk')||'';
+      const itemInterp = el.getAttribute('data-interp')||'';
+      const matchKw = !kw || itemKw.includes(kw);
+      const matchRisk = !risk || itemRisk === risk;
+      const matchInterp = !interp || itemInterp === interp;
+      el.style.display = (matchKw && matchRisk && matchInterp) ? 'flex' : 'none';
+    });
   },
 
   // ===== 报告查询 =====
@@ -15544,21 +15582,40 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     const nm=document.getElementById('ck_name').value.trim(),ph=document.getElementById('ck_phone').value.trim(),ag=parseInt(document.getElementById('ck_age').value),gd=document.getElementById('ck_gender').value,pk=document.getElementById('ck_package').value.trim(),dt=document.getElementById('ck_date').value;
     if(!nm){alert('请输入患者姓名');return}if(!ag){alert('请输入年龄');return}if(!dt){alert('请选择体检日期');return}
     const ind={};this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el)ind[f.k]=el.value})});
-    const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
+    const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存并解读中...';
     try{
+      // 🆕 v3.2.15：保存前先自动生成解读（按钮文字已承诺"生成解读"）
+      const ip=this.ckInterpRec({indicators:ind,patient_gender:gd,patient_age:ag});
+      const riskLevel=ip?(ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red'):'green';
       // 1. 保存到 checkup_reports
-      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green',positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
-      const ip=this.ckInterpRec({indicators:ind,patient_gender:gd});
-      if(ip){reportData.dimension_scores=ip.dim_scores;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):'';reportData.ai_recommendation=ip.recommendations?ip.recommendations.map(r=>r.suggest).join('\n'):''}
-      await CloudBaseManager.sb.from('checkup_reports').insert(reportData);
+      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:riskLevel,positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
+      if(ip){reportData.dimension_scores=ip.dim_scores;reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):'';reportData.ai_recommendation=ip.recommendations?ip.recommendations.map(r=>r.suggest).join('\n'):''}
+      const {data:insertedReport}=await CloudBaseManager.sb.from('checkup_reports').insert(reportData).select();
       // 2. 创建/更新 checkup_persons
       let personId=null;
-      if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level}).eq('id',personId)}}
-      if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
-      // 3. 兼容旧表 health_checkups
-      const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false,positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
-      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
-      alert('✅ 保存成功！风险等级：'+reportData.risk_level);this.ckReset();this.ckEditId=null;
+      if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,checkup_date:dt,risk_level:riskLevel}).eq('id',personId)}}
+      if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,checkup_date:dt,risk_level:riskLevel,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
+      // 3. 兼容旧表 health_checkups（存解读结果，双表同步）
+      const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:ip,report_generated:!!ip,positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
+      let savedLegacyId=this.ckEditId;
+      if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{const{data:insLegacy}=await CloudBaseManager.sb.from('health_checkups').insert(legacyData).select();if(insLegacy&&insLegacy[0])savedLegacyId=insLegacy[0].id}
+      // 4. 提示并直接弹解读报告
+      const tipRank={red:'🔴 高危',orange:'🟠 中高',yellow:'🟡 关注',green:'🟢 正常'}[riskLevel];
+      const tipScore=ip?Math.round(ip.overall_score):'--';
+      if(confirm('✅ 已保存并自动生成解读！\n\n姓名：'+nm+'\n综合评分：'+tipScore+' · '+tipRank+'\n\n是否立即查看完整解读报告？')){
+        this.ckReset();
+        // 跳到汇总看板，方便查看刚保存的记录
+        const dashTab=document.querySelector('[onclick*="ck-dashboard"]');
+        if(dashTab) this.ckSwitchTab('ck-dashboard',dashTab);
+        // 弹解读报告
+        const recId=savedLegacyId||(insertedReport&&insertedReport[0]?insertedReport[0].id:null);
+        if(recId&&ip){this.ckRenderRpt({patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:ip,positive_findings:this.ckPositiveFindings||[],supplementary_text:this.ckSupplementaryText||'',id:recId});document.getElementById('ck-reportModal').classList.add('show')}
+      }else{
+        this.ckReset();
+        const dashTab=document.querySelector('[onclick*="ck-dashboard"]');
+        if(dashTab) this.ckSwitchTab('ck-dashboard',dashTab);
+      }
+      this.ckEditId=null;
     }catch(e){console.error('[ckSave] error:',e);alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存并生成解读'}
   },
 
@@ -15886,7 +15943,22 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
   },
 
   async ckViewRpt(id){
-    try{const{data:rec,error}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).single();if(error)throw error;if(!rec.interpretation){alert('尚未解读');return}this.ckRenderRpt(rec);document.getElementById('ck-reportModal').classList.add('show')}catch(e){alert('加载失败')}
+    try{
+      // 🆕 v3.2.15：先查 health_checkups（旧表），没查到再查 checkup_reports（新表）
+      let rec=null;
+      const {data:legacy}=await CloudBaseManager.sb.from('health_checkups').select('*').eq('id',id).maybeSingle();
+      if(legacy){rec=legacy}else{
+        const {data:newRec,error}=await CloudBaseManager.sb.from('checkup_reports').select('*').eq('id',id).maybeSingle();
+        if(newRec){
+          // 字段映射：checkup_reports → health_checkups 字段
+          rec={patient_name:newRec.person_name,patient_phone:newRec.person_phone,patient_age:newRec.person_age,patient_gender:newRec.patient_gender,package_name:newRec.package_name,checkup_date:newRec.report_date,indicators:newRec.ai_extracted,interpretation:newRec.interpretation||null,report_generated:!!newRec.interpretation,positive_findings:newRec.positive_findings,supplementary_text:newRec.supplementary_text,id:newRec.id}
+        }
+      }
+      if(!rec){alert('未找到该记录');return}
+      if(!rec.interpretation){alert('尚未解读（请先在 ckSave 或报告解读处生成）');return}
+      this.ckRenderRpt(rec);
+      document.getElementById('ck-reportModal').classList.add('show')
+    }catch(e){console.error('[ckViewRpt] error:',e);alert('加载失败: '+(e.message||'未知错误'))}
   },
 
   ckRenderRpt(rec){
