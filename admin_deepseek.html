@@ -17643,7 +17643,10 @@ tcmPrint() {
   body += '<tr><th class="rpt-th">苔色</th><td>' + esc(arr2str(t.coating_color) || '-') + '</td><th class="rpt-th">苔质</th><td>' + esc(arr2str(t.coating_texture) || '-') + '</td></tr>';
   body += '<tr><th class="rpt-th">苔分布</th><td>' + esc(arr2str(t.coating_distribution) || '-') + '</td><th class="rpt-th">舌下络脉</th><td>' + esc(arr2str(t.sublingual) || '-') + '</td></tr>';
   if (t.notes) body += '<tr><th class="rpt-th">备注</th><td colspan="3">' + esc(t.notes) + '</td></tr>';
-  body += '</table></div>';
+  body += '</table>';
+  // 🆕 v3.2.16 舌象固定 disclaimer（公主 07:55 决策：舌象受多因素影响，是常见生理表现）
+  body += '<div class="rpt-note-soft">💡 <b>温馨提示：</b>舌象受饮食、情绪、作息、就诊时间等多因素影响，其变化为身体生理常见表现，不必恐慌。</div>';
+  body += '</div>';
   // 3.2 脉象
   body += '<div class="rpt-card-tcm"><div class="rpt-card-title">3.2 脉象</div><table class="rpt-tbl">';
   body += '<tr><th class="rpt-th">脉率</th><td colspan="3">' + esc(arr2str(p_obj.pulse_rate) || '-') + (p_obj.bpm ? '（心率 ' + esc(p_obj.bpm) + ' 次/分）' : '') + '</td></tr>';
@@ -17659,7 +17662,10 @@ tcmPrint() {
   });
   body += '</div></td></tr>';
   if (p_obj.notes) body += '<tr><th class="rpt-th">备注</th><td colspan="3">' + esc(p_obj.notes) + '</td></tr>';
-  body += '</table></div>';
+  body += '</table>';
+  // 🆕 v3.2.16 脉象固定 disclaimer（公主 07:55 决策：脉象受多因素影响，是常见生理表现）
+  body += '<div class="rpt-note-soft">💡 <b>温馨提示：</b>脉象受情绪、运动、就诊体位等多因素影响，其变化为身体生理常见表现，不必恐慌。</div>';
+  body += '</div>';
   // 3.3 一般情况
   body += '<div class="rpt-card-tcm"><div class="rpt-card-title">3.3 一般情况</div><table class="rpt-tbl">';
   body += '<tr><th class="rpt-th">情绪</th><td>' + esc(obj2str(rec.emotional_status) || '-') + '</td><th class="rpt-th">睡眠</th><td>' + esc(obj2str(rec.sleep_quality) || '-') + '</td></tr>';
@@ -17741,11 +17747,47 @@ tcmPrint() {
     '.rpt-sig-line::after{content:"✦";position:absolute;right:-8px;bottom:-6px;color:#F0A684;font-size:10px}' +
     '.rpt-warn{margin:0 32px 20px;padding:10px;background:linear-gradient(135deg,#F2F9FE 0%,#FFF8F0 100%);border:1px solid #CCE3F2;border-left:3px solid #F0A684;font-size:11px;color:#6B5B3C;line-height:1.7;text-align:center;border-radius:0 6px 6px 0}' +
     '@media print{body{background:#fff;padding:0}.report-page{box-shadow:none;border-radius:0}.rpt-h2{page-break-after:avoid}.rpt-card-tcm,.rpt-card-tcm-strong{page-break-inside:avoid}.rpt-section{page-break-inside:avoid}}';
-  // 打开新窗口
+    // 打开新窗口（v3.2.16 改：可编辑预览 + 顶部工具栏，不再强制自动 print）
   const w = window.open('', '_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>中医诊疗记录 - ' + esc(p.name || '') + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
+  // 🆕 v3.2.16 工具栏 + 可编辑预览（公主 07:55 决策：模板可编辑，不直接弹打印）
+  //   - 顶部固定工具栏：可编辑提示 + 🖨️ 打印此页 + ❌ 关闭（contenteditable=false）
+  //   - 报告主体 .report-page 设 contenteditable=true，公主可直接点文字改
+  //   - @media print 时工具栏 display:none，打印纯净
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>中医诊疗记录 - ' + esc(p.name || '') + '</title><style>' + css +
+    // 🆕 v3.2.16 工具栏 + 可编辑样式
+    '.rpt-toolbar{position:sticky;top:0;z-index:999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;margin:-30px -20px 18px;background:linear-gradient(135deg,#F2F9FE 0%,#FFF8F0 100%);border-bottom:2px solid #7EBEE8;box-shadow:0 2px 10px rgba(60,120,170,.12);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}' +
+    '.rpt-toolbar-info{font-size:13px;color:#2A4A6E;letter-spacing:.5px;display:flex;align-items:center;gap:6px}' +
+    '.rpt-toolbar-info::before{content:"✏️";font-size:16px}' +
+    '.rpt-toolbar-actions{display:flex;gap:10px}' +
+    '.rpt-toolbar-btn{border:0;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:5px}' +
+    '.rpt-toolbar-btn-print{background:linear-gradient(135deg,#7EBEE8 0%,#5AA5D5 100%);color:#FFFFFF;box-shadow:0 2px 6px rgba(126,190,232,.35)}' +
+    '.rpt-toolbar-btn-print:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(126,190,232,.5)}' +
+    '.rpt-toolbar-btn-close{background:#FFFFFF;color:#5A7790;border:1.5px solid #B8D8EE}' +
+    '.rpt-toolbar-btn-close:hover{background:#F2F9FE;color:#3A8AC0}' +
+    // 🆕 v3.2.16 备注样式（舌象/脉象温馨提示）
+    '.rpt-note-soft{margin:10px 0 0;padding:9px 14px;background:linear-gradient(135deg,#F2F9FE 0%,#FFFAF5 100%);border:1px dashed #B8D8EE;border-left:3px solid #7EBEE8;border-radius:0 6px 6px 0;font-size:11.5px;color:#6B829E;line-height:1.75;letter-spacing:.3px}' +
+    '.rpt-note-soft b{color:#3A8AC0;font-weight:600}' +
+    // 🆕 v3.2.16 打印时隐藏工具栏
+    '@media print{.rpt-toolbar{display:none!important}.report-page{box-shadow:none!important;border-radius:0!important}}' +
+    '</style></head><body>' +
+    // 工具栏
+    '<div class="rpt-toolbar" contenteditable="false">' +
+      '<div class="rpt-toolbar-info">模板可编辑——直接点击文字修改，打印前再点"打印此页"</div>' +
+      '<div class="rpt-toolbar-actions">' +
+        '<button class="rpt-toolbar-btn rpt-toolbar-btn-print" onclick="window.print()">🖨️ 打印此页</button>' +
+        '<button class="rpt-toolbar-btn rpt-toolbar-btn-close" onclick="window.close()">❌ 关闭</button>' +
+      '</div>' +
+    '</div>' +
+    // 报告主体（contenteditable=true 可编辑）
+    body +
+    '</body></html>');
   w.document.close();
-  setTimeout(() => w.print(), 500);
+  // 🆕 v3.2.16 给报告主体设 contenteditable=true（让公主直接点文字改）
+  try {
+    const pageEl = w.document.querySelector('.report-page');
+    if (pageEl) pageEl.contentEditable = 'true';
+  } catch(e) { console.warn('contenteditable 设置失败：', e); }
+  // 🆕 v3.2.16 不再自动 print()，让公主先在预览里调整（点"打印此页"才真正打印）
 },
 // ========== 复诊 ==========
 async tcmRenderFollowup() {
