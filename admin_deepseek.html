@@ -17169,8 +17169,8 @@ tcmPrint() {
   }));
   const visitDate = (rec.created_at || '').slice(0,10);
   const reportDate = new Date().toISOString().slice(0,10);
-  // 主体
-  let body = '';
+  // 主体（v3.2.7 加 .report-page 包裹，应用天蓝版卡片化效果）
+  let body = '<div class="report-page">';
   // 封面
   body += '<div class="rpt-cover">';
   body += '<div class="rpt-cover-hosp">武汉市妇幼保健院</div>';
@@ -17255,43 +17255,56 @@ tcmPrint() {
   body += '<div class="rpt-sig-row"><span>报告日期：</span><span>' + esc(reportDate) + '</span></div>';
   body += '</div>';
   // 7. 警示
-  // v3.2.6 报告底部"归元AI辅助生成" → "归元辅助生成"（公主 21:49 决策：去 AI 留归元）
-  body += '<div class="rpt-warn">⚠️ 本记录由归元辅助生成，仅供医疗参考。最终诊断与处方以主治医生签字为准。<br>抗衰中心助手 · 武汉市妇幼保健院 · 女性抗衰门诊</div>';
-  // 打印样式（周三仔 V3 风格：深青+暖铜+封面居中+表格+暖色卡片+脉象矩阵）
-  const css = 'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#333;max-width:760px;margin:0 auto;padding:20px 30px;line-height:1.7;font-size:13px}' +
-    '.rpt-cover{text-align:center;padding:30px 0 24px;border-bottom:3px double #1B5E7B;margin-bottom:24px}' +
-    '.rpt-cover-hosp{font-size:18px;color:#1B5E7B;font-weight:600;letter-spacing:2px}' +
-    '.rpt-cover-dept{font-size:14px;color:#D4763C;margin-top:4px;letter-spacing:1px}' +
-    '.rpt-cover-title{font-size:28px;color:#1B5E7B;font-weight:700;letter-spacing:8px;margin:20px 0 12px}' +
-    '.rpt-cover-name{font-size:22px;color:#333;font-weight:600;margin:6px 0}' +
-    '.rpt-cover-meta{font-size:12px;color:#666;margin-top:6px}' +
-    '.rpt-h2{font-size:16px;color:#1B5E7B;font-weight:700;margin:20px 0 10px;padding:6px 12px;background:linear-gradient(to right,#EAF4F8,transparent);border-left:4px solid #1B5E7B}' +
-    '.rpt-h2-tcm{color:#D4763C;background:linear-gradient(to right,#FFF3E8,transparent);border-left-color:#D4763C}' +
-    '.rpt-tbl{width:100%;border-collapse:collapse;margin-bottom:10px}' +
-    '.rpt-th{background:#1B5E7B;color:#fff;padding:7px 10px;text-align:left;font-weight:600;width:80px;font-size:12px}' +
+  // v3.2.7 报告底部"归元辅助生成" → "系统辅助生成"（公主 06-11 11:06 决策：去归元品牌字）
+  body += '<div class="rpt-warn">⚠️ 本记录由系统辅助生成，仅供医疗参考。最终诊断与处方以主治医生签字为准。<br>抗衰中心助手 · 武汉市妇幼保健院 · 女性抗衰门诊</div>';
+  body += '</div>'; // 关闭 .report-page 包裹（v3.2.7）
+  // 打印样式（v3.2.7 天蓝版：浅天蓝主色 + 暖桃点缀 + 卡片化 + 印章）
+  const css = 'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#cfe4f5 0%,#f7e8d4 100%);color:#2A4A6E;max-width:780px;margin:0 auto;padding:30px 20px;line-height:1.7;font-size:13px}' +
+    '.report-page{background:#FFFFFF;padding:0;border-radius:14px;overflow:hidden;box-shadow:0 12px 48px rgba(60,120,170,.18)}' +
+    '.rpt-cover{text-align:center;padding:48px 30px 36px;border-bottom:3px double #7EBEE8;background:linear-gradient(135deg,#F2F9FE 0%,#E8F3FB 60%,#DDEEF9 100%);position:relative}' +
+    '.rpt-cover::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#7EBEE8 0%,#A4D4F0 50%,#F0A684 100%)}' +
+    '.rpt-cover::after{content:"抗衰";position:absolute;top:30px;right:36px;width:42px;height:42px;background:radial-gradient(circle,#F0A684 0%,#D88560 100%);color:#FFFFFF;font-size:11px;font-weight:700;letter-spacing:2px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(216,133,96,.4);font-family:"STKaiti","KaiTi",serif}' +
+    '.rpt-cover-hosp{font-size:18px;color:#3A8AC0;font-weight:600;letter-spacing:2px}' +
+    '.rpt-cover-dept{font-size:14px;color:#D88560;margin-top:6px;letter-spacing:2px;font-weight:500}' +
+    '.rpt-cover-title{font-size:30px;color:#3A8AC0;font-weight:700;letter-spacing:10px;margin:20px 0 12px;text-shadow:0 1px 0 rgba(255,255,255,.6)}' +
+    '.rpt-cover-name{font-size:22px;color:#2A4A6E;font-weight:600;margin:6px 0}' +
+    '.rpt-cover-meta{margin-top:14px;font-size:12.5px;color:#5A7790;letter-spacing:1.5px;padding:8px 24px;display:inline-block;background:rgba(255,255,255,.65);border-radius:20px;border:1px solid #CCE3F2}' +
+    '.rpt-h2{font-size:18px;color:#3A8AC0;font-weight:700;margin:24px 0 12px;padding:8px 0 10px 16px;background:transparent;position:relative;border-bottom:1.5px dashed #B8D8EE}' +
+    '.rpt-h2::before{content:"";position:absolute;left:0;top:6px;bottom:14px;width:5px;background:linear-gradient(180deg,#7EBEE8 0%,#F0A684 100%);border-radius:3px;box-shadow:0 1px 3px rgba(126,190,232,.4)}' +
+    '.rpt-h2::after{content:"";position:absolute;left:0;bottom:-1.5px;width:60px;height:1.5px;background:#F0A684}' +
+    '.rpt-h2-tcm{color:#D88560;border-bottom-color:#EBDDD0}' +
+    '.rpt-h2-tcm::before{background:linear-gradient(180deg,#7EBEE8 0%,#F0A684 100%)}' +
+    '.rpt-section{padding:22px 32px 18px;background:#FFFFFF}' +
+    '.rpt-section:nth-child(even){background:#F5FAFE}' +
+    '.rpt-tbl{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:10px;background:#FFFFFF;border-radius:8px;overflow:hidden;box-shadow:0 1px 8px rgba(60,120,170,.07)}' +
+    '.rpt-th{background:linear-gradient(180deg,#7EBEE8 0%,#5AA5D5 100%);color:#FFFFFF;padding:11px 14px;text-align:left;font-weight:600;width:88px;font-size:12.5px;letter-spacing:1.5px;text-shadow:0 1px 1px rgba(40,80,130,.18)}' +
     '.rpt-th-row{width:90px}' +
-    '.rpt-th-tcm{background:#D4763C}' +
-    '.rpt-tbl td{padding:7px 10px;border-bottom:1px solid #e8e8e8;font-size:12px;vertical-align:top}' +
-    '.rpt-tbl tr:nth-child(even) td{background:#F8FAFC}' +
-    '.rpt-card-tcm{margin:10px 0;padding:12px 14px;background:#FFFCF7;border-left:4px solid #D4763C;border-radius:4px}' +
-    '.rpt-card-tcm-strong{margin:10px 0;padding:14px 16px;background:#FFF8F0;border:2px solid #D4763C;border-radius:6px}' +
-    '.rpt-card-title{font-size:14px;font-weight:700;color:#D4763C;margin-bottom:8px;letter-spacing:1px}' +
-    '.pulse-cross-mini{width:100%;max-width:260px;margin:6px auto;border:1.5px solid #1B5E7B;border-radius:4px;overflow:hidden;background:#fff}' +
-    '.pcm-head{display:flex;background:#1B5E7B;color:#fff}' +
-    '.pcm-hand{flex:1;padding:6px 0;text-align:center;font-weight:700;letter-spacing:3px;font-size:13px;position:relative}' +
-    '.pcm-hand:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1px;background:#fff}' +
-    '.pcm-row{display:flex;border-top:1px solid #cce0e8}' +
+    '.rpt-th-tcm{background:linear-gradient(180deg,#F0A684 0%,#D88560 100%);color:#FFFFFF}' +
+    '.rpt-tbl td{padding:9px 14px;border-bottom:1px solid #EDF2F7;font-size:12.5px;vertical-align:top;color:#2A4A6E;line-height:1.6}' +
+    '.rpt-tbl tr:last-child td{border-bottom:0}' +
+    '.rpt-tbl tr:nth-child(even) td{background:#F5FAFE}' +
+    '.rpt-card-tcm{margin:10px 0;padding:14px 16px;background:linear-gradient(135deg,#FFFCF8 0%,#FFF6EE 100%);border:1px solid #EBDDD0;border-left:4px solid #F0A684;border-radius:0 8px 8px 0;box-shadow:0 2px 6px rgba(216,133,96,.07)}' +
+    '.rpt-card-tcm-strong{margin:12px 0;padding:16px 18px;background:linear-gradient(135deg,#FFF8F0 0%,#F5E8DC 100%);border:1px solid #F0A684;border-radius:8px;box-shadow:0 3px 12px rgba(216,133,96,.14);position:relative}' +
+    '.rpt-card-tcm-strong::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7EBEE8 0%,#F0A684 50%,#7EBEE8 100%);border-radius:8px 8px 0 0}' +
+    '.rpt-card-title{font-size:13.5px;font-weight:700;color:#D88560;margin-bottom:8px;letter-spacing:2px;display:flex;align-items:center;gap:6px}' +
+    '.rpt-card-title::before{content:"❋";color:#7EBEE8;font-size:14px}' +
+    '.pulse-cross-mini{width:100%;max-width:260px;margin:6px auto;border:2px solid #7EBEE8;border-radius:8px;overflow:hidden;background:#FFFFFF;box-shadow:0 3px 12px rgba(126,190,232,.2)}' +
+    '.pcm-head{display:flex;background:linear-gradient(180deg,#DDEEF9 0%,#C5E0F2 100%);border-bottom:2px solid #7EBEE8}' +
+    '.pcm-hand{flex:1;padding:7px 0;text-align:center;font-weight:700;letter-spacing:4px;font-size:13px;color:#3A8AC0;position:relative;text-shadow:0 1px 0 rgba(255,255,255,.5)}' +
+    '.pcm-hand:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1.5px;background:#7EBEE8}' +
+    '.pcm-row{display:flex;border-top:1px solid #E0EAF3}' +
     '.pcm-row:first-of-type{border-top:0}' +
-    '.pcm-val{flex:1;padding:7px 4px;text-align:center;font-family:Consolas,Monaco,monospace;font-size:13px;color:#1B5E7B;font-weight:500;position:relative}' +
-    '.pcm-val:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1px;background:#5A4D7A}' +
-    '.rpt-mat-empty{color:#bbb;font-weight:400}' +
-    '.rpt-syn{color:#D4763C;font-size:15px}' +
-    '.rpt-sig{margin-top:30px;padding-top:14px;border-top:1px solid #ccc;font-size:12px}' +
-    '.rpt-sig-row{display:flex;justify-content:flex-end;align-items:baseline;margin-bottom:8px}' +
-    '.rpt-sig-row span:first-child{color:#666;margin-right:6px}' +
-    '.rpt-sig-line{display:inline-block;width:160px;border-bottom:1px solid #333;height:18px}' +
-    '.rpt-warn{margin-top:16px;padding:10px;background:#FFF3E8;border:1px dashed #D4763C;font-size:11px;color:#666;line-height:1.7;text-align:center;border-radius:4px}' +
-    '@media print{.rpt-h2{page-break-after:avoid}.rpt-card-tcm,.rpt-card-tcm-strong{page-break-inside:avoid}body{padding:10px 20px}}';
+    '.pcm-val{flex:1;padding:7px 4px;text-align:center;font-family:Consolas,Monaco,monospace;font-size:12.5px;color:#3A8AC0;font-weight:600;position:relative}' +
+    '.pcm-val:first-child::after{content:"";position:absolute;right:0;top:18%;height:64%;width:1px;background:#E0EAF3}' +
+    '.rpt-mat-empty{color:#C5C0B0;font-weight:400}' +
+    '.rpt-syn{color:#D88560;font-size:16px;font-weight:700;letter-spacing:1px}' +
+    '.rpt-sig{margin-top:0;padding:20px 32px 28px;font-size:12.5px;color:#2A4A6E;background:linear-gradient(135deg,#F2F9FE 0%,#FFF8F0 100%);border-top:2px dashed #B8DAF0}' +
+    '.rpt-sig-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}' +
+    '.rpt-sig-row span:first-child{color:#5A7790;margin-right:6px}' +
+    '.rpt-sig-line{display:inline-block;width:180px;border-bottom:1.5px solid #7EBEE8;height:22px;position:relative}' +
+    '.rpt-sig-line::after{content:"✦";position:absolute;right:-8px;bottom:-6px;color:#F0A684;font-size:10px}' +
+    '.rpt-warn{margin:0 32px 20px;padding:10px;background:linear-gradient(135deg,#F2F9FE 0%,#FFF8F0 100%);border:1px solid #CCE3F2;border-left:3px solid #F0A684;font-size:11px;color:#6B5B3C;line-height:1.7;text-align:center;border-radius:0 6px 6px 0}' +
+    '@media print{body{background:#fff;padding:0}.report-page{box-shadow:none;border-radius:0}.rpt-h2{page-break-after:avoid}.rpt-card-tcm,.rpt-card-tcm-strong{page-break-inside:avoid}.rpt-section{page-break-inside:avoid}}';
   // 打开新窗口
   const w = window.open('', '_blank');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>中医诊疗记录 - ' + esc(p.name || '') + '</title><style>' + css + '</style></head><body>' + body + '</body></html>');
