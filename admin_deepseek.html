@@ -15226,7 +15226,9 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     content += '<span id="ck_aiStatus" style="line-height:38px;font-size:13px;color:var(--color-gray)"></span>';
     content += '</div>';
     content += '</div>';
+    content += '<div id="ck_positiveFindings"></div>';
     content += '<div id="ck_indicatorCards"></div>';
+    content += '<div id="ck_supplementaryReport"></div>';
     content += '<button class="btn btn-primary btn-lg btn-block" id="ck_saveBtn" onclick="AdminApp.ckSave()" style="margin-top:8px">💾 保存并生成解读</button>';
     content += '<button class="btn btn-outline btn-block" onclick="AdminApp.ckReset()" style="margin-top:8px">🔄 重置表单</button>';
     content += '</div>';
@@ -15543,7 +15545,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
     try{
       // 1. 保存到 checkup_reports
-      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green',positive_findings:this.ckPositiveFindings||[]};
+      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green',positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
       const ip=this.ckInterpRec({indicators:ind,patient_gender:gd});
       if(ip){reportData.dimension_scores=ip.dim_scores;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):'';reportData.ai_recommendation=ip.recommendations?ip.recommendations.map(r=>r.suggest).join('\n'):''}
       await CloudBaseManager.sb.from('checkup_reports').insert(reportData);
@@ -15552,7 +15554,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       if(ph){const{data:existing}=await CloudBaseManager.sb.from('checkup_persons').select('id').eq('phone',ph).maybeSingle();if(existing){personId=existing.id;await CloudBaseManager.sb.from('checkup_persons').update({name:nm,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level}).eq('id',personId)}}
       if(!personId){const{data:newP}=await CloudBaseManager.sb.from('checkup_persons').insert({name:nm,phone:ph,age:ag,gender:gd,checkup_date:dt,risk_level:reportData.risk_level,conversion_status:'none'}).select();if(newP&&newP[0])personId=newP[0].id}
       // 3. 兼容旧表 health_checkups
-      const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false};
+      const legacyData={patient_name:nm,patient_phone:ph,patient_age:ag,patient_gender:gd,package_name:pk,checkup_date:dt,indicators:ind,interpretation:null,report_generated:false,positive_findings:this.ckPositiveFindings||[],report_type:this.ckReportType||'scattered',supplementary_text:this.ckSupplementaryText||''};
       if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
       alert('✅ 保存成功！风险等级：'+reportData.risk_level);this.ckReset();this.ckEditId=null;
     }catch(e){console.error('[ckSave] error:',e);alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存并生成解读'}
@@ -15586,6 +15588,72 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     });
     h += '</div>';
     container.innerHTML = h;
+  },
+
+  // 🆕 v3.2.12：渲染"补充报告"卡片（仅 scattered 类型显示）
+  ckRenderSupplementary() {
+    const container = document.getElementById('ck_supplementaryReport');
+    if (!container) return;
+    const isScattered = this.ckReportType === 'scattered';
+    const text = this.ckSupplementaryText || '';
+    if (!isScattered || !text.trim()) {
+      container.innerHTML = '';
+      return;
+    }
+    let h = '<div class="ck-card" style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:2px solid #8B5CF6;margin-bottom:12px;">';
+    h += '<div class="ck-title" style="color:#6D28D9;">📝 补充报告（' + text.length + ' 字）</div>';
+    h += '<div style="font-size:11px;color:#6D28D9;margin-bottom:8px;">📌 本报告为【零散报告】无医生"结论"段，以下为 AI 从散装数据中提取、无法归入结构化字段的发现</div>';
+    h += '<div id="ck_suppView" style="background:#FFFFFF;border:1px solid #DDD6FE;border-radius:6px;padding:12px;font-size:13px;color:#4C1D95;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto;">' + this.ckEscape(text) + '</div>';
+    h += '<div id="ck_suppEdit" style="display:none"><textarea class="form-input" rows="8" style="margin-top:8px;font-size:13px;">' + this.ckEscape(text) + '</textarea></div>';
+    h += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">';
+    h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.ckEditSupp()">✏️ 编辑</button>';
+    h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.ckSaveSuppEdit()">💾 保存修改</button>';
+    h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.ckGenSupp()">🔄 重新生成</button>';
+    h += '</div>';
+    h += '</div>';
+    container.innerHTML = h;
+  },
+
+  ckEscape(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  ckEditSupp() {
+    const view = document.getElementById('ck_suppView');
+    const edit = document.getElementById('ck_suppEdit');
+    if (view) view.style.display = 'none';
+    if (edit) edit.style.display = 'block';
+  },
+
+  ckSaveSuppEdit() {
+    const edit = document.getElementById('ck_suppEdit');
+    if (!edit) return;
+    const ta = edit.querySelector('textarea');
+    if (!ta) return;
+    this.ckSupplementaryText = ta.value;
+    this.ckRenderSupplementary();
+  },
+
+  async ckGenSupp() {
+    const input = document.getElementById('ck_aiInput')?.value?.trim();
+    if (!input) { alert('请先粘贴报告文本'); return; }
+    if (!confirm('重新生成补充报告？当前编辑的内容将被覆盖。')) return;
+    // 复用 ckAIExtract，但只触发补充报告部分（用 Qwen 单独跑）
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 API 密钥'); return; }
+    const prompt = '你是体检报告补充分析助手。以下是一份【零散体检报告】（无医生"结论"段），请把所有"无法归入结构化字段"的文字发现（影像结论/超声结论/医生手写诊断/主诉等）整理成 markdown 格式：分部位小标题（## 标题）+ 列表。保留报告原文措辞，不要意译、不要推断严重程度。报告：\n' + input;
+    try {
+      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
+      // 提取 markdown（去掉可能的代码块包裹）
+      let md = result.trim();
+      const codeMatch = md.match(/```(?:markdown|md)?\s*([\s\S]*?)```/);
+      if (codeMatch) md = codeMatch[1].trim();
+      this.ckSupplementaryText = md;
+      this.ckRenderSupplementary();
+    } catch (e) {
+      alert('重新生成失败：' + (e.message || '未知错误'));
+    }
   },
 
   // 🆕 v3.2.10：上传 PDF 后浏览器端解析文字版 PDF，提取文本后塞进 ck_aiInput 并自动触发 ckAIExtract
@@ -15653,27 +15721,39 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if (!apiKey || !apiKey.startsWith('sk-')) { throw new Error('请先配置 DeepSeek API密钥'); }
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
-      const prompt = '你是体检报告数据提取专家。从以下体检报告文本中提取所有可识别的指标数据。\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n请严格按以下JSON格式返回，只返回JSON不要其他文字：\n{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""}\n未找到的指标留空字符串。数值只写数字不带单位。文本类指标填文字。\n\n体检报告文本：\n' + input;
+      // 🆕 v3.2.12：先判断报告类型 + 区分标准报告/零散报告
+      const prompt = '你是体检报告数据提取助手。请严格按 JSON 格式输出（不要任何多余文字、不要 markdown 包裹）。\n\n【第一步：判断报告类型】\n- "standard"：报告末尾有"检查结论"/"结论"/"健康建议"/"异常发现"等医生总结段（绝大多数体检报告属于此类）\n- "scattered"：只有散装指标数据，无医生"结论"段（如医院电子病历粘贴、手写报告 OCR 等）\n\n【第二步：按类型处理】\n\n■ A. 如果是【standard 标准报告】：\n1. 定位"结论"段落（一般在报告末尾，以"检查结论"/"结论"/"异常"等标题开头）\n2. 把结论段落【逐字抄写】作为阳性发现\n3. 按"句号/分号/换行/编号（1./（1）/①）"自然拆分，每条 = 一个独立发现\n4. 每条 item 字段 = 报告原文完整措辞（一字不改）\n5. location 字段 = AI 从上下文判断的部位（可选：妇科/甲状腺/乳腺/胃肠/肝胆/泌尿/心血管/呼吸/神经/皮肤/口腔/眼耳鼻喉/血液/免疫/其他）\n\n■ B. 如果是【scattered 零散报告】：\n1. 把可识别的数值填进 indicators 字段\n2. 把"无法归入现有结构化字段"的所有发现（影像结论/超声结论/医生手写诊断/主诉等）→ 全部放进 supplementary_text 字段\n3. supplementary_text 用 markdown：分部位小标题（## 标题）+ 列表，保留报告原文措辞\n\n【铁律】\n- 阳性发现 item 字段：一字不差保留报告原文，不要意译、不要概括、不要 AI 推断严重程度\n- 不要遗漏结论里的任何一条\n- 指标数值只写数字不带单位，未找到的留空字符串""\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n返回严格 JSON（只返回 JSON，不要多余文字）：\n{"report_type":"standard|scattered","indicators":{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""},"positive_findings":[{"item":"原文措辞","location":"部位"}],"supplementary_text":""}\n\n体检报告文本：\n' + input;
       // 高频结构化任务：走 Qwen3-8B（永久免费，严格 JSON 输出 Qwen 也能干）
       const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
       let jsonStr = result;
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) jsonStr = jsonMatch[0];
       const extracted = JSON.parse(jsonStr);
+      // 兜底：报告类型未识别时，按零散报告处理
+      if (!extracted.report_type) extracted.report_type = 'scattered';
+      if (!extracted.indicators) extracted.indicators = {};
       let filled = 0;
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => {
         const el = document.getElementById('cki_' + f.k);
-        if (el && extracted[f.k] !== undefined && extracted[f.k] !== '') {
-          el.value = extracted[f.k];
+        if (el && extracted.indicators[f.k] !== undefined && extracted.indicators[f.k] !== '') {
+          el.value = extracted.indicators[f.k];
           filled++;
           if (el.type === 'number') this.ckChkAbn(f.k);
         }
       }); });
-      // 🆕 v3.2.11：保存阳性发现到实例变量，渲染到 UI
+      // 🆕 v3.2.12：保存报告类型 + 阳性发现 + 补充报告，渲染到 UI
+      this.ckReportType = extracted.report_type;
       this.ckPositiveFindings = Array.isArray(extracted.positive_findings) ? extracted.positive_findings.filter(p => p && p.item) : [];
+      this.ckSupplementaryText = extracted.supplementary_text || '';
       this.ckRenderPositiveFindings();
+      this.ckRenderSupplementary();
       const pfCount = this.ckPositiveFindings.length;
-      status.textContent = '✅ AI提取完成！已填入 ' + filled + ' 个指标' + (pfCount > 0 ? ' · ⚠️ 阳性发现 ' + pfCount + ' 项' : '');
+      const supLen = this.ckSupplementaryText.length;
+      const typeLabel = this.ckReportType === 'standard' ? '标准报告' : '零散报告';
+      let info = '✅ AI提取完成！' + typeLabel + ' · 已填入 ' + filled + ' 个指标';
+      if (pfCount > 0) info += ' · ⚠️ 阳性发现 ' + pfCount + ' 项';
+      if (supLen > 0) info += ' · 📝 补充报告 ' + supLen + ' 字';
+      status.textContent = info;
       status.style.color = 'var(--color-green)';
     } catch(e) {
       console.error('[AI Extract] error:', e);
@@ -15684,7 +15764,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     }
   },
 
-  ckReset(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});this.ckEditId=null},
+  ckReset(){document.getElementById('ck_name').value='';document.getElementById('ck_phone').value='';document.getElementById('ck_age').value='';document.getElementById('ck_package').value='';document.getElementById('ck_date').value=new Date().toISOString().split('T')[0];this.CK_DIMS.forEach(d=>{d.fields.forEach(f=>{const el=document.getElementById('cki_'+f.k);if(el){el.value='';el.classList.remove('abnormal')}})});this.ckEditId=null;this.ckReportType=null;this.ckPositiveFindings=[];this.ckSupplementaryText='';const pf=document.getElementById('ck_positiveFindings');if(pf)pf.innerHTML='';const sr=document.getElementById('ck_supplementaryReport');if(sr)sr.innerHTML='';const ai=document.getElementById('ck_aiInput');if(ai)ai.value='';const ps=document.getElementById('ck_pdfStatus');if(ps){ps.textContent='未选择文件';ps.style.color='var(--color-gray)'}},
 
   async ckLoadRecs(){
     const c=document.getElementById('ck_recordsList');c.innerHTML='<div style="text-align:center;padding:20px;color:#999">加载中...</div>';
@@ -15757,6 +15837,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(abn.length){h+='<div style="font-size:13px;color:#E74C3C;margin-top:6px;line-height:1.7">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:13px;color:#27AE60">✅ 各项正常</div>';
     h+='</div>'});
     if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+    // 🆕 v3.2.12：补充报告（仅零散报告）
+    if(rec.supplementary_text&&rec.supplementary_text.trim()){h+='<div class="ck-rec" style="border-color:#8B5CF6;background:#F5F3FF;"><h3 style="color:#6D28D9;">📝 补充报告（零散报告）</h3><div style="font-size:11px;color:#6D28D9;margin-bottom:6px">📌 本报告无医生"结论"段，以下为 AI 从散装数据中提取的发现</div><div style="font-size:13px;color:#4C1D95;line-height:1.8;white-space:pre-wrap;">'+this.ckEscape(rec.supplementary_text)+'</div></div>'}
     h+=`<div style="text-align:center;margin-top:16px"><button class="btn btn-primary btn-lg" onclick="AdminApp.ckViewRpt('${rec.id}')" style="max-width:300px">📄 查看完整报告</button></div>`;
     document.getElementById('ck_interpResult').innerHTML=h;
   },
@@ -15782,6 +15864,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       h+='<div class="ck-rec" style="border-color:#F59E0B;background:#FFFBEB;"><h3 style="color:#B45309;">⚠️ 阳性发现（'+rec.positive_findings.length+' 项）</h3>';
       Object.keys(byLoc).forEach(loc=>{h+='<div class="ck-rec-item"><span style="display:inline-block;padding:1px 8px;background:#FED7AA;color:#7C2D12;border-radius:4px;font-size:11px;margin-right:6px;">'+loc+'</span>'+byLoc[loc].join('；')+'</div>'});
       h+='</div>'}
+    // 🆕 v3.2.12：补充报告（仅零散报告，完整报告里也显示）
+    if(rec.supplementary_text&&rec.supplementary_text.trim()){h+='<div class="ck-rec" style="border-color:#8B5CF6;background:#F5F3FF;"><h3 style="color:#6D28D9;">📝 补充报告（零散报告）</h3><div style="font-size:11px;color:#6D28D9;margin-bottom:6px">📌 本报告无医生"结论"段，以下为 AI 从散装数据中提取的发现</div><div style="font-size:13px;color:#4C1D95;line-height:1.8;white-space:pre-wrap;">'+this.ckEscape(rec.supplementary_text)+'</div></div>'}
     h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入抗衰中心助手评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
     h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">抗衰中心助手 · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
     document.getElementById('ck-reportContent').innerHTML=h;
