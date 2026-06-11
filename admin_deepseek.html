@@ -15743,6 +15743,46 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
           if (el.type === 'number') this.ckChkAbn(f.k);
         }
       }); });
+      // 🆕 v3.2.14：JS 关键词兜底（小模型看不完全文，AI 没填时强制覆盖）
+      const reportText = input;
+      // TCT 兜底
+      const tctEl = document.getElementById('cki_tct');
+      if (tctEl && !tctEl.value) {
+        if (/未见上皮内病变|NILM/i.test(reportText) && !/ASC-US|ASC-H|LSIL|HSIL|不满意/.test(reportText)) { tctEl.value = 'NILM(未见上皮内病变)'; filled++; }
+        else if (/ASC-US/i.test(reportText)) { tctEl.value = 'ASC-US'; filled++; }
+        else if (/ASC-H/i.test(reportText)) { tctEl.value = 'ASC-H'; filled++; }
+        else if (/HSIL/i.test(reportText)) { tctEl.value = 'HSIL'; filled++; }
+        else if (/LSIL/i.test(reportText)) { tctEl.value = 'LSIL'; filled++; }
+        else if (/不满意/i.test(reportText)) { tctEl.value = '不满意标本'; filled++; }
+      }
+      // HPV 兜底
+      const hpvEl = document.getElementById('cki_hpv');
+      if (hpvEl && !hpvEl.value && /HPV/i.test(reportText)) {
+        if (/HPV.*阴性|HPV.*未检出|HPV\s*-|HPV\s*\(-\)|HPV\s*检测.*阴/i.test(reportText)) {
+          hpvEl.value = '阴性'; filled++;
+        } else if (/HPV.*阳性/i.test(reportText)) {
+          hpvEl.value = '阳性'; filled++;
+          const detailEl = document.getElementById('cki_hpv_detail');
+          if (detailEl && !detailEl.value) {
+            const m = reportText.match(/HPV\s*(\d+(?:\s*[\/,、和]\s*\d+)*)/i);
+            if (m) { detailEl.value = 'HPV ' + m[1].replace(/\s/g,''); filled++; }
+          }
+        }
+      }
+      // ECG 兜底（窦性心律 = 正常，公主临床判断）
+      const ecgEl = document.getElementById('cki_ecg');
+      if (ecgEl && !ecgEl.value) {
+        if (/窦性心律/i.test(reportText)) {
+          if (/窦性心动过速|心动过速/i.test(reportText)) { ecgEl.value = '窦性心动过速'; filled++; }
+          else if (/窦性心动过缓|心动过缓/i.test(reportText)) { ecgEl.value = '窦性心动过缓'; filled++; }
+          else { ecgEl.value = '正常'; filled++; }
+        } else if (/心电图/i.test(reportText) && /正常|未见.*异常/i.test(reportText)) { ecgEl.value = '正常'; filled++; }
+        else if (/ST-T\s*改变/i.test(reportText)) { ecgEl.value = 'ST-T改变'; filled++; }
+        else if (/房颤/i.test(reportText)) { ecgEl.value = '房颤'; filled++; }
+        else if (/房扑/i.test(reportText)) { ecgEl.value = '房扑'; filled++; }
+        else if (/室性早搏/i.test(reportText)) { ecgEl.value = '室性早搏'; filled++; }
+      }
+      // 重新扫描一遍 filled 计数（兜底填的也算）
       // 🆕 v3.2.12：保存报告类型 + 阳性发现 + 补充报告，渲染到 UI
       this.ckReportType = extracted.report_type;
       this.ckPositiveFindings = Array.isArray(extracted.positive_findings) ? extracted.positive_findings.filter(p => p && p.item) : [];
