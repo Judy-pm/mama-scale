@@ -1317,6 +1317,13 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    // PDF.js 全局变量兼容（部分版本挂在 window.pdfjsLib）
+    if (typeof pdfjsLib !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+  </script>
 </head>
 <body>
 
@@ -15199,6 +15206,16 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     content += '<div class="ck-g3"><div class="ck-fg"><label>年龄 *</label><input id="ck_age" type="number" placeholder="岁"></div><div class="ck-fg"><label>性别</label><select id="ck_gender" onchange="AdminApp.ckGenderChange()"><option value="女">女</option><option value="男">男</option></select></div><div class="ck-fg"><label>体检日期 *</label><input id="ck_date" type="date"></div></div>';
     content += '<div class="ck-fg"><label>体检套餐</label><input id="ck_package" placeholder="如：女性甄选套餐"></div>';
     content += '</div>';
+    // === 🆕 v3.2.10 PDF 上传区（不存原文件，只读文字版 PDF 提炼数值）===
+    content += '<div class="ck-card" style="margin-bottom:12px;border:2px dashed var(--color-primary);background:linear-gradient(135deg,#F0F8FC,#E8F2FA)">';
+    content += '<div class="ck-title" style="color:var(--color-primary-dark)">📎 上传体检报告 PDF（不保存原文件）</div>';
+    content += '<div style="font-size:12px;color:var(--color-gray);margin-bottom:8px">支持文字版 PDF · 扫描版需先 OCR · 文件仅本地解析，不会保存到云端</div>';
+    content += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+    content += '<input type="file" id="ck_pdfFile" accept="application/pdf,.pdf" style="display:none" onchange="AdminApp.ckUploadPDF(this.files[0])" />';
+    content += '<button class="btn btn-primary" onclick="document.getElementById(\'ck_pdfFile\').click()">📁 选择 PDF 文件</button>';
+    content += '<span id="ck_pdfStatus" style="font-size:13px;color:var(--color-gray)">未选择文件</span>';
+    content += '</div>';
+    content += '</div>';
     // === AI智能提取区 ===
     content += '<div class="ck-card" style="margin-bottom:12px;border:2px solid var(--color-primary);background:linear-gradient(135deg,#F8F6FA,#F0E8FA)">';
     content += '<div class="ck-title" style="color:var(--color-primary-dark)">🤖 AI智能提取</div>';
@@ -15539,6 +15556,58 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
       alert('✅ 保存成功！风险等级：'+reportData.risk_level);this.ckReset();this.ckEditId=null;
     }catch(e){console.error('[ckSave] error:',e);alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存并生成解读'}
+  },
+
+  // 🆕 v3.2.10：上传 PDF 后浏览器端解析文字版 PDF，提取文本后塞进 ck_aiInput 并自动触发 ckAIExtract
+  async ckUploadPDF(file) {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      alert('请选择 PDF 文件'); return;
+    }
+    if (typeof pdfjsLib === 'undefined') {
+      alert('PDF.js 库未加载完成，请稍后重试或检查网络');
+      return;
+    }
+    const status = document.getElementById('ck_pdfStatus');
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+    status.textContent = `⏳ 正在解析 ${file.name} (${fileSizeMB}MB)...`;
+    status.style.color = 'var(--color-primary)';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const strings = content.items.map(item => item.str).filter(s => s && s.trim());
+        fullText += `【第 ${i} 页】\n` + strings.join(' ') + '\n\n';
+      }
+      if (!fullText.trim()) {
+        status.textContent = '⚠️ PDF 解析为空（可能是扫描版图片 PDF，需要先 OCR）';
+        status.style.color = 'var(--color-red)';
+        alert('PDF 解析为空\n\n可能是扫描版 PDF（图片型），请先用 OCR 工具转为文字版 PDF 后再上传。\n\n推荐免费工具：百度网盘 / 微信"传图识字" / Adobe Acrobat 在线版');
+        return;
+      }
+      // 塞进 ck_aiInput（如果有内容则追加）
+      const aiInput = document.getElementById('ck_aiInput');
+      if (aiInput) {
+        if (aiInput.value.trim()) {
+          aiInput.value = aiInput.value + '\n\n' + fullText;
+        } else {
+          aiInput.value = fullText;
+        }
+      }
+      status.textContent = `✅ 解析成功（${pdf.numPages} 页），AI 提取中...`;
+      status.style.color = 'var(--color-green)';
+      // 自动触发 AI 提取
+      await this.ckAIExtract();
+      status.textContent = `✅ 完成（${pdf.numPages} 页 · ${fullText.length} 字符）`;
+    } catch (e) {
+      console.error('[ckUploadPDF] error:', e);
+      status.textContent = '❌ 解析失败: ' + (e.message || '未知错误');
+      status.style.color = 'var(--color-red)';
+      alert('PDF 解析失败：' + (e.message || '未知错误') + '\n\n可能原因：\n1. PDF 已加密/损坏\n2. 扫描版图片 PDF（需先 OCR）\n3. 网络问题导致 PDF.js worker 加载失败');
+    }
   },
 
   async ckAIExtract() {
