@@ -15169,10 +15169,11 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       {k:'ca125',n:'CA125',u:'U/mL',r:()=>[0,35],t:'n'},
       {k:'ca199',n:'CA199',u:'U/mL',r:()=>[0,37],t:'n'}]},
     {id:'gyno',name:'妇科',icon:'👩‍⚕️',fields:[
-      {k:'tct',n:'TCT',u:'',r:()=>['正常'],t:'s',opts:['正常','ASC-US','LSIL','HSIL']},
-      {k:'hpv',n:'HPV',u:'',r:()=>['阴性'],t:'s',opts:['阴性','阳性']}]},
+      {k:'tct',n:'TCT',u:'',r:()=>['NILM'],t:'s',opts:['NILM(未见上皮内病变)','正常','ASC-US','ASC-H','LSIL','HSIL','不满意标本']},
+      {k:'hpv',n:'HPV',u:'',r:()=>['阴性'],t:'s',opts:['阴性','阳性']},
+      {k:'hpv_detail',n:'HPV 型号',u:'',r:()=>[''],t:'t',placeholder:'HPV 阳性时填写具体型号，如 HPV 16 / HPV 52,58'}]},
     {id:'cardio',name:'心血管',icon:'❤️',fields:[
-      {k:'ecg',n:'心电图',u:'',r:()=>['正常'],t:'s',opts:['正常','窦性心动过速','窦性心动过缓','ST-T改变','房颤','其他']}]}
+      {k:'ecg',n:'心电图',u:'',r:()=>['正常'],t:'s',opts:['正常','窦性心律(=正常)','窦性心动过速','窦性心动过缓','ST-T改变','房颤','房扑','室性早搏','其他']}]}
   ],
 
   ckG(){return document.getElementById('ck_gender')?.value||'女'},
@@ -15219,7 +15220,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     // === AI智能提取区 ===
     content += '<div class="ck-card" style="margin-bottom:12px;border:2px solid var(--color-primary);background:linear-gradient(135deg,#F8F6FA,#F0E8FA)">';
     content += '<div class="ck-title" style="color:var(--color-primary-dark)">🤖 AI智能提取</div>';
-    content += '<div style="font-size:13px;color:var(--color-gray);margin-bottom:8px">粘贴体检报告文本，AI自动提取指标并填入下方表单</div>';
+    content += '<div style="font-size:13px;color:var(--color-gray);margin-bottom:8px">粘贴体检报告文本，AI自动提取指标并填入下方表单。<br><span style="color:#B45309;">📌 指标参考值、正常范围、临床意义均以各体检报告原文为准，AI 仅辅助提取不替代医生判断</span></div>';
     content += '<textarea id="ck_aiInput" class="form-input" rows="6" placeholder="将体检报告文本粘贴到这里...支持格式：白细胞WBC 6.5 / 空腹血糖 5.2 mmol/L / 或直接粘贴整份报告文本，AI会自动识别提取"></textarea>';
     content += '<div style="display:flex;gap:8px;margin-top:8px">';
     content += '<button class="btn btn-primary" id="ck_aiBtn" onclick="AdminApp.ckAIExtract()">🤖 AI提取指标</button>';
@@ -15526,6 +15527,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       d.fields.forEach(f=>{
         const rl=this.ckRefStr(f),uid='cki_'+f.k;
         if(f.t==='s') h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><select id="${uid}" data-k="${f.k}"><option value="">--</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+        else if(f.t==='t') h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="text" data-k="${f.k}" placeholder="${f.placeholder||'输入文本'}"></div>`;
         else h+=`<div class="ck-fg"><label>${f.n}${f.u?' ('+f.u+')':''} <span class="ref" id="ckrf_${f.k}">参考: ${rl}</span></label><input id="${uid}" type="number" step="any" data-k="${f.k}" placeholder="${f.auto?'自动计算':'输入值'}" ${f.auto?'readonly':''} oninput="AdminApp.ckOnIn('${f.k}')"></div>`;
       });
       h+='</div></div></div>';
@@ -15721,8 +15723,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if (!apiKey || !apiKey.startsWith('sk-')) { throw new Error('请先配置 DeepSeek API密钥'); }
       let fieldList = '';
       this.CK_DIMS.forEach(d => { d.fields.forEach(f => { fieldList += f.k + '(' + f.n + '): ' + f.u + ' | '; }); });
-      // 🆕 v3.2.12：先判断报告类型 + 区分标准报告/零散报告
-      const prompt = '你是体检报告数据提取助手。请严格按 JSON 格式输出（不要任何多余文字、不要 markdown 包裹）。\n\n【第一步：判断报告类型】\n- "standard"：报告末尾有"检查结论"/"结论"/"健康建议"/"异常发现"等医生总结段（绝大多数体检报告属于此类）\n- "scattered"：只有散装指标数据，无医生"结论"段（如医院电子病历粘贴、手写报告 OCR 等）\n\n【第二步：按类型处理】\n\n■ A. 如果是【standard 标准报告】：\n1. 定位"结论"段落（一般在报告末尾，以"检查结论"/"结论"/"异常"等标题开头）\n2. 把结论段落【逐字抄写】作为阳性发现\n3. 按"句号/分号/换行/编号（1./（1）/①）"自然拆分，每条 = 一个独立发现\n4. 每条 item 字段 = 报告原文完整措辞（一字不改）\n5. location 字段 = AI 从上下文判断的部位（可选：妇科/甲状腺/乳腺/胃肠/肝胆/泌尿/心血管/呼吸/神经/皮肤/口腔/眼耳鼻喉/血液/免疫/其他）\n\n■ B. 如果是【scattered 零散报告】：\n1. 把可识别的数值填进 indicators 字段\n2. 把"无法归入现有结构化字段"的所有发现（影像结论/超声结论/医生手写诊断/主诉等）→ 全部放进 supplementary_text 字段\n3. supplementary_text 用 markdown：分部位小标题（## 标题）+ 列表，保留报告原文措辞\n\n【铁律】\n- 阳性发现 item 字段：一字不差保留报告原文，不要意译、不要概括、不要 AI 推断严重程度\n- 不要遗漏结论里的任何一条\n- 指标数值只写数字不带单位，未找到的留空字符串""\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n返回严格 JSON（只返回 JSON，不要多余文字）：\n{"report_type":"standard|scattered","indicators":{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","ecg":""},"positive_findings":[{"item":"原文措辞","location":"部位"}],"supplementary_text":""}\n\n体检报告文本：\n' + input;
+      // 🆕 v3.2.13：妇科/心血管字段强制提取 + 阳性带型号 + 阴性必填
+      const prompt = '你是体检报告数据提取助手。请严格按 JSON 格式输出（不要任何多余文字、不要 markdown 包裹）。\n\n【第一步：判断报告类型】\n- "standard"：报告末尾有"检查结论"/"结论"/"健康建议"/"异常发现"等医生总结段（绝大多数体检报告属于此类）\n- "scattered"：只有散装指标数据，无医生"结论"段（如医院电子病历粘贴、手写报告 OCR 等）\n\n【第二步：按类型处理】\n\n■ A. 如果是【standard 标准报告】：\n1. 定位"结论"段落（一般在报告末尾，以"检查结论"/"结论"/"异常"等标题开头）\n2. 把结论段落【逐字抄写】作为阳性发现\n3. 按"句号/分号/换行/编号（1./（1）/①）"自然拆分，每条 = 一个独立发现\n4. 每条 item 字段 = 报告原文完整措辞（一字不改）\n5. location 字段 = AI 从上下文判断的部位（可选：妇科/甲状腺/乳腺/胃肠/肝胆/泌尿/心血管/呼吸/神经/皮肤/口腔/眼耳鼻喉/血液/免疫/其他）\n\n■ B. 如果是【scattered 零散报告】：\n1. 把可识别的数值填进 indicators 字段\n2. 把"无法归入现有结构化字段"的所有发现（影像结论/超声结论/医生手写诊断/主诉等）→ 全部放进 supplementary_text 字段\n3. supplementary_text 用 markdown：分部位小标题（## 标题）+ 列表，保留报告原文措辞\n\n【第三步：妇科/心血管字段强制提取（必须填，不要漏）】\n\n■ TCT（宫颈细胞学）\n- 报告写"未见上皮内病变或恶性细胞"/"NILM" → 填 "NILM(未见上皮内病变)"\n- 报告写"ASC-US" / "ASC-H" / "LSIL" / "HSIL" / "不满意的标本" → 照填\n- 报告写其他 → 用最接近的选项\n\n■ HPV\n- 报告写"阴性"/"未检出" → 填 "阴性"（必须填，不要漏）\n- 报告写"阳性" → 填 "阳性"，同时把具体型号（如 HPV 16, HPV 52/58）写到 hpv_detail 字段\n- 常见高危型：16/18/31/33/35/39/45/51/52/56/58/59/66/68\n- 常见低危型：6/11/40/42/43/44/54/55/57/61\n\n■ 心电图（ECG）\n- 报告写"窦性心律" → 填 "正常"（窦性心律 = 正常，临床意义上属于正常心律）\n- 报告写"窦性心动过速" / "窦性心动过缓" / "ST-T改变" / "房颤" / "房扑" / "室性早搏" → 照填\n- 报告写"正常" / "未见明显异常" → 填 "正常"\n\n【铁律】\n- 阳性发现 item 字段：一字不差保留报告原文，不要意译、不要概括、不要 AI 推断严重程度\n- 不要遗漏结论里的任何一条\n- TCT/HPV/ECG 三个字段在妇科/心血管体检中**几乎必有**，报告里有数据就必须填，不要漏\n- 指标数值只写数字不带单位，未找到的留空字符串""\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n返回严格 JSON（只返回 JSON，不要多余文字）：\n{"report_type":"standard|scattered","indicators":{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","hpv_detail":"","ecg":""},"positive_findings":[{"item":"原文措辞","location":"部位"}],"supplementary_text":""}\n\n【最后备注】本报告所有指标参考值、正常范围、临床意义均以各体检报告原文为准。AI 仅辅助提取，不替代医生判断。\n\n体检报告文本：\n' + input;
       // 高频结构化任务：走 Qwen3-8B（永久免费，严格 JSON 输出 Qwen 也能干）
       const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
       let jsonStr = result;
@@ -15819,8 +15821,8 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(v('alt')>40)recs.push({dim:'liver',title:'肝功能异常',detail:'ALT '+v('alt'),suggest:'推荐肝脏保护+生活方式干预'});
     const crT=g==='女'?97:133;if(v('cr')>crT)recs.push({dim:'kidney',title:'肾功能异常',detail:'Cr '+v('cr'),suggest:'建议肾内科就诊'});
     if(v('ca125')>35)recs.push({dim:'tumor',title:'CA125升高',detail:'CA125 '+v('ca125'),suggest:'建议妇科进一步检查'});
-    if(s('tct')&&s('tct')!=='正常')recs.push({dim:'gyno',title:'宫颈细胞学异常',detail:'TCT: '+s('tct'),suggest:'建议阴道镜检查'});
-    if(s('hpv')==='阳性')recs.push({dim:'gyno',title:'HPV感染',detail:'HPV阳性',suggest:'推荐免疫调节评估+定期随访'});
+    if(s('tct')&&!['正常','NILM(未见上皮内病变)'].includes(s('tct')))recs.push({dim:'gyno',title:'宫颈细胞学异常',detail:'TCT: '+s('tct'),suggest:'建议阴道镜检查'});
+    if(s('hpv')==='阳性'){const det=ind.hpv_detail?'（'+ind.hpv_detail+'）':'';recs.push({dim:'gyno',title:'HPV感染',detail:'HPV阳性'+det,suggest:'推荐免疫调节评估+定期随访'})}
     if(s('ecg')==='ST-T改变')recs.push({dim:'cardio',title:'心肌缺血可能',detail:'心电图ST-T改变',suggest:'建议心内科就诊'});
 
     const wt={general:1.5,blood:1,urine:.8,liver:1.2,kidney:1.2,glucose:1.5,lipid:1.3,thyroid:1,hormone:1.2,bone:1,tumor:1.5,gyno:1,cardio:1.5};
