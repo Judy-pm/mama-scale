@@ -15784,9 +15784,31 @@ tcmSelectPatient() {
         if (data && data[0]) {
           this.tcmCurrentRecord = data[0];
           console.log('[tcmSelectPatient] 加载现有 consultation:', this.tcmCurrentRecord.id);
-          // 🆕 触发重渲染 dialogue 历史
-          if (typeof this.tcmLoadAndRenderDialogue === 'function') {
-            setTimeout(() => this.tcmLoadAndRenderDialogue(), 50);
+          // 🆕 v3.2.8 修复：选患者后触发 renderConsultation 重渲染，确保 AI 辨证历史 + 最新辨证都显示
+          // 根因：tcmRenderInitial 末尾才会调 tcmLoadAndRenderHistory，但 tcmSelectPatient 不触发重渲染
+          //      导致用户选完患者，DOM 还是上一次的旧状态，AI 辨证历史不显示
+          // 方案：先尝试只调 history/AI 渲染（避免整页重渲染闪烁），fallback 才走整页重渲染
+          if (this.tcmTab === 'initial' || !this.tcmTab) {
+            // 在 initial tab：history 和 _tcmRenderExistingAIDiagnosis 都能直接绑到现有 DOM
+            if (typeof this.tcmLoadAndRenderHistory === 'function') {
+              setTimeout(() => this.tcmLoadAndRenderHistory(this.tcmCurrentRecord.id), 100);
+            }
+            if (typeof this._tcmRenderExistingAIDiagnosis === 'function'
+                && this.tcmCurrentRecord.ai_diagnosis
+                && Object.keys(this.tcmCurrentRecord.ai_diagnosis).length > 0) {
+              setTimeout(() => this._tcmRenderExistingAIDiagnosis(
+                this.tcmCurrentRecord.ai_diagnosis,
+                this.tcmCurrentRecord.updated_at,
+                '最新一次（已存档）'
+              ), 60);
+            }
+            // 触发 dialogue 加载
+            if (typeof this.tcmLoadAndRenderDialogue === 'function') {
+              setTimeout(() => this.tcmLoadAndRenderDialogue(), 200);
+            }
+          } else {
+            // 其他 tab（复诊/档案）：走整页重渲染更稳
+            this.renderConsultation();
           }
         }
       })
@@ -16093,8 +16115,35 @@ async tcmRenderInitial() {
     { id: 'pulse_shape', label: '脉形', opts: ['滑','涩','弦','紧','细','洪','濡','微','散','结','代','促'], multi: true }
   ];
   const existingPulse = existingData && existingData.pulse ? existingData.pulse : {};
-  // 兼容老数据：pulse_matrix 可能不存在，fallback 用 pulse_position + pulse_force 反推
-  const existingMatrix = existingPulse.pulse_matrix || { L: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}}, R: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}} };
+  // 🆕 v3.2.8 修复：兼容老数据（v3.2.0 升级前存的 pulse_position / pulse_force）→ 反推 18 格矩阵
+  // 根因：注释说"fallback 用 pulse_position + pulse_force 反推"，但代码只是用空矩阵 fallback
+  //      导致 v3.2.0 升级前填的脉诊数据在升级后看到 18 格全空（公主反馈"脉像记录不全"）
+  // 反推规则（与 tcmAutoDifferentiate 中 `_cunAvg` 阈值保持一致）：
+  //   - pulse_position: 浮/中/沉 → 把对应的那一层的 6 格都填 0.5（脉位）
+  //   - pulse_force:   虚/弱/实 → 双寸"中"层填 0.3 / 0.5 / 0.7
+  //                    虚 = 0.3, 弱 = 0.5, 实 = 0.7
+  const _emptyMatrix = { L: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}}, R: {cun:{fu:'',zhong:'',chen:''},guan:{fu:'',zhong:'',chen:''},chi:{fu:'',zhong:'',chen:''}} };
+  let existingMatrix = existingPulse.pulse_matrix || _emptyMatrix;
+  if (!existingPulse.pulse_matrix && (existingPulse.pulse_position || existingPulse.pulse_force)) {
+    // 老数据反推：构造临时矩阵用于本次回填（不写入数据库，下次保存时会被新矩阵覆盖）
+    existingMatrix = JSON.parse(JSON.stringify(_emptyMatrix));
+    const _pp = existingPulse.pulse_position;  // '浮' | '中' | '沉' | undefined
+    const _pf = existingPulse.pulse_force;      // '虚' | '弱' | '实' | undefined
+    const _pfVal = _pf === '虚' ? 0.3 : (_pf === '弱' ? 0.5 : (_pf === '实' ? 0.7 : null));
+    const _ppDepth = _pp === '浮' ? 'fu' : (_pp === '沉' ? 'chen' : (_pp === '中' ? 'zhong' : null));
+    if (_ppDepth) {
+      // 6 格都填 0.5（脉位定性，所有 6 格都给 0.5 提示该层取脉）
+      ['L', 'R'].forEach(h => ['cun', 'guan', 'chi'].forEach(p => {
+        existingMatrix[h][p][_ppDepth] = 0.5;
+      }));
+    }
+    if (_pfVal != null) {
+      // 双寸"中"层填脉力值
+      existingMatrix.L.cun.zhong = _pfVal;
+      existingMatrix.R.cun.zhong = _pfVal;
+    }
+    console.log('[v3.2.8] 老数据脉诊反推:', { position: _pp, force: _pf, matrix: existingMatrix });
+  }
   const hands = ['L','R'];
   const positions = ['cun','guan','chi'];
   const depths = ['fu','zhong','chen'];
@@ -16129,7 +16178,7 @@ async tcmRenderInitial() {
         let opts = '<option value=""></option>';
         for (let i = 1; i <= 10; i++) {
           const val = (i / 10).toFixed(1);  // 0.1, 0.2, ..., 1.0
-          opts += '<option value="'+val+'"'+(String(cur) === val ? ' selected' : '')+'>'+val+'</option>';
+          opts += '<option value="'+val+'"'+(parseFloat(cur) === parseFloat(val) ? ' selected' : '')+'>'+val+'</option>';
         }
         html += '<select class="tcm-input" id="tcm-pulse-mat-'+hand+'-'+pos+'-'+dep+'" style="width:100%;padding:4px 2px;text-align:center;font-size:13px;min-width:0;appearance:auto;" title="'+hand+' '+posLabelMap[pos]+' '+depthLabelMap[dep]+'">'+opts+'</select>';
       });
@@ -16190,7 +16239,83 @@ async tcmRenderInitial() {
     });
   }
 
+  // 🆕 v3.2.8 修复：进入页面 / 选患者 / 切 tab 时，主动加载 AI 辨证历史 + 最新辨证结果
+  // 根因 2026-06-11：tcmLoadAndRenderHistory 只在 tcmAIDiagnosis 完成后才被调用，导致用户重进页面看不到历史
+  //              又必须再点一次"AI 辨证"才能看到之前的辨证记录（公主陛下原话）
+  // 修复：把"加载历史"和"回填最新 AI 辨证"提前到 tcmRenderInitial 完成时执行
+  if (existingData && existingData.id) {
+    this.tcmCurrentRecord = existingData;  // 同步 tcmCurrentRecord，确保 tcmLoadAndRenderHistory 拿得到 id
+    setTimeout(() => {
+      // 1) 回填最新一次 AI 辨证结果到 #tcm-ai-result
+      if (existingData.ai_diagnosis && Object.keys(existingData.ai_diagnosis).length > 0) {
+        this._tcmRenderExistingAIDiagnosis(existingData.ai_diagnosis, existingData.updated_at, '最新一次（已存档）');
+      }
+      // 2) 加载 AI 辨证历史列表
+      if (typeof this.tcmLoadAndRenderHistory === 'function') {
+        this.tcmLoadAndRenderHistory(existingData.id);
+      }
+      // 3) 加载 AI 探讨对话历史
+      if (typeof this.tcmLoadAndRenderDialogue === 'function') {
+        setTimeout(() => this.tcmLoadAndRenderDialogue(), 100);
+      }
+    }, 50);
+  }
+
   return html;
+},
+
+// 🆕 v3.2.8：回填已有 AI 辨证结果（不带预览 modal，直接渲染，让用户重进页面就看到上次的辨证）
+// 抽出公共渲染逻辑，避免和 tcmAIDiagnosis / tcmRestoreFromHistory 重复
+_tcmRenderExistingAIDiagnosis(diagnosis, sourceTime, sourceLabel) {
+  const container = document.querySelector('.tcm-ai-result');
+  if (!container) return;
+
+  const toStr = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+    if (typeof v === 'object') {
+      if (v.name && (v.composition || v.ingredients || v.组成)) return `${v.name}：${toStr(v.composition || v.ingredients || v.组成)}`;
+      if (v.formula_name && (v.composition || v.ingredients)) return `${v.formula_name}：${toStr(v.composition || v.ingredients)}`;
+      if (v.name || v.formula_name) return v.name || v.formula_name;
+      return Object.values(v).map(toStr).filter(Boolean).join('；');
+    }
+    return String(v);
+  };
+
+  const sections = [
+    { key: 'syndrome', title: '🎯 证型', icon: '🎯' },
+    { key: 'pathogenesis', title: '🔬 病机分析', icon: '🔬' },
+    { key: 'treatment_principle', title: '⚖️ 治法', icon: '⚖️' },
+    { key: 'main_formula', title: '💊 主方', icon: '💊' },
+    { key: 'modification', title: '📝 加减', icon: '📝' },
+    { key: 'acupuncture', title: '🪡 针灸建议', icon: '🪡' },
+    { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
+    { key: 'prognosis', title: '📈 预后', icon: '📈' }
+  ];
+  const timeStr = sourceTime ? new Date(sourceTime).toLocaleString('zh-CN', { hour12: false }) : '';
+
+  let h = `<div class="tcm-ai-result">
+    <h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3>
+    <p style="font-size:11px;color:#7B5A00;background:#fff8e0;padding:6px 10px;border-radius:4px;margin-bottom:12px;">
+      📋 ${sourceLabel}${timeStr ? ' · ' + timeStr : ''}
+    </p>`;
+  sections.forEach(s => {
+    const val = toStr(diagnosis[s.key]);
+    if (val) {
+      h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${val}</div></div>`;
+    }
+  });
+  h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">';
+  h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成新版本</button>';
+  h += '</div>';
+  h += '<div id="tcm-history-panel"></div>';
+  if (this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+    h += this.tcmRenderDialoguePanel();
+  }
+  h += '</div>';
+  container.innerHTML = h;
 },
 
 tcmChipSelect(field, value, multi, el) {
