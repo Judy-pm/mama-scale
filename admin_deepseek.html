@@ -15543,7 +15543,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     const btn=document.getElementById('ck_saveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
     try{
       // 1. 保存到 checkup_reports
-      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green'};
+      const reportData={person_name:nm,person_phone:ph,package_name:pk,report_date:dt,ai_extracted:ind,ai_conclusion:null,risk_level:'green',positive_findings:this.ckPositiveFindings||[]};
       const ip=this.ckInterpRec({indicators:ind,patient_gender:gd});
       if(ip){reportData.dimension_scores=ip.dim_scores;reportData.risk_level=ip.overall_score>=70?'green':ip.overall_score>=50?'yellow':ip.overall_score>=30?'orange':'red';reportData.abnormal_items=ip.recommendations?ip.recommendations.map(r=>r.title):[];reportData.ai_conclusion=ip.recommendations?ip.recommendations.map(r=>r.title+' - '+r.suggest).join('; '):'';reportData.ai_recommendation=ip.recommendations?ip.recommendations.map(r=>r.suggest).join('\n'):''}
       await CloudBaseManager.sb.from('checkup_reports').insert(reportData);
@@ -15556,6 +15556,36 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       if(this.ckEditId){await CloudBaseManager.sb.from('health_checkups').update(legacyData).eq('id',this.ckEditId)}else{await CloudBaseManager.sb.from('health_checkups').insert(legacyData)}
       alert('✅ 保存成功！风险等级：'+reportData.risk_level);this.ckReset();this.ckEditId=null;
     }catch(e){console.error('[ckSave] error:',e);alert('保存失败: '+(e.message||'未知错误'))}finally{btn.disabled=false;btn.textContent='💾 保存并生成解读'}
+  },
+
+  // 🆕 v3.2.11：渲染阳性发现卡片（ckAIExtract 完成后调用）
+  ckRenderPositiveFindings() {
+    const container = document.getElementById('ck_positiveFindings');
+    if (!container) return;
+    const findings = this.ckPositiveFindings || [];
+    if (findings.length === 0) {
+      container.innerHTML = '<div class="ck-card" style="background:#F0FDF4;border:1px solid #BBF7D0;margin-bottom:12px;"><div class="ck-title" style="color:#15803D;">✅ 阳性发现</div><div style="font-size:13px;color:#15803D;padding:8px 0;">报告原文未发现阳性/异常/疾病诊断描述</div></div>';
+      return;
+    }
+    // 按部位分组
+    const byLocation = {};
+    findings.forEach(f => {
+      const loc = f.location || '其他';
+      if (!byLocation[loc]) byLocation[loc] = [];
+      byLocation[loc].push(f.item);
+    });
+    let h = '<div class="ck-card" style="background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:2px solid #F59E0B;margin-bottom:12px;">';
+    h += '<div class="ck-title" style="color:#B45309;">⚠️ 阳性发现（' + findings.length + ' 项）</div>';
+    h += '<div style="font-size:11px;color:#92400E;margin-bottom:8px;">📌 以下为报告原文措辞保留，由您判断严重程度</div>';
+    Object.keys(byLocation).forEach(loc => {
+      h += '<div style="margin-top:6px;"><div style="font-size:12px;font-weight:600;color:#7C2D12;background:#FED7AA;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:4px;">' + loc + '</div><ul style="margin:4px 0 4px 20px;padding:0;font-size:13px;color:#7C2D12;line-height:1.7;">';
+      byLocation[loc].forEach(item => {
+        h += '<li>' + item + '</li>';
+      });
+      h += '</ul></div>';
+    });
+    h += '</div>';
+    container.innerHTML = h;
   },
 
   // 🆕 v3.2.10：上传 PDF 后浏览器端解析文字版 PDF，提取文本后塞进 ck_aiInput 并自动触发 ckAIExtract
@@ -15639,7 +15669,11 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
           if (el.type === 'number') this.ckChkAbn(f.k);
         }
       }); });
-      status.textContent = '✅ AI提取完成！已填入 ' + filled + ' 个指标';
+      // 🆕 v3.2.11：保存阳性发现到实例变量，渲染到 UI
+      this.ckPositiveFindings = Array.isArray(extracted.positive_findings) ? extracted.positive_findings.filter(p => p && p.item) : [];
+      this.ckRenderPositiveFindings();
+      const pfCount = this.ckPositiveFindings.length;
+      status.textContent = '✅ AI提取完成！已填入 ' + filled + ' 个指标' + (pfCount > 0 ? ' · ⚠️ 阳性发现 ' + pfCount + ' 项' : '');
       status.style.color = 'var(--color-green)';
     } catch(e) {
       console.error('[AI Extract] error:', e);
@@ -15742,6 +15776,12 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if(abn.length){h+='<div style="font-size:12px;color:#E74C3C;margin-top:4px;line-height:1.6">⚠️ ';abn.forEach(a=>{if(typeof a.v==='number'){const rs=a.ref?(a.ref[0]===0?'<'+a.ref[1]:a.ref[0]+'~'+a.ref[1]):'';h+=a.n+': '+a.v+' (参考'+rs+')<br>'}else h+=a.n+': '+a.v+' (参考'+a.norm+')<br>'});h+='</div>'}else h+='<div style="font-size:12px;color:#27AE60">✅ 各项正常</div>';
     h+='</div>'});
     if(ip.recommendations&&ip.recommendations.length){h+='<div class="ck-rec"><h3>🧭 抗衰门诊推荐</h3>';ip.recommendations.forEach(r=>{h+=`<div class="ck-rec-item"><strong>${r.title}</strong>（${r.detail}）<br>💡 ${r.suggest}</div>`});h+='</div>'}
+    // 🆕 v3.2.11：阳性发现（ckViewRpt 完整报告里也显示）
+    if(rec.positive_findings&&rec.positive_findings.length){
+      const byLoc={};rec.positive_findings.forEach(f=>{const loc=f.location||'其他';if(!byLoc[loc])byLoc[loc]=[];byLoc[loc].push(f.item)});
+      h+='<div class="ck-rec" style="border-color:#F59E0B;background:#FFFBEB;"><h3 style="color:#B45309;">⚠️ 阳性发现（'+rec.positive_findings.length+' 项）</h3>';
+      Object.keys(byLoc).forEach(loc=>{h+='<div class="ck-rec-item"><span style="display:inline-block;padding:1px 8px;background:#FED7AA;color:#7C2D12;border-radius:4px;font-size:11px;margin-right:6px;">'+loc+'</span>'+byLoc[loc].join('；')+'</div>'});
+      h+='</div>'}
     h+=`<div class="ck-qr"><h4 style="color:var(--color-primary-dark);margin-bottom:10px">📱 扫码进入抗衰中心助手评估</h4><div id="ck-qrcode"></div><p style="font-size:11px;color:#999">获取个性化健康管理方案</p></div>`;
     h+=`<div style="text-align:center;margin-top:20px;padding-top:12px;border-top:1px solid #e0e0e0;color:#999;font-size:11px">抗衰中心助手 · 固本归元 · 抗衰中心<br>本报告由AI辅助生成，仅供健康参考</div></div>`;
     document.getElementById('ck-reportContent').innerHTML=h;
