@@ -16267,8 +16267,12 @@ async tcmRenderInitial() {
 // 🆕 v3.2.8：回填已有 AI 辨证结果（不带预览 modal，直接渲染，让用户重进页面就看到上次的辨证）
 // 抽出公共渲染逻辑，避免和 tcmAIDiagnosis / tcmRestoreFromHistory 重复
 _tcmRenderExistingAIDiagnosis(diagnosis, sourceTime, sourceLabel) {
-  const container = document.querySelector('.tcm-ai-result');
-  if (!container) return;
+  // 修复 2026-06-11：模板里容器是 <div id="tcm-ai-result">，不是 class，这里必须用 getElementById
+  const container = document.getElementById('tcm-ai-result');
+  if (!container) {
+    console.warn('[tcm] _tcmRenderExistingAIDiagnosis: #tcm-ai-result 容器未找到（可能 initial tab 未渲染）');
+    return;
+  }
 
   const toStr = (v) => {
     if (v == null) return '';
