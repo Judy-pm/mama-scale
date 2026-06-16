@@ -13387,21 +13387,58 @@ const AdminApp = {
       html += '</div>';
     }
     
-    // Latest assessment summary
+    // Latest assessment summary (with expandable answer details)
     if (records.length > 0) {
       html += '<div class="info-card"><h4>📋 最近评估</h4>';
-      records.slice(0, 3).forEach(r => {
+      const safeName = String(name || 'p').replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
+      const safePhone = String(phone || '').replace(/[^0-9]/g, '') || 'np';
+      records.slice(0, 3).forEach((r, idx) => {
         const levelColor = r.level ? r.level.color : 'gray';
         const levelRange = r.level ? `<span style="color:var(--color-gray);font-size:11px;margin-left:4px;">(参考 ${r.level.min}–${r.level.max})</span>` : '';
+        const hasAnswers = r.answers && Object.keys(r.answers).length > 0;
+        const ansKey = `${safeName}_${safePhone}_${idx}`;
+        let ansHtml = '';
+        if (hasAnswers) {
+          const scale = SCALES.find(s => s.id === r.scaleId);
+          if (scale && scale.questions) {
+            ansHtml += '<div style="font-size:13px;">';
+            scale.questions.forEach((q, qi) => {
+              const a = r.answers[qi];
+              if (!a) {
+                ansHtml += `<div style="padding:3px 0;color:var(--color-gray);"><span style="color:var(--color-gray);">${qi+1}.</span> ${q.text || ''} <em style="color:var(--color-gray);">(未答)</em></div>`;
+                return;
+              }
+              const optText = a.text !== undefined ? a.text : (a.inputValue !== undefined ? `输入值: ${a.inputValue}` : '-');
+              const scoreTxt = a.score !== undefined && a.score !== 0 ? `<span style="color:var(--color-primary);font-weight:600;margin-left:4px;">${a.score}分</span>` : '';
+              ansHtml += `<div style="padding:3px 0;line-height:1.6;"><span style="color:var(--color-gray);margin-right:4px;">${qi+1}.</span>${q.text || ''} <span style="color:var(--color-primary);font-weight:600;margin:0 4px;">→</span> <strong style="color:var(--color-primary-dark);">${optText}</strong>${scoreTxt}</div>`;
+            });
+            ansHtml += '</div>';
+          } else {
+            ansHtml = '<div style="font-size:12px;color:var(--color-gray);">量表题库未匹配，无法展示具体答卷</div>';
+          }
+        }
         html += `<div style="padding:6px 0;font-size:14px;">
           <strong>${r.scaleName}</strong> <span style="color:var(--color-${levelColor});font-weight:700;">${r.scoreDisplay}</span>${r.level ? ` <span style="color:var(--color-${levelColor});margin-left:4px;">${r.level.label}</span>${levelRange}` : ''}
           <span style="font-size:12px;color:var(--color-gray);margin-left:8px;">${r.date}</span>
+          ${hasAnswers ? `<button class="btn btn-outline btn-sm" data-pd-ans-btn="${ansKey}" onclick="AdminApp._togglePdAnswers('${ansKey}')" style="margin-left:8px;font-size:12px;">📋 查看答卷</button>` : ''}
+        </div>
+        <div id="pd-ans-${ansKey}" style="display:none;margin:4px 0 8px 4px;padding:8px 0 8px 12px;border-left:2px solid var(--color-primary);">
+          ${ansHtml}
         </div>`;
       });
       html += '</div>';
     }
-    
+
     return html;
+  },
+
+  _togglePdAnswers(key) {
+    const el = document.getElementById('pd-ans-' + key);
+    const btn = document.querySelector('[data-pd-ans-btn="' + key + '"]');
+    if (!el) return;
+    const willShow = el.style.display === 'none';
+    el.style.display = willShow ? 'block' : 'none';
+    if (btn) btn.textContent = willShow ? '🔼 收起答卷' : '📋 查看答卷';
   },
 
   _renderPdArchive(name, phone, p, records, checkupRecords, prescriptions) {
