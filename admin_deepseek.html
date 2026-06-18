@@ -13409,7 +13409,15 @@ const AdminApp = {
                 return;
               }
               const optText = a.text !== undefined ? a.text : (a.inputValue !== undefined ? `输入值: ${a.inputValue}` : '-');
-              const scoreTxt = a.score !== undefined && a.score !== 0 ? `<span style="color:var(--color-primary);font-weight:600;margin-left:4px;">${a.score}分</span>` : '';
+              // 🆕 v3.2.18: 加权等效分显示（Kupperman 等带权重量表）
+              const _w = (q.weight !== undefined ? q.weight : (a.weight !== undefined ? a.weight : 1)) || 1;
+              const _s = a.score || 0;
+              const _weighted = _s * _w;
+              const scoreTxt = _s > 0
+                ? (_w > 1
+                    ? `<span style="color:var(--color-primary);font-weight:600;margin-left:4px;">${_s}分 ×${_w} = ${_weighted}分</span>`
+                    : `<span style="color:var(--color-primary);font-weight:600;margin-left:4px;">${_s}分</span>`)
+                : '';
               ansHtml += `<div style="padding:3px 0;line-height:1.6;"><span style="color:var(--color-gray);margin-right:4px;">${qi+1}.</span>${q.text || ''} <span style="color:var(--color-primary);font-weight:600;margin:0 4px;">→</span> <strong style="color:var(--color-primary-dark);">${optText}</strong>${scoreTxt}</div>`;
             });
             ansHtml += '</div>';
