@@ -296,6 +296,72 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .activity-text { font-size: 14px; flex: 1; }
 .activity-time { font-size: 12px; color: var(--color-gray); }
 
+/* ========== 风险预警面板 ========== */
+.risk-alert-panel {
+  background: var(--color-white); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden; margin-top: 28px;
+  border: 1px solid var(--color-border);
+}
+.risk-alert-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgba(126,190,232,0.08), rgba(240,166,132,0.08));
+}
+.risk-alert-header h3 {
+  font-size: 16px; font-weight: 700; color: var(--color-primary-dark);
+  display: flex; align-items: center; gap: 8px; margin: 0;
+}
+.risk-alert-stats {
+  display: flex; gap: 16px; font-size: 13px;
+}
+.risk-alert-stats .ras-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.risk-alert-stats .ras-num {
+  font-weight: 700; font-size: 18px;
+}
+.ras-new .ras-num { color: var(--color-red); }
+.ras-pending .ras-num { color: var(--color-orange); }
+.ras-done .ras-num { color: var(--color-green); }
+.risk-alert-list { max-height: 380px; overflow-y: auto; }
+.risk-alert-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; border-bottom: 1px solid var(--color-border);
+  transition: background 0.15s;
+}
+.risk-alert-item:hover { background: rgba(126,190,232,0.05); }
+.risk-alert-item:last-child { border-bottom: none; }
+.ra-severity-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.ra-severity-dot.severity-high { background: var(--color-red); box-shadow: 0 0 6px rgba(231,76,60,0.4); }
+.ra-severity-dot.severity-medium { background: var(--color-orange); box-shadow: 0 0 6px rgba(230,126,34,0.3); }
+.ra-severity-dot.severity-low { background: #F0A684; box-shadow: 0 0 6px rgba(240,166,132,0.3); }
+.ra-info { flex: 1; min-width: 0; }
+.ra-patient { font-weight: 600; font-size: 14px; color: var(--color-text); }
+.ra-detail { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ra-type-badge {
+  display: inline-block; font-size: 11px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 600; margin-right: 6px;
+}
+.ra-type-badge.type-vital { background: rgba(231,76,60,0.1); color: var(--color-red); }
+.ra-type-badge.type-drug { background: rgba(230,126,34,0.1); color: var(--color-orange); }
+.ra-type-badge.type-checkin { background: rgba(243,156,18,0.1); color: #D4940A; }
+.ra-type-badge.type-ai { background: rgba(126,190,232,0.12); color: #5A9EC4; }
+.ra-status-select {
+  padding: 4px 8px; border: 1px solid var(--color-border);
+  border-radius: 6px; font-size: 12px; background: var(--color-white);
+  color: var(--color-text); cursor: pointer; outline: none;
+  transition: border-color 0.2s;
+}
+.ra-status-select:focus { border-color: #7EBEE8; }
+.ra-time { font-size: 11px; color: var(--color-gray); white-space: nowrap; }
+.ra-empty {
+  text-align: center; padding: 40px 20px; color: var(--color-gray);
+}
+.ra-empty-icon { font-size: 40px; margin-bottom: 8px; }
+.ra-empty-text { font-size: 14px; }
+
 /* ========== 客户管理 ========== */
 .patient-toolbar {
   display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
@@ -13274,7 +13340,119 @@ const AdminApp = {
       <div class="recent-activity" style="background: var(--color-white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
         ${activityHtml || '<div style="text-align:center;color:var(--color-gray);padding:20px;">暂无活动记录</div>'}
       </div>
+
+      <div id="risk-alert-container"></div>
     `;
+    // 异步加载风险预警
+    this.loadRiskAlerts();
+  },
+
+  // ========== 风险预警 ==========
+  async loadRiskAlerts() {
+    const container = document.getElementById('risk-alert-container');
+    if (!container) return;
+    if (!supabaseClient) {
+      container.innerHTML = '';
+      return;
+    }
+    try {
+      const { data: alerts, error } = await supabaseClient
+        .from('risk_alerts')
+        .select('*, patients(name)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const todayNew = (alerts || []).filter(a => (a.created_at || '').slice(0, 10) === today).length;
+      const pending = (alerts || []).filter(a => !a.status || a.status === 'pending').length;
+      const done = (alerts || []).filter(a => a.status && a.status !== 'pending').length;
+
+      const typeMap = {
+        vital_abnormal: { label: '生命体征异常', cls: 'type-vital' },
+        drug_interaction: { label: '药物相互作用', cls: 'type-drug' },
+        checkin_missed: { label: '未按时签到', cls: 'type-checkin' },
+        ai_flagged: { label: 'AI标记', cls: 'type-ai' },
+      };
+      const severityMap = {
+        high: 'severity-high',
+        medium: 'severity-medium',
+        low: 'severity-low',
+      };
+      const statusMap = {
+        pending: '待处理',
+        phone_followup: '已电话随访',
+        suggest_visit: '已建议就诊',
+        arranged_appointment: '已安排加号',
+      };
+
+      let listHtml = '';
+      if (!alerts || alerts.length === 0) {
+        listHtml = '<div class="ra-empty"><div class="ra-empty-icon">🛡️</div><div class="ra-empty-text">暂无风险预警</div></div>';
+      } else {
+        alerts.forEach(a => {
+          const patientName = a.patients?.name || a.patient_name || '未知患者';
+          const tInfo = typeMap[a.alert_type] || { label: a.alert_type || '未知', cls: 'type-ai' };
+          const sevCls = severityMap[a.severity] || 'severity-low';
+          const currentStatus = a.status || 'pending';
+          const timeStr = a.created_at ? new Date(a.created_at).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+          const desc = a.description || '';
+
+          let optionsHtml = '';
+          Object.entries(statusMap).forEach(([k, v]) => {
+            const sel = k === currentStatus ? ' selected' : '';
+            optionsHtml += `<option value="${k}"${sel}>${v}</option>`;
+          });
+
+          listHtml += `
+            <div class="risk-alert-item">
+              <div class="ra-severity-dot ${sevCls}"></div>
+              <div class="ra-info">
+                <div class="ra-patient">${patientName}</div>
+                <div class="ra-detail"><span class="ra-type-badge ${tInfo.cls}">${tInfo.label}</span>${desc}</div>
+              </div>
+              <select class="ra-status-select" onchange="AdminApp.updateRiskAlertStatus('${a.id}', this.value)">
+                ${optionsHtml}
+              </select>
+              <div class="ra-time">${timeStr}</div>
+            </div>`;
+        });
+      }
+
+      container.innerHTML = `
+        <div class="risk-alert-panel">
+          <div class="risk-alert-header">
+            <h3>⚠️ 风险预警</h3>
+            <div class="risk-alert-stats">
+              <div class="ras-item ras-new"><span class="ras-num">${todayNew}</span>今日新增</div>
+              <div class="ras-item ras-pending"><span class="ras-num">${pending}</span>待处理</div>
+              <div class="ras-item ras-done"><span class="ras-num">${done}</span>已处理</div>
+            </div>
+          </div>
+          <div class="risk-alert-list">
+            ${listHtml}
+          </div>
+        </div>`;
+    } catch (e) {
+      console.warn('[RiskAlerts] 加载失败:', e.message);
+      container.innerHTML = '';
+    }
+  },
+
+  async updateRiskAlertStatus(alertId, newStatus) {
+    if (!supabaseClient || !alertId) return;
+    try {
+      const { error } = await supabaseClient
+        .from('risk_alerts')
+        .update({ status: newStatus })
+        .eq('id', alertId);
+      if (error) throw error;
+      // 刷新列表
+      this.loadRiskAlerts();
+    } catch (e) {
+      console.warn('[RiskAlerts] 更新状态失败:', e.message);
+      alert('更新失败，请重试');
+    }
   },
 
   // ========== 客户管理 ==========
