@@ -24,6 +24,10 @@
   --color-red: #E74C3C;
   --color-darkred: #C0392B;
   --color-gray: #95A5A6;
+  --color-peach: #F0A684;
+  --color-sky: #7EBEE8;
+  --color-sky-light: #B0D9F2;
+  --color-sky-bg: #EBF5FB;
   --radius: 12px;
   --shadow: 0 2px 12px rgba(123, 104, 174, 0.1);
   --font-size-base: 16px;
@@ -696,6 +700,10 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     --sidebar-text: #E6EDF3;
     --sidebar-active: rgba(167, 139, 250, 0.15);
     --sidebar-hover: rgba(167, 139, 250, 0.06);
+    --color-peach: #E0926F;
+    --color-sky: #5BA3CC;
+    --color-sky-light: #3A7CA5;
+    --color-sky-bg: #0F2733;
   }
 }
 
@@ -1498,6 +1506,203 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .diet-empty-state .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
 .diet-empty-state .empty-desc { font-size: 13px; }
 
+/* ========== 用药安全核查 v3.3.0 ========== */
+.drug-check-container { max-width: 960px; margin: 0 auto; }
+.drug-check-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.drug-check-header h3 {
+  font-size: 20px; font-weight: 700; color: var(--color-primary-dark);
+  display: flex; align-items: center; gap: 8px; margin: 0;
+}
+.drug-input-area {
+  background: var(--color-white); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.drug-input-area h4 {
+  font-size: 15px; font-weight: 600; color: var(--color-primary-dark);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.drug-tag-input-wrap {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px;
+  border: 2px solid var(--color-border); border-radius: 10px;
+  min-height: 48px; align-items: center; transition: border-color 0.2s;
+  background: var(--color-white);
+}
+.drug-tag-input-wrap:focus-within { border-color: var(--color-sky); }
+.drug-tag-input-wrap input {
+  border: none; outline: none; font-size: 14px; flex: 1; min-width: 120px;
+  background: transparent; color: var(--color-text);
+}
+.drug-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  background: var(--color-sky-bg); color: var(--color-sky);
+  border: 1px solid var(--color-sky-light);
+}
+.drug-tag .drug-tag-remove {
+  cursor: pointer; font-size: 14px; margin-left: 2px; opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.drug-tag .drug-tag-remove:hover { opacity: 1; }
+.drug-suggestions {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 60;
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: 8px; max-height: 200px; overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: none;
+}
+.drug-suggestions.show { display: block; }
+.drug-suggestion-item {
+  padding: 8px 14px; cursor: pointer; font-size: 14px;
+  transition: background 0.15s;
+}
+.drug-suggestion-item:hover { background: var(--color-sky-bg); }
+.drug-suggestion-item .ds-category { font-size: 11px; color: var(--color-gray); margin-left: 6px; }
+.drug-check-actions {
+  display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;
+}
+.drug-check-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.2s;
+}
+.drug-check-btn:active { transform: scale(0.97); }
+.drug-check-btn-primary {
+  background: linear-gradient(135deg, var(--color-sky), var(--color-sky-light));
+  color: white;
+}
+.drug-check-btn-primary:hover { box-shadow: 0 4px 12px rgba(126,190,232,0.3); }
+.drug-check-btn-ai {
+  background: linear-gradient(135deg, var(--color-peach), #E8926F);
+  color: white;
+}
+.drug-check-btn-ai:hover { box-shadow: 0 4px 12px rgba(240,166,132,0.3); }
+.drug-check-btn-outline {
+  background: var(--color-white); color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+.drug-check-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 结果区域 */
+.drug-check-results { margin-top: 20px; }
+.drug-result-group {
+  border-radius: var(--radius); margin-bottom: 16px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.drug-result-group-header {
+  padding: 12px 18px; font-weight: 700; font-size: 15px;
+  display: flex; align-items: center; gap: 8px;
+  color: white;
+}
+.drug-result-group-header.contraindicated { background: var(--color-red); }
+.drug-result-group-header.severe { background: var(--color-orange); }
+.drug-result-group-header.caution { background: var(--color-yellow); color: #333; }
+.drug-result-group-header.safe { background: var(--color-green); }
+.drug-result-group-header .count-badge {
+  background: rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 10px;
+  font-size: 12px; font-weight: 600;
+}
+.drug-result-pair {
+  background: var(--color-white); padding: 16px 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+.drug-result-pair:last-child { border-bottom: none; }
+.drug-pair-drugs {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.drug-pair-drug-a {
+  padding: 4px 14px; border-radius: 8px; font-weight: 600; font-size: 14px;
+  background: var(--color-sky-bg); color: var(--color-sky);
+}
+.drug-pair-plus { color: var(--color-gray); font-size: 16px; }
+.drug-pair-drug-b {
+  padding: 4px 14px; border-radius: 8px; font-weight: 600; font-size: 14px;
+  background: #FFF3E0; color: #E65100;
+}
+.drug-pair-level {
+  font-size: 12px; padding: 3px 10px; border-radius: 10px; font-weight: 600;
+}
+.drug-pair-level.contraindicated { background: #FFEBEE; color: var(--color-red); }
+.drug-pair-level.severe { background: #FFF3E0; color: var(--color-orange); }
+.drug-pair-level.caution { background: #FFFDE7; color: #F9A825; }
+.drug-pair-level.safe { background: #E8F5E9; color: var(--color-green); }
+.drug-pair-detail { font-size: 13px; color: var(--color-text-secondary); line-height: 1.7; }
+.drug-pair-detail strong { color: var(--color-text); }
+.drug-pair-mechanism { margin: 6px 0; }
+.drug-pair-suggestion {
+  padding: 8px 12px; border-radius: 8px; font-size: 13px;
+  line-height: 1.6;
+}
+.drug-pair-suggestion.contraindicated { background: #FFEBEE; border-left: 3px solid var(--color-red); }
+.drug-pair-suggestion.severe { background: #FFF3E0; border-left: 3px solid var(--color-orange); }
+.drug-pair-suggestion.caution { background: #FFFDE7; border-left: 3px solid var(--color-yellow); }
+.drug-pair-suggestion.safe { background: #E8F5E9; border-left: 3px solid var(--color-green); }
+
+/* AI 补充核查结果 */
+.drug-ai-result {
+  background: var(--color-white); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-top: 16px;
+  border-left: 4px solid var(--color-peach);
+}
+.drug-ai-result h4 {
+  font-size: 15px; font-weight: 600; color: var(--color-peach);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.drug-ai-result .ai-content { font-size: 14px; line-height: 1.8; color: var(--color-text); }
+.drug-ai-result .ai-content p { margin-bottom: 8px; }
+.drug-ai-loading {
+  display: flex; align-items: center; gap: 8px;
+  padding: 16px; color: var(--color-gray); font-size: 14px;
+}
+.drug-ai-loading .spinner {
+  width: 18px; height: 18px; border: 2px solid var(--color-border);
+  border-top-color: var(--color-peach); border-radius: 50%;
+  animation: drug-spin 0.8s linear infinite;
+}
+@keyframes drug-spin { to { transform: rotate(360deg); } }
+
+/* 空状态 */
+.drug-check-empty {
+  text-align: center; padding: 48px 20px; color: var(--color-gray);
+}
+.drug-check-empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.drug-check-empty .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.drug-check-empty .empty-desc { font-size: 13px; line-height: 1.6; }
+
+/* 统计摘要 */
+.drug-check-summary {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+.drug-summary-card {
+  text-align: center; padding: 14px; border-radius: 10px;
+  font-weight: 600;
+}
+.drug-summary-card .num { font-size: 28px; font-weight: 700; }
+.drug-summary-card .label { font-size: 12px; margin-top: 2px; }
+.drug-summary-card.contraindicated { background: #FFEBEE; color: var(--color-red); }
+.drug-summary-card.severe { background: #FFF3E0; color: var(--color-orange); }
+.drug-summary-card.caution { background: #FFFDE7; color: #F9A825; }
+.drug-summary-card.safe { background: #E8F5E9; color: var(--color-green); }
+
+/* 规则库信息 */
+.drug-rule-info {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; background: var(--color-sky-bg); border-radius: 8px;
+  font-size: 13px; color: var(--color-sky); margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .drug-check-summary { grid-template-columns: repeat(2, 1fr); }
+  .drug-check-header { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .drug-check-summary { grid-template-columns: 1fr 1fr; }
+  .drug-pair-drugs { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -1556,6 +1761,9 @@ textarea.form-input { resize: vertical; min-height: 80px; }
         </div>
         <div class="nav-item" onclick="switchPage('consultation', this)" data-page="consultation">
           <span class="nav-icon">🏥</span> 中医诊疗
+        </div>
+        <div class="nav-item" onclick="switchPage('drug-check', this)" data-page="drug-check">
+          <span class="nav-icon">💊</span> 用药安全核查
         </div>
         <div class="nav-item" onclick="switchPage('checkup', this)" data-page="checkup">
           <span class="nav-icon">🔬</span> 体检管理
@@ -1621,6 +1829,11 @@ textarea.form-input { resize: vertical; min-height: 80px; }
         <!-- ===== 问诊管理 ===== -->
         <div id="page-consultation" class="page-content">
           <div id="consultation-content"></div>
+        </div>
+        
+        <!-- ===== 用药安全核查 v3.3.0 ===== -->
+        <div id="page-drug-check" class="page-content">
+          <div id="drug-check-content"></div>
         </div>
         
         <!-- ===== 体检解读 ===== -->
@@ -12771,6 +12984,7 @@ const PAGE_TITLES = {
   'health-plan': '📋 健康计划',
   'prescribe': '📝 问卷管理',
   'consultation': '🏥 中医诊疗',
+  'drug-check': '💊 用药安全核查',
   'checkup': '🔬 体检管理',
   'ai-workspace': '🤖 AI工作台',
   'clinical-docs': '📄 临床文档',
@@ -12804,6 +13018,7 @@ function switchPage(page, navItem) {
     case 'patients': AdminApp.renderPatients(); break;
     case 'prescribe': AdminApp.renderPrescribe(); break;
     case 'consultation': AdminApp.renderConsultation(); break;
+    case 'drug-check': AdminApp.renderDrugCheck(); break;
     case 'checkup': AdminApp.renderCheckup(); break;
     case 'ai-workspace': AdminApp.renderAIWorkspace(); break;
     case 'health-plan': AdminApp.renderHealthPlan(); break;
@@ -15312,7 +15527,7 @@ const AdminApp = {
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
           <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">抗衰中心助手 健康管理平台</div></div>
-          <div class="info-row"><div class="info-label">版本</div><div class="info-value">2.1.0 AI工作台+健康计划</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.0 用药安全核查</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
@@ -19395,6 +19610,440 @@ async dietQuickGenerate(patientName, patientPhone, constitutionType) {
   await this.dietAIGenerate(patientName, patientPhone, constitutionType);
   // 刷新膳食Tab
   this.hpShowDietTab();
+},
+
+// ========== 用药安全核查 v3.3.0 ==========
+
+// 中西药相互作用规则库 v1（50对），硬编码为JS对象
+_drugInteractionRules: [
+  // 🔴 禁忌级（8对）
+  {id:1, drugA:"华法林", drugB:"丹参", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"丹参酮抑制CYP2C9酶，减慢华法林代谢；丹参多酚酸抑制血小板聚集，两者药效学协同增强抗凝作用", risk:"出血风险显著↑，INR失控，可致脑出血、消化道出血。联用14天内出血风险增加约4倍", suggestion:"禁止联用。如需活血化瘀，在严密INR监测下可考虑三七（风险较低），但仍需慎重"},
+  {id:2, drugA:"华法林", drugB:"银杏叶制剂", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"银杏内酯为PAF受体拮抗剂，抑制血小板聚集。虽对INR影响不显著，但药效学协同使出血风险大幅增加", risk:"可致颅内出血、前房出血等严重出血事件", suggestion:"禁止联用。银杏叶的抗血小板作用独立于凝血指标，不可因INR正常而忽视风险"},
+  {id:3, drugA:"SSRI类抗抑郁药", drugB:"圣约翰草/舒肝解郁胶囊", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"圣约翰草抑制5-HT和NE再摄取，与SSRI药理作用叠加→5-HT综合征；同时诱导CYP3A4/2C9改变SSRI代谢", risk:"5-HT综合征（高热、肌阵挛、意识障碍、心律失常），可致命", suggestion:"禁止联用。帕罗西汀说明书明确标注与圣约翰草合用可致5-HT综合征。舒肝解郁胶囊同样含贯叶金丝桃，禁止与SSRI联用"},
+  {id:4, drugA:"地高辛", drugB:"含蟾酥中成药", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"蟾酥含蟾毒配基，结构与洋地黄强心苷相似，药理作用叠加，等同增加地高辛剂量", risk:"极易诱发洋地黄中毒——恶心、呕吐、严重心律失常，可致命", suggestion:"禁止联用。蟾酥的强心作用与地高辛协同，安全窗极窄"},
+  {id:5, drugA:"地高辛", drugB:"甘草（大剂量）", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"甘草酸/甘草次酸抑制11β-HSD2→假性醛固酮增多症→排钾保钠→低钾血症。低钾显著增加心肌对强心苷的敏感性", risk:"低钾血症诱发洋地黄中毒，致严重心律失常", suggestion:"禁止联用。使用地高辛的患者应避免一切含甘草制剂"},
+  {id:6, drugA:"华法林", drugB:"当归", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"当归含香豆素类成分，抑制血小板聚集；与华法林竞争血浆蛋白结合位点，增加华法林游离浓度", risk:"INR升高（可升高0.7-1.5个点），出血风险显著增加", suggestion:"禁止联用。如需补血调经，应在医师指导下选择替代方案"},
+  {id:7, drugA:"HRT雌激素", drugB:"紫河车（胎盘）", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"紫河车含天然雌激素、孕激素，与外源性HRT叠加产生雌激素过量效应", risk:"雌激素过载→子宫内膜过度增生→异常子宫出血；长期增加血栓栓塞风险、乳腺癌风险", suggestion:"禁止联用。HRT期间不得使用含动物源性激素的中药"},
+  {id:8, drugA:"MAOI类", drugB:"含麻黄中药", drugACat:"西药", drugBCat:"中药", level:"contraindicated", levelLabel:"🔴 禁忌", mechanism:"MAOI阻止酪胺降解，麻黄碱促进NE释放，叠加→交感神经过度兴奋", risk:"高血压危象（血压骤升），可致脑出血、心衰", suggestion:"禁止联用。MAOI与含麻黄中药同用属绝对禁忌"},
+  // 🟠 严重警告级（12对）
+  {id:9, drugA:"环孢素/他克莫司", drugB:"圣约翰草", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"圣约翰草强效诱导CYP3A4和P-糖蛋白，大幅加速环孢素/他克莫司代谢", risk:"免疫抑制剂血药浓度骤降→器官排斥反应/自身免疫病复发", suggestion:"禁止联用。停用圣约翰草后CYP3A4诱导效应可持续1-2周"},
+  {id:10, drugA:"环孢素", drugB:"小檗碱（黄连素）", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"小檗碱抑制CYP3A4和P-糖蛋白，增加环孢素血药浓度；长期又可诱导PXR上调CYP3A4产生双向效应", risk:"环孢素浓度升高→肾毒性↑、肝毒性↑、感染风险↑", suggestion:"避免联用。如必须联用，需每周监测环孢素血药浓度并调整剂量"},
+  {id:11, drugA:"环孢素/甲氨蝶呤", drugB:"雷公藤多苷", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"两者均为免疫抑制剂，药理作用叠加", risk:"免疫过度抑制→严重感染；肝肾毒性叠加；骨髓抑制加重", suggestion:"避免联用。如确需联合，必须在专科医师指导下进行，密切监测血常规、肝肾功能、淋巴细胞亚群"},
+  {id:12, drugA:"华法林", drugB:"人参/西洋参", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"人参皂苷诱导CYP3A4和CYP2C9，加速华法林代谢→抗凝作用减弱", risk:"INR降低，血栓风险增加。RCT显示人参组INR峰值较基线显著下降", suggestion:"避免联用。人参可能使华法林抗凝失效。如需补益药，选择太子参等替代品"},
+  {id:13, drugA:"华法林", drugB:"红花", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"红花含红花黄色素，具有显著抗血小板聚集和纤溶活性，与华法林药效学协同", risk:"出血风险显著增加，尤其消化道出血和颅内出血", suggestion:"避免联用。活血化瘀可改用风险较低的丹参（仍需监测），红花与华法林联用风险更高"},
+  {id:14, drugA:"左甲状腺素钠", drugB:"含碘中药（海藻/昆布）", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"大量碘摄入干扰甲状腺激素合成调节，影响外源性甲状腺激素的剂量需求；碘过量可加重自身免疫性甲状腺炎", risk:"甲状腺功能紊乱——甲亢或甲减加重，TSH失控", suggestion:"避免联用。桥本甲状腺炎患者尤需严格限制碘摄入"},
+  {id:15, drugA:"SNRI类抗抑郁药", drugB:"圣约翰草/舒肝解郁胶囊", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"与SSRI相同，双重5-HT能叠加→5-HT综合征风险", risk:"5-HT综合征（高热、肌阵挛、意识障碍、心律失常），可致命", suggestion:"避免联用。机制与SSRI+圣约翰草相同"},
+  {id:16, drugA:"阿司匹林", drugB:"丹参/三七制剂", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"丹参酚酸类、三七皂苷均有抗血小板聚集活性，与阿司匹林COX-1抑制协同叠加", risk:"消化道出血风险大幅增加，尤其合并慢性胃炎/胃溃疡的老年患者", suggestion:"避免联用。国家药评中心已警示：复方丹参滴丸不能替代阿司匹林，联用增加出血风险"},
+  {id:17, drugA:"降压药", drugB:"含麻黄中药", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"麻黄碱兴奋α和β受体→收缩血管、加快心率、升高血压，直接拮抗降压药效果", risk:"血压失控，血压波动加剧，可诱发心脑血管事件", suggestion:"避免联用。需解表宣肺时，可选用不含麻黄的替代品"},
+  {id:18, drugA:"HRT雌激素", drugB:"鹿茸", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"鹿茸含雄激素样成分及多种性激素前体物质，温补肾阳作用可干扰HRT的内分泌平衡", risk:"激素水平紊乱——可能增强或拮抗雌激素效应，导致月经紊乱、子宫内膜异常增生", suggestion:"避免联用。HRT期间禁用含性激素样作用的动物药"},
+  {id:19, drugA:"他汀类(CYP3A4)", drugB:"小檗碱/黄连", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"小檗碱抑制CYP3A4，减慢他汀代谢", risk:"他汀血药浓度升高→肌毒性风险↑（肌痛、肌炎，严重时横纹肌溶解→肾衰竭）", suggestion:"避免联用。如需降脂联用，优选不经CYP3A4代谢的他汀（如瑞舒伐他汀、普伐他汀），或降低他汀剂量并监测CK"},
+  {id:20, drugA:"IVF促排卵药", drugB:"活血破血中药", drugACat:"西药", drugBCat:"中药", level:"severe", levelLabel:"🟠 严重警告", mechanism:"破血药强力活血通经，可干扰促排卵药的子宫内环境调控；可能影响子宫内膜容受性", risk:"增加OHSS出血风险；可能影响着床和早期妊娠维持", suggestion:"避免联用。IVF周期中禁用破血逐瘀类中药"},
+  // 🟡 Caution级（20对）
+  {id:21, drugA:"二甲双胍", drugB:"黄芪（大剂量）", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"黄芪多糖通过激活AMPK通路增强胰岛素敏感性，与二甲双胍机制部分重叠→降糖效果叠加", risk:"低血糖风险增加，尤其空腹服药时", suggestion:"可联用但需监测血糖。建议黄芪用量≤15g，联用初期每周至少3次监测空腹及餐后血糖"},
+  {id:22, drugA:"二甲双胍", drugB:"人参/参芪降糖颗粒", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"人参皂苷和黄芪多糖均具有降糖活性，与二甲双胍联用增强降糖效果", risk:"低血糖风险↑", suggestion:"可联用但需密切监测血糖。建议从低剂量开始，避免空腹服药，随身携带糖块"},
+  {id:23, drugA:"降压药(CCB)", drugB:"天麻钩藤饮", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"钩藤碱为天然钙通道阻滞剂；天麻素降低去甲肾上腺素释放。两者降压机制与CCB重叠", risk:"低血压风险——收缩压过度降低→头晕、乏力、晕厥", suggestion:"可在监测下联用，是临床常用的中西医结合方案。中药起效后可逐步减少CCB剂量，需每日监测血压"},
+  {id:24, drugA:"降压药", drugB:"甘草制剂", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"甘草酸抑制11β-HSD2→皮质醇不能灭活→类醛固酮效应→保钠排钾→血压升高、血钾降低", risk:"低血钾+血压反弹升高，抵消降压效果。与噻嗪类利尿剂联用低血钾风险增加3倍", suggestion:"尽量避免联用。如需止咳化痰，选用不含甘草的替代制剂。长期用甘草者必须定期监测血钾和血压"},
+  {id:25, drugA:"排钾利尿剂", drugB:"甘草", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"甘草的去氧皮质酮样作用+利尿剂的排钾效应→低钾血症叠加", risk:"严重低钾血症→肌无力、心律失常、横纹肌溶解", suggestion:"避免联用。如必须使用，严密监测血钾，积极补钾，血钾监测频率提高至每周1次"},
+  {id:26, drugA:"华法林", drugB:"枸杞", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"枸杞抑制CYP2C9酶活性，减慢华法林代谢→INR升高", risk:"华法林中毒，INR异常升高。病例：61岁女性服华法林稳定期间饮用枸杞茶后INR升至4.1", suggestion:"避免大量饮用枸杞茶。少量食疗用枸杞影响可能不大，但需告知医生并监测INR"},
+  {id:27, drugA:"华法林", drugB:"穿心莲", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"穿心莲内酯抑制华法林代谢酶，增强抗凝作用", risk:"出血风险增加", suggestion:"避免联用。如需清热解毒，选用不含穿心莲的替代方"},
+  {id:28, drugA:"华法林", drugB:"灵芝", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"灵芝具有抗血小板和抗凝活性，与华法林协同增强抗凝", risk:"出血风险增加", suggestion:"避免联用。如需免疫调节，在医师指导下选用其他温和补益品"},
+  {id:29, drugA:"左甲状腺素钠", drugB:"含钙矿物类中药", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"钙离子与左甲状腺素在肠道结合形成不溶性复合物，减少药物吸收", risk:"甲状腺激素血药浓度降低→甲减控制不佳→TSH升高", suggestion:"如必须联用，左甲状腺素与含钙中药间隔至少4小时。建议晨起空腹服左甲状腺素"},
+  {id:30, drugA:"四环素/喹诺酮", drugB:"含钙/镁中药", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"金属离子（Ca²⁺、Mg²⁺、Al³⁺）与抗生素形成不溶性螯合物→肠道吸收减少", risk:"抗生素吸收率降低可达70%以上→抗菌失败→延误治疗、增加耐药风险", suggestion:"如必须联用，抗生素与含金属离子中药间隔至少2小时，优先服抗生素"},
+  {id:31, drugA:"磺脲类降糖药", drugB:"芦荟", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"芦荟具有降糖活性，与磺脲类降糖药联用产生叠加降糖效应", risk:"低血糖风险增加", suggestion:"可联用但需密切监测血糖，尤其联用初期。建议减少磺脲类剂量或改用低剂量起始"},
+  {id:32, drugA:"SSRI", drugB:"曲马多", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"曲马多具有5-HT再摄取抑制活性，与SSRI叠加→5-HT综合征", risk:"5-HT综合征（震颤、高热、肌阵挛、意识改变）", suggestion:"避免联用。如需止痛，选择不影响5-HT系统的替代止痛药"},
+  {id:33, drugA:"华法林", drugB:"葛根", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"葛根素可能通过诱导肝药酶加速华法林代谢→抗凝作用减弱", risk:"INR降低→血栓风险增加", suggestion:"联用需增加INR监测频率。葛根中的植物雌激素也需关注（尤其在HRT患者中）"},
+  {id:34, drugA:"华法林", drugB:"西洋参", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"西洋参诱导CYP酶加速华法林代谢", risk:"INR显著降低，血栓风险增加", suggestion:"避免联用。如需补气养阴，可选用不含人参属的替代品"},
+  {id:35, drugA:"DOACs（阿哌沙班/利伐沙班）", drugB:"小檗碱", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"小檗碱抑制CYP3A4和P-糖蛋白，增加DOACs血药浓度", risk:"出血风险增加", suggestion:"避免联用。如需降脂/降糖联用小檗碱，建议更换为非CYP3A4底物的抗凝方案"},
+  {id:36, drugA:"铁剂", drugB:"含鞣质中药", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"鞣质与铁离子形成不溶性鞣酸铁沉淀→肠道吸收障碍", risk:"贫血治疗失效", suggestion:"必须联用时，间隔至少2小时。中药优先安排在餐后，铁剂在空腹时服用"},
+  {id:37, drugA:"降糖药", drugB:"甘草", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"甘草具有糖皮质激素样作用→促进糖原异生→升高血糖，拮抗降糖药效果", risk:"血糖控制不佳，糖尿病病情加重", suggestion:"糖尿病患者避免使用含甘草制剂。如需调和药性，用大枣替代"},
+  {id:38, drugA:"β受体阻滞剂", drugB:"含麻黄中药", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"麻黄碱兴奋β受体，直接拮抗β受体阻滞剂的治疗效果", risk:"心率加快、血压异常波动，心血管事件风险增加", suggestion:"避免联用。需解表时选用不含麻黄的方剂"},
+  {id:39, drugA:"阿司匹林", drugB:"银杏叶制剂", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"银杏内酯拮抗PAF受体抑制血小板聚集，与阿司匹林COX-1抑制协同→出血风险叠加", risk:"出血风险显著增加", suggestion:"避免联用。如需银杏叶改善认知，须停用阿司匹林或换用其他方案"},
+  {id:40, drugA:"IVF促排药", drugB:"温肾活血方", drugACat:"西药", drugBCat:"中药", level:"caution", levelLabel:"🟡 Caution", mechanism:"补肾中药可增强卵泡对促性腺激素的敏感性；活血成分可能影响子宫内膜状态", risk:"可能增加OHSS风险；活血成分可能在取卵前增加出血风险", suggestion:"在生殖中心医师和中医医师共同指导下使用。取卵前3天停用活血类中药"},
+  // 🟢 安全级（10对）
+  {id:41, drugA:"二甲双胍", drugB:"黄芪（小剂量）", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"小剂量黄芪补气健脾，与二甲双胍机制互补而非重叠", risk:"现有临床观察未见明显低血糖风险", suggestion:"可安全联用。小剂量黄芪可改善糖尿病患者气虚症状。建议定期监测血糖和肝肾功能"},
+  {id:42, drugA:"降压药", drugB:"六味地黄丸", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"六味地黄丸滋补肝肾，不直接影响血压；通过改善肾上腺功能间接辅助降压药", risk:"现有证据未见明显不良相互作用", suggestion:"可安全联用。适用于肝肾阴虚型高血压患者的辅助调理"},
+  {id:43, drugA:"降糖药", drugB:"苦瓜/葛根（食疗量）", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"苦瓜含苦瓜皂苷，有轻度降糖活性；葛根素改善微循环。食疗量下与降糖药作用温和互补", risk:"食疗量下低血糖风险极低", suggestion:"可安全联用。正常饮食量食用即可，避免大量浓缩提取物"},
+  {id:44, drugA:"HRT雌激素", drugB:"知柏地黄丸", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"知柏地黄丸滋阴降火，缓解激素引起的潮热盗汗等阴虚火旺症状，不含性激素样成分", risk:"未见明显不良相互作用", suggestion:"可安全联用。适用于HRT期间出现潮热、盗汗等阴虚症状的患者辅助治疗"},
+  {id:45, drugA:"左甲状腺素钠", drugB:"不含碘补益中药", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"不含碘、不含金属离子的补益类中药不干扰左甲状腺素的吸收和代谢", risk:"现有证据未见明显不良相互作用", suggestion:"可安全联用。建议间隔2小时服用以确保最佳吸收。定期监测甲状腺功能"},
+  {id:46, drugA:"二甲双胍", drugB:"茯苓/山药", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"茯苓健脾利水、山药健脾益肾，调节水盐代谢，不直接影响血糖代谢酶", risk:"未见明显不良相互作用", suggestion:"可安全联用。适用于糖尿病伴脾虚湿盛的患者辅助调理"},
+  {id:47, drugA:"降压药", drugB:"杜仲/桑寄生", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"杜仲促进肾脏排钠，改善血管弹性；桑寄生抗氧化保护血管内皮。两者不直接降血压", risk:"现有证据未见明显不良相互作用", suggestion:"可安全联用。适用于高血压伴肝肾不足的患者辅助治疗"},
+  {id:48, drugA:"糖皮质激素", drugB:"白及/海螵蛸", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"白及、海螵蛸保护胃黏膜，减少激素诱发胃溃疡风险", risk:"属于有益的相互作用，未见不良风险", suggestion:"可安全联用，且推荐联用。长期使用糖皮质激素的患者加用护胃中药可减少消化道不良反应"},
+  {id:49, drugA:"糖皮质激素", drugB:"黄芪/白术", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"黄芪、白术增强免疫力，减轻激素导致的免疫抑制和感染风险；健脾益气改善水盐代谢", risk:"有益的辅助作用，未见不良相互作用", suggestion:"可安全联用，且推荐联用。适用于长期激素治疗患者辅助减少副作用"},
+  {id:50, drugA:"糖皮质激素", drugB:"复方丹参片", drugACat:"西药", drugBCat:"中药", level:"safe", levelLabel:"🟢 安全", mechanism:"改善激素导致的血管脆性增加和微循环障碍", risk:"此场景下为有益辅助，但需注意：如在抗凝治疗期间则另有风险", suggestion:"可安全联用（非抗凝治疗场景下）。仅用于减轻激素性血管脆性增加"}
+],
+
+// 构建药物名称索引（用于搜索匹配）
+_drugNameIndex: null,
+
+_getDrugNameIndex() {
+  if (this._drugNameIndex) return this._drugNameIndex;
+  const index = {};
+  this._drugInteractionRules.forEach(rule => {
+    // 索引 drugA 的各种关键词
+    const aNames = rule.drugA.split(/[\/（）、]/).map(s => s.replace(/[（）\(\)]/g, '').trim()).filter(Boolean);
+    const bNames = rule.drugB.split(/[\/（）、]/).map(s => s.replace(/[（）\(\)]/g, '').trim()).filter(Boolean);
+    aNames.forEach(name => {
+      if (!index[name]) index[name] = [];
+      index[name].push(rule);
+    });
+    bNames.forEach(name => {
+      if (!index[name]) index[name] = [];
+      index[name].push(rule);
+    });
+    // 也索引完整名
+    if (!index[rule.drugA]) index[rule.drugA] = [];
+    if (!index[rule.drugA].includes(rule)) index[rule.drugA].push(rule);
+    if (!index[rule.drugB]) index[rule.drugB] = [];
+    if (!index[rule.drugB].includes(rule)) index[rule.drugB].push(rule);
+  });
+  this._drugNameIndex = index;
+  return index;
+},
+
+// 获取所有药物名称列表（用于自动补全）
+_getAllDrugNames() {
+  const index = this._getDrugNameIndex();
+  return Object.keys(index).sort();
+},
+
+// 当前选中的药物列表
+_drugCheckSelectedDrugs: [],
+
+// 渲染用药安全核查页面
+renderDrugCheck() {
+  this._drugCheckSelectedDrugs = [];
+  const allDrugNames = this._getAllDrugNames();
+
+  document.getElementById('drug-check-content').innerHTML = `
+    <div class="drug-check-container">
+      <div class="drug-check-header">
+        <h3>💊 用药安全核查</h3>
+        <span style="font-size:13px;color:var(--color-gray);">v3.3.0 · 规则库50对</span>
+      </div>
+
+      <div class="drug-rule-info">
+        📖 内置中西药相互作用规则库 v1（50对）· 🔴禁忌8对 · 🟠严重警告12对 · 🟡Caution 20对 · 🟢安全10对
+      </div>
+
+      <div class="drug-input-area">
+        <h4>🔍 输入当前用药</h4>
+        <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px;">
+          输入药物名称后按回车或点击建议添加，支持中西药混合输入
+        </p>
+        <div style="position:relative;">
+          <div class="drug-tag-input-wrap" id="drug-tag-input-wrap">
+            <span id="drug-tags-container"></span>
+            <input type="text" id="drug-name-input" placeholder="输入药物名称，如：华法林、丹参、阿司匹林..." autocomplete="off" />
+          </div>
+          <div class="drug-suggestions" id="drug-suggestions"></div>
+        </div>
+        <div class="drug-check-actions">
+          <button class="drug-check-btn drug-check-btn-primary" id="drug-check-btn" onclick="AdminApp.runDrugCheck()">
+            🔍 本地规则核查
+          </button>
+          <button class="drug-check-btn drug-check-btn-ai" id="drug-ai-check-btn" onclick="AdminApp.runDrugAICheck()">
+            🤖 AI补充核查
+          </button>
+          <button class="drug-check-btn drug-check-btn-outline" onclick="AdminApp.clearDrugCheck()">
+            🗑️ 清空重置
+          </button>
+        </div>
+      </div>
+
+      <div id="drug-check-results" class="drug-check-results"></div>
+    </div>
+  `;
+
+  // 绑定输入事件
+  const input = document.getElementById('drug-name-input');
+  const suggestionsEl = document.getElementById('drug-suggestions');
+
+  input.addEventListener('input', () => {
+    const val = input.value.trim().toLowerCase();
+    if (!val) { suggestionsEl.classList.remove('show'); return; }
+    const matches = allDrugNames.filter(n => n.toLowerCase().includes(val)).slice(0, 12);
+    if (matches.length === 0) { suggestionsEl.classList.remove('show'); return; }
+    suggestionsEl.innerHTML = matches.map(name => {
+      const rule = this._drugNameIndex[name]?.[0];
+      const cat = rule ? (rule.drugA === name ? rule.drugACat : rule.drugBCat) : '';
+      return `<div class="drug-suggestion-item" onclick="AdminApp._addDrugFromSuggestion('${name.replace(/'/g, "\\'")}')">${name}<span class="ds-category">${cat}</span></div>`;
+    }).join('');
+    suggestionsEl.classList.add('show');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = input.value.trim();
+      if (val) this._addDrugFromInput(val);
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => suggestionsEl.classList.remove('show'), 200);
+  });
+},
+
+_addDrugFromSuggestion(name) {
+  this._addDrugFromInput(name);
+  document.getElementById('drug-suggestions').classList.remove('show');
+},
+
+_addDrugFromInput(name) {
+  if (!name || this._drugCheckSelectedDrugs.includes(name)) return;
+  this._drugCheckSelectedDrugs.push(name);
+  this._renderDrugTags();
+  document.getElementById('drug-name-input').value = '';
+  document.getElementById('drug-name-input').focus();
+},
+
+_removeDrugTag(index) {
+  this._drugCheckSelectedDrugs.splice(index, 1);
+  this._renderDrugTags();
+  // 清除结果
+  if (this._drugCheckSelectedDrugs.length < 2) {
+    document.getElementById('drug-check-results').innerHTML = '';
+  }
+},
+
+_renderDrugTags() {
+  const container = document.getElementById('drug-tags-container');
+  if (!container) return;
+  container.innerHTML = this._drugCheckSelectedDrugs.map((name, i) =>
+    `<span class="drug-tag">${name}<span class="drug-tag-remove" onclick="AdminApp._removeDrugTag(${i})">×</span></span>`
+  ).join('');
+},
+
+// 本地规则核查
+runDrugCheck() {
+  const drugs = this._drugCheckSelectedDrugs;
+  if (drugs.length < 2) {
+    alert('请至少输入2种药物进行核查');
+    return;
+  }
+
+  const index = this._getDrugNameIndex();
+  const matchedRules = new Map(); // id -> rule
+
+  // 对每种药物，查找其可能参与的规则
+  drugs.forEach(drug => {
+    // 精确匹配
+    if (index[drug]) {
+      index[drug].forEach(rule => {
+        if (!matchedRules.has(rule.id)) matchedRules.set(rule.id, rule);
+      });
+    }
+    // 模糊匹配：检查药物名是否包含在规则的 drugA 或 drugB 中，或规则中的名是否包含输入名
+    this._drugInteractionRules.forEach(rule => {
+      const aMatch = rule.drugA.includes(drug) || drug.includes(rule.drugA.split(/[\/（）、]/)[0]);
+      const bMatch = rule.drugB.includes(drug) || drug.includes(rule.drugB.split(/[\/（）、]/)[0]);
+      if (aMatch || bMatch) {
+        // 确认这个规则涉及的两种药物都在用户列表中（至少部分匹配）
+        const drugAInList = drugs.some(d => rule.drugA.includes(d) || d.includes(rule.drugA.split(/[\/（）、]/)[0]));
+        const drugBInList = drugs.some(d => rule.drugB.includes(d) || d.includes(rule.drugB.split(/[\/（）、]/)[0]));
+        if (drugAInList && drugBInList) {
+          if (!matchedRules.has(rule.id)) matchedRules.set(rule.id, rule);
+        }
+      }
+    });
+  });
+
+  // 按风险等级分组
+  const groups = {
+    contraindicated: { label: '🔴 禁忌合用', css: 'contraindicated', pairs: [] },
+    severe: { label: '🟠 严重警告', css: 'severe', pairs: [] },
+    caution: { label: '🟡 注意事项', css: 'caution', pairs: [] },
+    safe: { label: '🟢 安全合用', css: 'safe', pairs: [] }
+  };
+
+  matchedRules.forEach(rule => {
+    groups[rule.level].pairs.push(rule);
+  });
+
+  // 统计
+  const totalCount = matchedRules.size;
+  const cCount = groups.contraindicated.pairs.length;
+  const sCount = groups.severe.pairs.length;
+  const caCount = groups.caution.pairs.length;
+  const saCount = groups.safe.pairs.length;
+
+  let html = '';
+
+  // 统计摘要
+  html += `<div class="drug-check-summary">
+    <div class="drug-summary-card contraindicated"><div class="num">${cCount}</div><div class="label">🔴 禁忌</div></div>
+    <div class="drug-summary-card severe"><div class="num">${sCount}</div><div class="label">🟠 严重警告</div></div>
+    <div class="drug-summary-card caution"><div class="num">${caCount}</div><div class="label">🟡 Caution</div></div>
+    <div class="drug-summary-card safe"><div class="num">${saCount}</div><div class="label">🟢 安全</div></div>
+  </div>`;
+
+  if (totalCount === 0) {
+    html += `<div class="drug-check-empty">
+      <div class="empty-icon">✅</div>
+      <div class="empty-title">未在本地规则库中找到相互作用</div>
+      <div class="empty-desc">当前 ${drugs.length} 种药物组合未命中规则库中的50对已知交互。<br>可使用「AI补充核查」对不在规则库中的药物组合进行风险评估。</div>
+    </div>`;
+  } else {
+    // 按严重程度排序输出
+    const levelOrder = ['contraindicated', 'severe', 'caution', 'safe'];
+    levelOrder.forEach(level => {
+      const group = groups[level];
+      if (group.pairs.length === 0) return;
+
+      html += `<div class="drug-result-group">`;
+      html += `<div class="drug-result-group-header ${group.css}">
+        ${group.label} <span class="count-badge">${group.pairs.length}对</span>
+      </div>`;
+
+      group.pairs.forEach(rule => {
+        html += `<div class="drug-result-pair">
+          <div class="drug-pair-drugs">
+            <span class="drug-pair-drug-a">${rule.drugA}</span>
+            <span class="drug-pair-plus">+</span>
+            <span class="drug-pair-drug-b">${rule.drugB}</span>
+            <span class="drug-pair-level ${group.css}">${rule.levelLabel}</span>
+          </div>
+          <div class="drug-pair-detail">
+            <div class="drug-pair-mechanism"><strong>机制：</strong>${rule.mechanism}</div>
+            <div><strong>风险：</strong>${rule.risk}</div>
+          </div>
+          <div class="drug-pair-suggestion ${group.css}">
+            <strong>💡 处理建议：</strong>${rule.suggestion}
+          </div>
+        </div>`;
+      });
+
+      html += `</div>`;
+    });
+  }
+
+  // 提示可使用AI补充核查
+  if (drugs.length >= 2) {
+    html += `<div style="text-align:center;padding:16px;color:var(--color-gray);font-size:13px;">
+      💡 以上为本地规则库（50对）核查结果。如需对不在规则库中的药物组合进行评估，请点击「🤖 AI补充核查」
+    </div>`;
+  }
+
+  document.getElementById('drug-check-results').innerHTML = html;
+
+  // 如果有禁忌，强制提醒
+  if (cCount > 0) {
+    setTimeout(() => {
+      alert('⚠️ 警告：检测到 ' + cCount + ' 对禁忌合用药物！请立即查看并调整处方！');
+    }, 300);
+  }
+},
+
+// AI 补充核查（调用硅基流动 API，temperature 0.2）
+async runDrugAICheck() {
+  const drugs = this._drugCheckSelectedDrugs;
+  if (drugs.length < 2) {
+    alert('请至少输入2种药物进行核查');
+    return;
+  }
+
+  // 先运行本地核查（如果还没运行的话）
+  const resultsEl = document.getElementById('drug-check-results');
+  if (!resultsEl.innerHTML.trim()) {
+    this.runDrugCheck();
+  }
+
+  // 准备 AI 核查
+  const apiKey = localStorage.getItem('coze_access_token');
+  if (!apiKey || !apiKey.startsWith('sk-')) {
+    alert('请先在设置中配置 DeepSeek API 密钥（硅基流动 sk-xxx）');
+    return;
+  }
+
+  const btn = document.getElementById('drug-ai-check-btn');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ AI核查中...'; btn.disabled = true;
+
+  // 构建提示词
+  const drugList = drugs.join('、');
+  const prompt = `你是武汉市妇幼保健院女性抗衰中心的临床药师AI助手。请对以下药物组合进行中西药相互作用风险评估。
+
+## 当前用药列表
+${drugList}
+
+## 评估要求
+1. 逐一检查所有两两组合的相互作用风险
+2. 对每种组合给出：风险等级（禁忌/严重警告/注意/安全）、机制说明、临床建议
+3. 重点关注：药代动力学相互作用（CYP酶抑制/诱导、P-糖蛋白影响）、药效学协同/拮抗、吸收干扰
+4. 如有已知但规则库未覆盖的相互作用，请特别指出
+
+## 输出格式
+请按风险等级从高到低排列，每种组合包含：
+- 药物A + 药物B
+- 风险等级（🔴禁忌 / 🟠严重警告 / 🟡Caution / 🟢安全）
+- 机制说明
+- 临床处理建议
+
+如果所有组合均未见明显相互作用风险，请明确说明「未发现明显药物相互作用风险」并简要解释原因。`;
+
+  try {
+    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-ai/DeepSeek-V3',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        max_tokens: 3000
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'AI接口错误');
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || 'AI未返回有效内容';
+
+    // 将AI结果追加到结果区域
+    const aiResultHtml = `
+      <div class="drug-ai-result">
+        <h4>🤖 AI 补充核查结果 <span style="font-size:11px;font-weight:normal;color:var(--color-gray);">temperature 0.2 · DeepSeek-V3</span></h4>
+        <div class="ai-content">${content.replace(/\n/g, '<br>')}</div>
+        <div style="margin-top:12px;padding:8px 12px;background:#FFF3E0;border-radius:6px;font-size:12px;color:#E65100;">
+          ⚠️ AI补充核查结果仅供临床辅助参考，不替代药师/医师的专业判断。建议结合患者个体情况综合评估。
+        </div>
+      </div>
+    `;
+
+    // 如果已有结果，追加到末尾；否则直接显示
+    const existingResults = resultsEl.innerHTML;
+    // 移除之前的AI结果
+    const withoutAI = existingResults.replace(/<div class="drug-ai-result">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g, '');
+    resultsEl.innerHTML = withoutAI + aiResultHtml;
+
+  } catch(e) {
+    const errorHtml = `
+      <div class="drug-ai-result">
+        <h4>🤖 AI 补充核查</h4>
+        <div style="padding:16px;color:var(--color-red);font-size:14px;">
+          ❌ AI核查失败：${e.message}<br>
+          <span style="color:var(--color-gray);font-size:12px;">请检查API密钥配置或网络连接后重试</span>
+        </div>
+      </div>
+    `;
+    resultsEl.innerHTML += errorHtml;
+  } finally {
+    btn.innerHTML = origText; btn.disabled = false;
+  }
+},
+
+// 清空重置
+clearDrugCheck() {
+  this._drugCheckSelectedDrugs = [];
+  this._renderDrugTags();
+  document.getElementById('drug-check-results').innerHTML = '';
+  const input = document.getElementById('drug-name-input');
+  if (input) input.value = '';
 },
 
 };
