@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>抗衰中心助手 - AI健康助手</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237EBEE8'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'%3E归%3C/text%3E%3C/svg%3E" />
+  <style>
+/* ========== 抗衰中心助手 - AI健康助手患者端 ========== */
+
+:root {
+  --color-primary: #7EBEE8;
+  --color-primary-light: #A8D5F0;
+  --color-primary-dark: #4A9AC8;
+  --color-primary-bg: #F0F8FF;
+  --color-accent: #F0A684;
+  --color-accent-light: #F5C4AD;
+  --color-accent-dark: #D88B6A;
+  --color-bg: #F5F9FC;
+  --color-white: #FFFFFF;
+  --color-text: #333333;
+  --color-text-secondary: #666666;
+  --color-border: #D8E8F0;
+  --color-green: #27AE60;
+  --color-yellow: #F39C12;
+  --color-orange: #E67E22;
+  --color-red: #E74C3C;
+  --color-gray: #95A5A6;
+  --color-disclaimer-bg: #FFF3E0;
+  --color-disclaimer-border: #FFB74D;
+  --color-disclaimer-text: #E65100;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(126, 190, 232, 0.12);
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+  max-width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== 免责声明横幅 ========== */
+.disclaimer-banner {
+  background: var(--color-disclaimer-bg);
+  border-bottom: 2px solid var(--color-disclaimer-border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.disclaimer-banner .disclaimer-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.disclaimer-banner .disclaimer-text {
+  font-size: 13px;
+  color: var(--color-disclaimer-text);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ========== 顶部栏 ========== */
+.chat-header {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(126, 190, 232, 0.3);
+}
+.chat-header .back-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.chat-header .back-btn:active { background: rgba(255,255,255,0.2); }
+.chat-header .header-info { flex: 1; }
+.chat-header .header-title { font-size: 17px; font-weight: 700; }
+.chat-header .header-sub { font-size: 12px; opacity: 0.85; }
+.chat-header .header-avatar {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+/* ========== 对话区域 ========== */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.chat-messages::-webkit-scrollbar { width: 0; }
+
+/* 消息气泡 */
+.msg-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.msg-row.ai { flex-direction: row; }
+.msg-row.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.msg-row.ai .msg-avatar { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); }
+.msg-row.user .msg-avatar { background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light)); }
+
+.msg-bubble {
+  max-width: 78%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: break-word;
+  position: relative;
+}
+.msg-row.ai .msg-bubble {
+  background: var(--color-white);
+  color: var(--color-text);
+  border-top-left-radius: 4px;
+  box-shadow: var(--shadow);
+}
+.msg-row.user .msg-bubble {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  border-top-right-radius: 4px;
+}
+
+/* AI回复中的免责尾部 */
+.msg-disclaimer {
+  font-size: 12px;
+  color: var(--color-gray);
+  border-top: 1px solid var(--color-border);
+  margin-top: 10px;
+  padding-top: 8px;
+  line-height: 1.4;
+}
+
+/* 图片消息 */
+.msg-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  object-fit: cover;
+}
+
+/* 打字指示器 */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+}
+.typing-indicator span {
+  width: 8px; height: 8px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+
+/* 欢迎卡 */
+.welcome-card {
+  background: linear-gradient(135deg, var(--color-primary-bg), #E8F4FD);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.welcome-card .welcome-icon { font-size: 40px; margin-bottom: 8px; }
+.welcome-card .welcome-title { font-size: 18px; font-weight: 700; color: var(--color-primary-dark); margin-bottom: 6px; }
+.welcome-card .welcome-desc { font-size: 14px; color: var(--color-text-secondary); line-height: 1.6; }
+.welcome-card .constitution-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  color: white;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+/* 快捷问题 */
+.quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.quick-q {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quick-q:active { transform: scale(0.95); background: var(--color-primary-bg); }
+
+/* ========== 输入栏 ========== */
+.chat-input-bar {
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+}
+.input-btn {
+  width: 40px; height: 40px;
+  border: none;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.input-btn:active { transform: scale(0.92); }
+.input-btn.photo-btn {
+  background: var(--color-primary-bg);
+  color: var(--color-primary-dark);
+}
+.input-btn.send-btn {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+}
+.input-btn.send-btn:disabled {
+  background: var(--color-gray);
+  opacity: 0.5;
+}
+
+.chat-textarea {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  resize: none;
+  max-height: 100px;
+  min-height: 40px;
+  outline: none;
+  font-family: inherit;
+}
+.chat-textarea:focus { border-color: var(--color-primary); background: var(--color-white); }
+.chat-textarea::placeholder { color: var(--color-gray); }
+
+/* ========== 图片预览 ========== */
+.image-preview-bar {
+  display: none;
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border);
+  padding: 8px 12px;
+  align-items: center;
+  gap: 8px;
+}
+.image-preview-bar.show { display: flex; }
+.image-preview-thumb {
+  width: 56px; height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--color-border);
+}
+.image-preview-bar .preview-text { flex: 1; font-size: 13px; color: var(--color-text-secondary); }
+.image-preview-bar .remove-btn {
+  background: none; border: none; font-size: 20px; color: var(--color-red); cursor: pointer;
+  padding: 4px;
+}
+
+/* ========== 加载页 ========== */
+.loading-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  background: var(--color-bg);
+}
+.loading-spinner {
+  width: 48px; height: 48px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========== 响应式 ========== */
+@media (max-width: 480px) {
+  .msg-bubble { max-width: 85%; }
+  .quick-questions { gap: 6px; }
+  .quick-q { font-size: 12px; padding: 6px 12px; }
+}
+  </style>
+</head>
+<body>
+
+  <!-- 加载页 -->
+  <div class="loading-page" id="loading-page">
+    <div style="width:72px;height:72px;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-light));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;color:white;margin-bottom:20px;">🤖</div>
+    <div class="loading-spinner"></div>
+    <div style="font-size:16px;color:var(--color-text-secondary);">正在加载AI健康助手...</div>
+  </div>
+
+  <!-- 主界面（初始隐藏） -->
+  <div id="chat-app" style="display:none; height:100vh; flex-direction:column;">
+
+    <!-- 免责声明横幅（固定，不可关闭） -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <span class="disclaimer-text">本AI助手提供的信息仅供健康管理参考，不能替代医生的面诊和处方。如有不适或病情变化，请及时就诊。</span>
+    </div>
+
+    <!-- 顶部栏 -->
+    <div class="chat-header">
+      <button class="back-btn" onclick="goBack()" title="返回">←</button>
+      <div class="header-info">
+        <div class="header-title">AI健康助手</div>
+        <div class="header-sub" id="header-sub">抗衰中心助手</div>
+      </div>
+      <div class="header-avatar">🤖</div>
+    </div>
+
+    <!-- 对话区域 -->
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <!-- 图片预览栏 -->
+    <div class="image-preview-bar" id="image-preview-bar">
+      <img class="image-preview-thumb" id="image-preview-thumb" src="" alt="预览" />
+      <span class="preview-text">舌象照片（仅辅助对话，不纳入病历）</span>
+      <button class="remove-btn" onclick="removeImage()">✕</button>
+    </div>
+
+    <!-- 输入栏 -->
+    <div class="chat-input-bar">
+      <button class="input-btn photo-btn" onclick="takePhoto()" title="拍照/上传舌象">📷</button>
+      <textarea class="chat-textarea" id="chat-input" placeholder="请输入您的健康问题..." rows="1" maxlength="500"></textarea>
+      <button class="input-btn send-btn" id="send-btn" onclick="sendMessage()" title="发送">➤</button>
+    </div>
+  </div>
+
+  <!-- 隐藏的文件输入 -->
+  <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+// ========== 配置 ==========
+const SUPABASE_URL = 'https://excwsowelxxkboljyobw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Y3dzb3dlbHh4a2JvbGp5b2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODU1NzEsImV4cCI6MjA5NDg2MTU3MX0.sNSkYXgme1M352IHvj_mDl7BY_OxZA3OLH2mMTvPblY';
+const SILICONFLOW_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+const SILICONFLOW_MODEL = 'deepseek-ai/DeepSeek-V3';
+const AI_TEMPERATURE = 0.3;
+
+// 免责声明文本
+const DISCLAIMER_TEXT = '⚠️ 本回复仅供参考，不能替代医生面诊和处方。如有不适请及时就诊。';
+
+// ========== Supabase 客户端 ==========
+let supabaseClient = null;
+try {
+  const sbLib = (typeof supabase !== 'undefined') ? supabase : null;
+  if (sbLib && sbLib.createClient) {
+    supabaseClient = sbLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch(e) { console.warn('[Supabase] 初始化失败:', e); }
+
+// ========== 状态 ==========
+let patientInfo = null;       // { id, name, phone, constitution_type, ... }
+let sessionId = crypto.randomUUID();
+let chatHistory = [];         // [{ role, content }]
+let pendingImage = null;      // { file, base64, url }
+let isSending = false;
+
+// ========== URL参数解析（扫码入口） ==========
+function getUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    phone: p.get('phone') || p.get('p') || '',
+    name: p.get('name') || p.get('n') || '',
+    id: p.get('id') || '',
+  };
+}
+
+// ========== 初始化 ==========
+async function init() {
+  const params = getUrlParams();
+
+  // 从localStorage获取已登录患者信息
+  const savedPatient = localStorage.getItem('guiyuan_patient');
+  if (savedPatient) {
+    try { patientInfo = JSON.parse(savedPatient); } catch(e) {}
+  }
+
+  // URL参数覆盖
+  if (params.phone) {
+    patientInfo = { ...patientInfo, phone: params.phone, name: params.name || patientInfo?.name || '' };
+  }
+
+  // 尝试从Supabase加载完整患者信息
+  if (supabaseClient && patientInfo?.phone) {
+    try {
+      const { data } = await supabaseClient.from('patients')
+        .select('*')
+        .eq('phone', patientInfo.phone)
+        .limit(1);
+      if (data && data.length > 0) {
+        patientInfo = { ...patientInfo, ...data[0] };
+        localStorage.setItem('guiyuan_patient', JSON.stringify(patientInfo));
+      }
+    } catch(e) { console.warn('[Supabase] 加载患者信息失败:', e); }
+  }
+
+  // 加载历史对话
+  await loadChatHistory();
+
+  // 显示界面
+  document.getElementById('loading-page').style.display = 'none';
+  document.getElementById('chat-app').style.display = 'flex';
+
+  // 渲染欢迎区域
+  renderWelcome();
+
+  // 滚动到底部
+  scrollToBottom();
+}
+
+// ========== 加载历史对话 ==========
+async function loadChatHistory() {
+  if (!supabaseClient || !patientInfo?.phone) return;
+  try {
+    const { data } = await supabaseClient.from('patient_ai_chats')
+      .select('*')
+      .eq('patient_phone', patientInfo.phone)
+      .order('created_at', { ascending: true })
+      .limit(50);
+    if (data && data.length > 0) {
+      // 使用最近一次session
+      sessionId = data[data.length - 1].session_id || sessionId;
+      data.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          appendMessage(msg.role, msg.content, msg.image_url, false);
+        }
+      });
+    }
+  } catch(e) { console.warn('[Supabase] 加载历史对话失败:', e); }
+}
+
+// ========== 渲染欢迎区域 ==========
+function renderWelcome() {
+  const container = document.getElementById('chat-messages');
+  if (container.children.length > 0) return; // 有历史对话不重复显示
+
+  const constitution = patientInfo?.constitution_type || patientInfo?.main_constitution || '';
+  const constitutionLabel = constitution ? getConstitutionLabel(constitution) : '';
+
+  let welcomeHtml = `
+    <div class="welcome-card">
+      <div class="welcome-icon">🤖</div>
+      <div class="welcome-title">您好，我是AI健康助手</div>
+      <div class="welcome-desc">
+        我可以根据您的体质和处方，为您提供<br/>
+        健康咨询、膳食建议和用药提醒<br/>
+        ${constitutionLabel ? `<span class="constitution-tag">当前体质：${constitutionLabel}</span>` : ''}
+      </div>
+    </div>`;
+
+  // 快捷问题
+  welcomeHtml += `
+    <div class="quick-questions">
+      <div class="quick-q" onclick="quickAsk('我的体质适合吃什么食物？')">🍎 体质膳食建议</div>
+      <div class="quick-q" onclick="quickAsk('我现在的药还要继续吃吗？')">💊 用药咨询</div>
+      <div class="quick-q" onclick="quickAsk('经期有什么需要注意的？')">🌸 经期注意</div>
+      <div class="quick-q" onclick="quickAsk('最近感觉容易疲劳，怎么办？')">😮‍💨 疲劳调理</div>
+    </div>`;
+
+  container.insertAdjacentHTML('afterbegin', welcomeHtml);
+}
+
+// ========== 体质映射 ==========
+function getConstitutionLabel(type) {
+  const map = {
+    'qixu': '气虚质', 'yangxu': '阳虚质', 'yinxu': '阴虚质',
+    'tanshi': '痰湿质', 'shire': '湿热质', 'xueyu': '血瘀质',
+    'qiyu': '气郁质', 'tebing': '特禀质', 'pinghe': '平和质',
+    '气虚质': '气虚质', '痰湿质': '痰湿质', '肝郁化火': '肝郁化火',
+    '肾阴虚': '肾阴虚', '肾阳虚': '肾阳虚', '血瘀质': '血瘀质',
+    '气血两虚': '气血两虚', '平和质': '平和质',
+  };
+  return map[type] || type || '';
+}
+
+// ========== 构建System Prompt ==========
+function buildSystemPrompt() {
+  const c = patientInfo?.constitution_type || patientInfo?.main_constitution || '未辨识';
+  const cLabel = getConstitutionLabel(c);
+  const prescription = patientInfo?.current_prescription || '暂无';
+  const healthPlan = patientInfo?.health_plan || '暂无';
+  const allergies = patientInfo?.allergy_history || patientInfo?.allergies || '无';
+
+  return `你是武汉市妇幼保健院女性生殖抗衰中心的AI健康助手。
+
+## 当前患者信息
+- 体质：${cLabel}
+- 当前处方：${prescription}
+- 健康计划：${healthPlan}
+- 过敏史：${allergies}
+
+## 硬性规则（绝不可违反）
+1. 你绝对不能开具处方或建议修改处方
+2. 你绝对不能给出确定性诊断
+3. 你绝对不能建议患者停药
+4. 当患者询问"是否停药/换药/加药"时，必须回复："这个问题需要您的主治医生根据面诊情况判断，建议您尽快预约复诊。"
+5. HRT期间禁用大剂量紫河车、鹿茸、蜂王浆
+6. 每条回复末尾必须附加免责声明
+
+## 你的能力范围
+✅ 可以：解释处方中药物的一般作用、提供体质相关的膳食建议、引导记录症状、提醒用药时间
+❌ 不可以：开方、改方、诊断、建议停药、替代面诊
+
+## 回复风格
+- 语气温和亲切，像一位关心的护士
+- 用通俗易懂的语言解释专业术语
+- 适当使用emoji使回复更友好
+- 如果涉及中医概念，简单解释其含义`;
+}
+
+// ========== 发送消息 ==========
+async function sendMessage(overrideText) {
+  if (isSending) return;
+
+  const input = document.getElementById('chat-input');
+  const text = (overrideText || input.value).trim();
+  if (!text && !pendingImage) return;
+
+  isSending = true;
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.disabled = true;
+
+  // 清空输入
+  input.value = '';
+  input.style.height = 'auto';
+
+  // 显示用户消息
+  let imageBase64 = null;
+  if (pendingImage) {
+    imageBase64 = pendingImage.base64;
+    appendMessage('user', text || '请帮我看看这个舌象', null, true, pendingImage.url);
+  } else {
+    appendMessage('user', text);
+  }
+  removeImage();
+
+  // 构建消息历史
+  const messages = [{ role: 'system', content: buildSystemPrompt() }];
+
+  // 加入历史上下文（最近20条）
+  const recentHistory = chatHistory.slice(-20);
+  messages.push(...recentHistory);
+
+  // 当前用户消息
+  let userContent = text || '请帮我看看这个舌象';
+  if (imageBase64) {
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: userContent + '（患者上传了一张舌象照片，请根据中医望诊理论进行初步观察描述，明确说明仅为辅助参考，不构成诊断）' },
+        { type: 'image_url', image_url: { url: imageBase64 } }
+      ]
+    });
+  } else {
+    messages.push({ role: 'user', content: userContent });
+  }
+
+  // 关键词拦截：停药/换药/加药
+  const dangerousKeywords = ['停药', '换药', '加药', '不吃药了', '停用'];
+  if (dangerousKeywords.some(k => userContent.includes(k))) {
+    const interceptReply = '这个问题需要您的主治医生根据面诊情况判断，建议您尽快预约复诊。🩺\n\n擅自停药或调整用药可能影响治疗效果，请务必咨询医生后再做决定。';
+    appendMessage('assistant', interceptReply);
+    chatHistory.push({ role: 'user', content: userContent });
+    chatHistory.push({ role: 'assistant', content: interceptReply });
+    saveChatToDB('user', userContent);
+    saveChatToDB('assistant', interceptReply);
+    isSending = false;
+    sendBtn.disabled = false;
+    return;
+  }
+
+  // 显示打字指示器
+  showTyping();
+
+  try {
+    const apiKey = localStorage.getItem('coze_access_token');
+    if (!apiKey || !apiKey.startsWith('sk-')) {
+      hideTyping();
+      appendMessage('assistant', '抱歉，AI服务尚未配置。请联系医生或管理员配置AI密钥。');
+      isSending = false;
+      sendBtn.disabled = false;
+      return;
+    }
+
+    const response = await fetch(SILICONFLOW_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: SILICONFLOW_MODEL,
+        messages: messages,
+        temperature: AI_TEMPERATURE,
+        max_tokens: 1500
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || data.message || 'AI接口错误');
+
+    const aiContent = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '（AI无响应）';
+
+    hideTyping();
+
+    // 附加免责声明
+    const fullReply = aiContent + '\n\n' + DISCLAIMER_TEXT;
+    appendMessage('assistant', fullReply);
+
+    // 更新历史
+    chatHistory.push({ role: 'user', content: userContent });
+    chatHistory.push({ role: 'assistant', content: aiContent });
+
+    // 保存到数据库
+    saveChatToDB('user', userContent, pendingImage?.url);
+    saveChatToDB('assistant', aiContent);
+
+  } catch(e) {
+    hideTyping();
+    const errMsg = '抱歉，AI暂时无法回复，请稍后再试。如急需帮助请直接联系医生。';
+    appendMessage('assistant', errMsg);
+    console.error('[AI] 请求失败:', e);
+  } finally {
+    isSending = false;
+    sendBtn.disabled = false;
+  }
+}
+
+// ========== 保存对话到数据库 ==========
+async function saveChatToDB(role, content, imageUrl) {
+  if (!supabaseClient || !patientInfo?.phone) return;
+  try {
+    await supabaseClient.from('patient_ai_chats').insert({
+      patient_id: patientInfo.id || null,
+      patient_name: patientInfo.name || '',
+      patient_phone: patientInfo.phone,
+      session_id: sessionId,
+      role: role,
+      content: content,
+      image_url: imageUrl || null,
+      model: SILICONFLOW_MODEL,
+      temperature: AI_TEMPERATURE,
+    });
+  } catch(e) { console.warn('[Supabase] 保存对话失败:', e); }
+}
+
+// ========== UI操作 ==========
+function appendMessage(role, content, imageUrl, animate = true, localImageUrl) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg-row ${role === 'user' ? 'user' : 'ai'}`;
+  if (!animate) div.style.animation = 'none';
+
+  const avatarEmoji = role === 'user' ? '👩' : '🤖';
+  let bubbleContent = formatContent(content);
+
+  // 图片
+  if (localImageUrl) {
+    bubbleContent = `<img class="msg-image" src="${localImageUrl}" alt="舌象照片" />` + (content ? `<div>${bubbleContent}</div>` : '');
+  } else if (imageUrl) {
+    bubbleContent = `<img class="msg-image" src="${imageUrl}" alt="舌象照片" />` + (content ? `<div>${bubbleContent}</div>` : '');
+  }
+
+  // AI回复添加免责区域
+  if (role === 'assistant') {
+    const disclaimerHtml = `<div class="msg-disclaimer">${DISCLAIMER_TEXT}</div>`;
+    bubbleContent += disclaimerHtml;
+  }
+
+  div.innerHTML = `
+    <div class="msg-avatar">${avatarEmoji}</div>
+    <div class="msg-bubble">${bubbleContent}</div>
+  `;
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function formatContent(text) {
+  // 简单的Markdown转换
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg-row ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="msg-bubble">
+      <div class="typing-indicator"><span></span><span></span><span></span></div>
+    </div>
+  `;
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  const container = document.getElementById('chat-messages');
+  requestAnimationFrame(() => { container.scrollTop = container.scrollHeight; });
+}
+
+// ========== 快捷提问 ==========
+function quickAsk(text) {
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+}
+
+// ========== 拍照/上传舌象 ==========
+function takePhoto() {
+  document.getElementById('photo-input').click();
+}
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // 文件大小限制 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    alert('图片大小不能超过5MB');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    pendingImage = {
+      file: file,
+      base64: e.target.result,
+      url: URL.createObjectURL(file)
+    };
+    // 显示预览
+    document.getElementById('image-preview-thumb').src = pendingImage.url;
+    document.getElementById('image-preview-bar').classList.add('show');
+  };
+  reader.readAsDataURL(file);
+  // 重置input以便重复选择
+  event.target.value = '';
+}
+
+function removeImage() {
+  if (pendingImage?.url) URL.revokeObjectURL(pendingImage.url);
+  pendingImage = null;
+  document.getElementById('image-preview-bar').classList.remove('show');
+  document.getElementById('photo-input').value = '';
+}
+
+// ========== 返回 ==========
+function goBack() {
+  // 如果是iframe嵌入，通知父页面
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'ai-assistant-close' }, '*');
+  }
+  // 如果有referrer，尝试返回
+  if (document.referrer) {
+    window.history.back();
+  }
+}
+
+// ========== 输入框自适应高度 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  const textarea = document.getElementById('chat-input');
+  textarea.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+});
+
+// ========== 启动 ==========
+init();
+  </script>
+</body>
+</html>
