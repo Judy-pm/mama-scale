@@ -335,11 +335,96 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ========== Token 用量条 ========== */
+.token-usage-bar {
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border);
+  padding: 5px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+.token-usage-bar .token-label {
+  white-space: nowrap;
+  min-width: fit-content;
+}
+.token-usage-bar .token-progress {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.token-usage-bar .token-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.token-usage-bar .token-progress-fill.warning {
+  background: linear-gradient(90deg, var(--color-orange), var(--color-red));
+}
+.token-usage-bar .token-value {
+  white-space: nowrap;
+  min-width: fit-content;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Token 额度用完提示卡 */
+.token-cap-card {
+  background: linear-gradient(135deg, rgba(240,166,132,0.08), rgba(126,190,232,0.08));
+  border: 1px dashed var(--color-accent);
+  border-radius: 14px;
+  padding: 24px 20px;
+  margin: 12px 0;
+  text-align: center;
+  animation: msgIn 0.4s ease;
+}
+.token-cap-card .cap-icon { font-size: 36px; margin-bottom: 8px; }
+.token-cap-card .cap-title { font-size: 16px; font-weight: 600; color: var(--color-accent-dark); margin-bottom: 6px; }
+.token-cap-card .cap-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+
+/* 输入栏禁用态 */
+.chat-input-bar.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.chat-input-bar.disabled .chat-textarea {
+  background: #eee;
+  color: #999;
+}
+.chat-input-bar.disabled .send-btn,
+.chat-input-bar.disabled .photo-btn {
+  opacity: 0.4;
+}
+
+/* 管理员 Token 详情 */
+.admin-token-detail {
+  display: none;
+  background: #f5f5f5;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: #888;
+  flex-shrink: 0;
+  border-top: 1px solid #e0e0e0;
+}
+.admin-token-detail.show { display: block; }
+.admin-token-detail code {
+  background: #e8e8e8;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
 /* ========== 响应式 ========== */
 @media (max-width: 480px) {
   .msg-bubble { max-width: 85%; }
   .quick-questions { gap: 6px; }
   .quick-q { font-size: 12px; padding: 6px 12px; }
+  .token-usage-bar { font-size: 11px; padding: 4px 12px; }
 }
   </style>
 </head>
@@ -381,8 +466,18 @@ body {
       <button class="remove-btn" onclick="removeImage()">✕</button>
     </div>
 
+    <!-- Token 用量条 -->
+    <div class="token-usage-bar" id="token-usage-bar">
+      <span class="token-label">📊 今日额度</span>
+      <div class="token-progress"><div class="token-progress-fill" id="token-progress-fill" style="width:0%"></div></div>
+      <span class="token-value" id="token-value">0 / 50万</span>
+    </div>
+
+    <!-- 管理员 Token 详情（仅 admin 可见） -->
+    <div class="admin-token-detail" id="admin-token-detail"></div>
+
     <!-- 输入栏 -->
-    <div class="chat-input-bar">
+    <div class="chat-input-bar" id="chat-input-bar">
       <button class="input-btn photo-btn" onclick="takePhoto()" title="拍照/上传舌象">📷</button>
       <textarea class="chat-textarea" id="chat-input" placeholder="请输入您的健康问题..." rows="1" maxlength="500"></textarea>
       <button class="input-btn send-btn" id="send-btn" onclick="sendMessage()" title="发送">➤</button>
@@ -400,9 +495,126 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const SILICONFLOW_URL = 'https://api.siliconflow.cn/v1/chat/completions';
 const SILICONFLOW_MODEL = 'deepseek-ai/DeepSeek-V3';
 const AI_TEMPERATURE = 0.3;
+const DAILY_TOKEN_CAP = 500000;  // 每日50万token封顶
+const TOKEN_STORAGE_KEY = 'daily_token_usage';
 
 // 免责声明文本
 const DISCLAIMER_TEXT = '⚠️ 本回复仅供参考，不能替代医生面诊和处方。如有不适请及时就诊。';
+
+// ========== 每日 Token 用量管理 ==========
+function getTodayStr() {
+  const now = new Date();
+  return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+}
+
+function getDailyTokenUsage() {
+  try {
+    const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!raw) return 0;
+    const data = JSON.parse(raw);
+    // 日期不同则自动重置
+    if (data.date !== getTodayStr()) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ date: getTodayStr(), tokens: 0 }));
+      return 0;
+    }
+    return data.tokens || 0;
+  } catch(e) {
+    return 0;
+  }
+}
+
+function addTokenUsage(tokens) {
+  if (!tokens || tokens <= 0) return;
+  const current = getDailyTokenUsage();
+  const newTotal = current + tokens;
+  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ date: getTodayStr(), tokens: newTotal }));
+  updateTokenUI(newTotal);
+  // 写入管理员详细记录
+  updateAdminDetail(newTotal, tokens);
+}
+
+function isTokenCapReached() {
+  return getDailyTokenUsage() >= DAILY_TOKEN_CAP;
+}
+
+function formatTokenCount(n) {
+  if (n >= 10000) {
+    return (n / 10000).toFixed(n >= 100000 ? 1 : 2) + '万';
+  }
+  return n.toLocaleString();
+}
+
+function updateTokenUI(currentTokens) {
+  if (currentTokens === undefined) currentTokens = getDailyTokenUsage();
+  const pct = Math.min((currentTokens / DAILY_TOKEN_CAP) * 100, 100);
+  const fill = document.getElementById('token-progress-fill');
+  const value = document.getElementById('token-value');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.className = 'token-progress-fill' + (pct >= 80 ? ' warning' : '');
+  }
+  if (value) {
+    value.textContent = formatTokenCount(currentTokens) + ' / 50万';
+  }
+  // 检查是否封顶
+  applyTokenCapState(currentTokens >= DAILY_TOKEN_CAP);
+}
+
+function applyTokenCapState(capReached) {
+  const inputBar = document.getElementById('chat-input-bar');
+  const textarea = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  if (capReached) {
+    inputBar.classList.add('disabled');
+    textarea.placeholder = '今日 AI 对话额度已用完，明天再来哦~';
+    textarea.disabled = true;
+    sendBtn.disabled = true;
+    // 显示封顶提示卡（仅一次）
+    showCapCardIfNeeded();
+  } else {
+    inputBar.classList.remove('disabled');
+    textarea.placeholder = '请输入您的健康问题...';
+    textarea.disabled = false;
+    sendBtn.disabled = false;
+    removeCapCard();
+  }
+}
+
+function showCapCardIfNeeded() {
+  if (document.getElementById('token-cap-card')) return;
+  const container = document.getElementById('chat-messages');
+  const card = document.createElement('div');
+  card.id = 'token-cap-card';
+  card.className = 'token-cap-card';
+  card.innerHTML = `
+    <div class="cap-icon">🌙</div>
+    <div class="cap-title">今日 AI 对话额度已用完，明天再来哦~</div>
+    <div class="cap-desc">每日额度 50 万 token，为您提供更稳定的服务保障<br/>明天 0 点自动恢复，感谢理解 ❤️</div>
+  `;
+  container.appendChild(card);
+  scrollToBottom();
+}
+
+function removeCapCard() {
+  const card = document.getElementById('token-cap-card');
+  if (card) card.remove();
+}
+
+// 管理员模式：URL 含 admin=1 时显示详细 token 信息
+function isAdminMode() {
+  return new URLSearchParams(window.location.search).has('admin');
+}
+
+function updateAdminDetail(totalTokens, lastAddTokens) {
+  if (!isAdminMode()) return;
+  const el = document.getElementById('admin-token-detail');
+  if (!el) return;
+  const remaining = Math.max(0, DAILY_TOKEN_CAP - totalTokens);
+  const usedPct = ((totalTokens / DAILY_TOKEN_CAP) * 100).toFixed(2);
+  const today = getTodayStr();
+  el.innerHTML = `🔑 管理员视图 | 日期: <code>${today}</code> | 本次消耗: <code>${lastAddTokens}</code> | 今日累计: <code>${totalTokens.toLocaleString()}</code> / ${DAILY_TOKEN_CAP.toLocaleString()} (${usedPct}%) | 剩余: <code>${remaining.toLocaleString()}</code>`;
+  el.classList.add('show');
+}
 
 // ========== Supabase 客户端 ==========
 let supabaseClient = null;
@@ -465,6 +677,13 @@ async function init() {
   // 显示界面
   document.getElementById('loading-page').style.display = 'none';
   document.getElementById('chat-app').style.display = 'flex';
+
+  // 初始化 Token 用量 UI
+  updateTokenUI();
+  // 管理员模式下显示初始详情
+  if (isAdminMode()) {
+    updateAdminDetail(getDailyTokenUsage(), 0);
+  }
 
   // 渲染欢迎区域
   renderWelcome();
@@ -577,6 +796,12 @@ function buildSystemPrompt() {
 async function sendMessage(overrideText) {
   if (isSending) return;
 
+  // Token 封顶检查
+  if (isTokenCapReached()) {
+    applyTokenCapState(true);
+    return;
+  }
+
   const input = document.getElementById('chat-input');
   const text = (overrideText || input.value).trim();
   if (!text && !pendingImage) return;
@@ -663,6 +888,13 @@ async function sendMessage(overrideText) {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error?.message || data.message || 'AI接口错误');
+
+    // 统计 token 用量
+    const tokenUsage = (data.usage && data.usage.total_tokens) ||
+                       ((data.usage && data.usage.prompt_tokens || 0) + (data.usage && data.usage.completion_tokens || 0));
+    if (tokenUsage > 0) {
+      addTokenUsage(tokenUsage);
+    }
 
     const aiContent = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '（AI无响应）';
 
@@ -775,6 +1007,10 @@ function scrollToBottom() {
 
 // ========== 快捷提问 ==========
 function quickAsk(text) {
+  if (isTokenCapReached()) {
+    applyTokenCapState(true);
+    return;
+  }
   document.getElementById('chat-input').value = text;
   sendMessage();
 }
@@ -839,7 +1075,9 @@ document.addEventListener('DOMContentLoaded', () => {
   textarea.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if (!isTokenCapReached()) {
+        sendMessage();
+      }
     }
   });
 });
