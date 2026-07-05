@@ -1314,6 +1314,123 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   .hp-template-grid { grid-template-columns: repeat(2, 1fr); }
   .pd-metric-grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* ========== 辨证膳食 v1.0 ========== */
+.diet-tabs {
+  display: flex; gap: 0; border-bottom: 2px solid var(--color-border);
+  margin-bottom: 20px; overflow-x: auto;
+}
+.diet-tab {
+  padding: 10px 18px; font-size: 14px; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; color: var(--color-text-secondary);
+  transition: all 0.2s; font-weight: 500;
+}
+.diet-tab:hover { color: var(--color-primary); }
+.diet-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+
+.diet-card {
+  background: var(--color-white); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.diet-card h4 {
+  font-size: 16px; color: var(--color-primary-dark); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.diet-section {
+  margin-bottom: 18px;
+}
+.diet-section:last-child { margin-bottom: 0; }
+.diet-section-title {
+  font-size: 14px; font-weight: 600; color: var(--color-text);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+
+.diet-food-tags {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.diet-food-tag {
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  transition: all 0.2s;
+}
+.diet-food-tag.recommend {
+  background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7;
+}
+.diet-food-tag.contraindicate {
+  background: #FFEBEE; color: #C62828; border: 1px solid #EF9A9A;
+}
+
+.diet-recipe-item {
+  background: var(--color-primary-bg); border-radius: 10px; padding: 14px;
+  margin-bottom: 10px; border: 1px solid var(--color-border);
+}
+.diet-recipe-name {
+  font-size: 15px; font-weight: 600; color: var(--color-primary-dark); margin-bottom: 4px;
+}
+.diet-recipe-detail {
+  font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;
+}
+.diet-recipe-freq {
+  display: inline-block; background: linear-gradient(135deg, #7EBEE8, #4A9AC8);
+  color: white; padding: 2px 10px; border-radius: 10px; font-size: 11px;
+  margin-top: 6px; font-weight: 500;
+}
+
+.diet-tea-item {
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 10px; padding: 12px; margin-bottom: 8px;
+  border: 1px solid #FFE0B2;
+}
+.diet-tea-name { font-size: 14px; font-weight: 600; color: #E65100; }
+.diet-tea-detail { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
+
+.diet-behavior-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0;
+  font-size: 13px; color: #C62828;
+}
+
+.diet-constitution-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #7EBEE8, #4A9AC8);
+  color: white; padding: 6px 16px; border-radius: 20px;
+  font-size: 14px; font-weight: 600;
+}
+
+.diet-syndrome-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: linear-gradient(135deg, #F0A684, #D88B6A);
+  color: white; padding: 4px 12px; border-radius: 16px;
+  font-size: 13px; font-weight: 500; margin-left: 8px;
+}
+
+.diet-action-bar {
+  display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;
+}
+
+.diet-edit-area {
+  display: none; margin-top: 16px;
+}
+.diet-edit-area.show { display: block; }
+.diet-edit-area textarea {
+  width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--color-border);
+  border-radius: 10px; font-size: 14px; line-height: 1.6; color: var(--color-text);
+  background: var(--color-bg); resize: vertical; font-family: inherit;
+}
+.diet-edit-area textarea:focus { border-color: var(--color-primary); background: white; }
+
+.diet-disclaimer {
+  background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 8px;
+  padding: 10px 14px; margin-top: 16px;
+  font-size: 12px; color: #E65100; line-height: 1.5;
+}
+
+.diet-empty-state {
+  text-align: center; padding: 48px 20px; color: var(--color-gray);
+}
+.diet-empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.diet-empty-state .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.diet-empty-state .empty-desc { font-size: 13px; }
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -12927,6 +13044,115 @@ function coze_init_sample_rules() {
 // 首次加载时检查并预填示例
 coze_init_sample_rules();
 
+// ========== 辨证膳食 v1.0 ==========
+
+// 体质-膳食映射规则库（与数据库diet_rules同步的本地副本，用于快速渲染和离线兜底）
+const DIET_RULES_LOCAL = {
+  '气虚质': {
+    foods: ['山药','黄芪','大枣','小米','糯米','扁豆','莲子','芡实','白术','甘草'],
+    recipes: [
+      { name: '黄芪炖鸡', freq: '每周2-3次', ingredients: '黄芪30g、鸡1只、生姜3片', method: '黄芪布包，与鸡同炖1.5小时，调味食用' },
+      { name: '山药粥', freq: '每日早餐', ingredients: '鲜山药100g、大米50g', method: '山药去皮切块，与米同煮为粥' },
+      { name: '大枣桂圆粥', freq: '每周3-4次', ingredients: '大枣10枚、桂圆肉15g、糯米50g', method: '同煮为粥，早晚食用' }
+    ],
+    teas: [
+      { name: '大枣桂圆茶', freq: '每日1杯', ingredients: '大枣5枚、桂圆肉10g', method: '开水冲泡，代茶饮' },
+      { name: '黄芪枸杞茶', freq: '每日1杯', ingredients: '黄芪15g、枸杞10g', method: '开水冲泡或小火煮10分钟' }
+    ],
+    contraindicatedFoods: ['生冷寒凉食物','过度油腻','苦瓜','绿豆','西瓜','冷饮'],
+    contraindicatedBehaviors: ['暴饮暴食','过度劳累','熬夜']
+  },
+  '痰湿质': {
+    foods: ['薏米','茯苓','陈皮','冬瓜','白萝卜','赤小豆','荷叶','山药','白扁豆'],
+    recipes: [
+      { name: '薏米茯苓粥', freq: '每日早餐', ingredients: '薏米30g、茯苓粉15g、大米50g', method: '薏米提前浸泡，与茯苓粉、大米同煮为粥' },
+      { name: '陈皮普洱茶', freq: '饭后饮用', ingredients: '陈皮5g、普洱茶3g', method: '开水冲泡，饭后半小时饮用' }
+    ],
+    teas: [
+      { name: '陈皮普洱茶', freq: '饭后饮用', ingredients: '陈皮5g、普洱茶3g', method: '开水冲泡' },
+      { name: '荷叶山楂茶', freq: '每日1杯', ingredients: '干荷叶10g、山楂10g', method: '开水冲泡或煮5分钟' }
+    ],
+    contraindicatedFoods: ['甜腻食物','肥甘厚味','冷饮','奶油蛋糕','油炸食品','含糖饮料'],
+    contraindicatedBehaviors: ['久坐不动','暴饮暴食','睡前进食']
+  },
+  '肝郁化火': {
+    foods: ['菊花','玫瑰花','芹菜','百合','莲子','绿豆','苦瓜','决明子','枸杞'],
+    recipes: [
+      { name: '菊花玫瑰茶', freq: '每日1-2杯', ingredients: '菊花5g、玫瑰花3g', method: '开水冲泡，代茶饮' },
+      { name: '芹菜百合炒', freq: '每周2-3次', ingredients: '芹菜200g、鲜百合50g', method: '清炒，少油少盐' }
+    ],
+    teas: [
+      { name: '菊花玫瑰茶', freq: '每日1-2杯', ingredients: '菊花5g、玫瑰花3g', method: '开水冲泡' },
+      { name: '决明子枸杞茶', freq: '每日1杯', ingredients: '决明子10g、枸杞10g', method: '开水冲泡或小火煮5分钟' }
+    ],
+    contraindicatedFoods: ['辛辣燥热食物','酒精','咖啡过量','羊肉','辣椒','榴莲'],
+    contraindicatedBehaviors: ['情绪激动','熬夜','过度焦虑']
+  },
+  '肾阴虚': {
+    foods: ['黑豆','枸杞','桑葚','黑芝麻','银耳','百合','山药','鸭肉','甲鱼'],
+    recipes: [
+      { name: '黑豆枸杞粥', freq: '每周3-4次', ingredients: '黑豆30g、枸杞15g、大米50g', method: '黑豆提前浸泡，与枸杞、大米同煮' },
+      { name: '桑葚膏', freq: '每日1勺', ingredients: '桑葚500g、蜂蜜适量', method: '桑葚熬膏，兑蜂蜜收膏' }
+    ],
+    teas: [
+      { name: '枸杞菊花茶', freq: '每日1杯', ingredients: '枸杞10g、菊花3g', method: '开水冲泡' },
+      { name: '黑芝麻核桃糊', freq: '每周2-3次', ingredients: '黑芝麻粉20g、核桃粉10g', method: '开水冲调' }
+    ],
+    contraindicatedFoods: ['温燥伤阴之品','羊肉','辣椒','韭菜','生姜过量','大蒜过量'],
+    contraindicatedBehaviors: ['熬夜','过度房事','大汗淋漓']
+  },
+  '肾阳虚': {
+    foods: ['核桃','羊肉','韭菜','肉桂','干姜','黑豆','山药','枸杞','栗子'],
+    recipes: [
+      { name: '核桃仁粥', freq: '每周3-4次', ingredients: '核桃仁30g、大米50g', method: '核桃仁捣碎，与米同煮为粥' },
+      { name: '杜仲腰花', freq: '每周1-2次', ingredients: '杜仲15g、猪腰1对', method: '杜仲煎汁，腰花炒制时加入' }
+    ],
+    teas: [
+      { name: '肉桂红茶', freq: '每日1杯', ingredients: '肉桂3g、红茶2g', method: '开水冲泡' },
+      { name: '干姜大枣茶', freq: '每日1杯', ingredients: '干姜3片、大枣5枚', method: '开水冲泡或煮5分钟' }
+    ],
+    contraindicatedFoods: ['寒凉生冷食物','西瓜','绿豆','苦瓜','冷饮','螃蟹'],
+    contraindicatedBehaviors: ['贪凉受寒','久坐湿地','过度劳累']
+  },
+  '血瘀质': {
+    foods: ['山楂','黑木耳','红糖','姜','玫瑰花','桃仁','当归','洋葱'],
+    recipes: [
+      { name: '山楂红糖水', freq: '经前1周每日1杯', ingredients: '山楂15g、红糖20g', method: '山楂煮水10分钟，加入红糖' },
+      { name: '黑木耳红枣粥', freq: '每周2-3次', ingredients: '黑木耳10g、红枣5枚、大米50g', method: '木耳泡发撕小朵，与枣、米同煮' }
+    ],
+    teas: [
+      { name: '玫瑰花茶', freq: '每日1杯', ingredients: '玫瑰花5g', method: '开水冲泡' },
+      { name: '山楂陈皮茶', freq: '饭后饮用', ingredients: '山楂10g、陈皮3g', method: '开水冲泡' }
+    ],
+    contraindicatedFoods: ['寒凉收涩之品','乌梅','石榴','柿子','冷饮'],
+    contraindicatedBehaviors: ['久坐不动','情志抑郁','外伤后不活动']
+  },
+  '气血两虚': {
+    foods: ['当归','阿胶','龙眼肉','猪肝','大枣','枸杞','黄芪','黑芝麻','红糖'],
+    recipes: [
+      { name: '当归生姜羊肉汤', freq: '每周2次', ingredients: '当归15g、生姜30g、羊肉200g', method: '羊肉焯水，与当归、生姜同炖1.5小时' },
+      { name: '阿胶糕', freq: '每日1片', ingredients: '阿胶250g、核桃仁150g、黑芝麻150g、红枣150g、冰糖适量', method: '阿胶烊化，加入核桃、芝麻、枣泥收膏，冷却切片' }
+    ],
+    teas: [
+      { name: '大枣枸杞茶', freq: '每日1杯', ingredients: '大枣5枚、枸杞10g', method: '开水冲泡' },
+      { name: '龙眼肉红枣茶', freq: '每日1杯', ingredients: '龙眼肉10g、红枣3枚', method: '开水冲泡或煮5分钟' }
+    ],
+    contraindicatedFoods: ['耗气伤血之品','浓茶','咖啡过量','生冷食物','过度节食'],
+    contraindicatedBehaviors: ['过度劳累','长期熬夜','节食减肥']
+  }
+};
+
+// 体质名映射（兼容数据库不同写法）
+const CONSTITUTION_MAP = {
+  'qixu': '气虚质', 'yangxu': '肾阳虚', 'yinxu': '肾阴虚',
+  'tanshi': '痰湿质', 'shire': '湿热质', 'xueyu': '血瘀质',
+  'qiyu': '气郁质', 'tebing': '特禀质', 'pinghe': '平和质',
+  '气虚质': '气虚质', '痰湿质': '痰湿质', '肝郁化火': '肝郁化火',
+  '肾阴虚': '肾阴虚', '肾阳虚': '肾阳虚', '血瘀质': '血瘀质',
+  '气血两虚': '气血两虚', '平和质': '平和质',
+};
+
+
 const AdminApp = {
   async init() {
     const ok = await CloudBaseManager.init();
@@ -14320,6 +14546,7 @@ const AdminApp = {
           <button class="hp-filter-btn${filter==='active'?' active':''}" onclick="AdminApp.hpSetFilter('active')">活跃中(${statusCounts.active})</button>
           <button class="hp-filter-btn${filter==='completed'?' active':''}" onclick="AdminApp.hpSetFilter('completed')">已完成(${statusCounts.completed})</button>
           <button class="hp-filter-btn${filter==='expired'?' active':''}" onclick="AdminApp.hpSetFilter('expired')">已过期(${statusCounts.expired})</button>
+          <button class="hp-filter-btn" onclick="AdminApp.hpShowDietTab()" id="hp-diet-tab-btn">🥣 辨证膳食</button>
         </div>
         <div id="hp-plan-list">`;
     
@@ -14760,7 +14987,9 @@ const AdminApp = {
       html += '<div style="color:var(--color-gray);font-size:14px;">暂无打卡记录</div>';
     }
     html += '</div>';
-    
+
+    // 辨证膳食卡片
+    html += await AdminApp.hpRenderDietCard(plan);
     document.getElementById('health-plan-content').innerHTML = html;
   },
 
@@ -18496,7 +18725,499 @@ updateCozeStatus() {
     tokenBadgeEl.textContent = configured ? '✅ sk-已配置' : '—';
     tokenBadgeEl.style.color = configured ? 'var(--color-green)' : 'var(--color-gray)';
   }
+},
+
+
+/**
+ * 辨证膳食：渲染健康计划详情中的膳食卡片
+ * @param {Object} plan - 健康计划对象
+ * @returns {string} HTML字符串
+ */
+async hpRenderDietCard(plan) {
+  // 获取患者体质
+  const constitution = await this._getPatientConstitution(plan.patient_name, plan.patient_phone);
+  const constitutionLabel = CONSTITUTION_MAP[constitution] || constitution || '';
+  
+  // 尝试从数据库加载已有膳食方案
+  let dietPlan = null;
+  if (supabaseClient) {
+    try {
+      const { data } = await supabaseClient.from('diet_plans')
+        .select('*')
+        .eq('patient_name', plan.patient_name)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) dietPlan = data[0];
+    } catch(e) { console.warn('[膳食] 加载方案失败:', e); }
+  }
+
+  let html = '<div class="info-card" id="diet-card">';
+  html += '<h4>🥣 辨证膳食方案</h4>';
+  
+  if (!constitutionLabel) {
+    html += `
+      <div class="diet-empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">暂无体质辨识结果</div>
+        <div class="empty-desc">请先完成中医体质辨识评估，系统将自动生成个性化膳食方案</div>
+      </div>`;
+    html += '</div>';
+    return html;
+  }
+
+  // 体质标签
+  html += `<div style="margin-bottom:16px;">`;
+  html += `<span class="diet-constitution-badge">🧬 ${constitutionLabel}</span>`;
+  if (dietPlan?.syndrome_type) {
+    html += `<span class="diet-syndrome-badge">📍 ${dietPlan.syndrome_type}</span>`;
+  }
+  html += '</div>';
+
+  // 使用已有方案或本地规则
+  let recommendations, contraindications;
+  if (dietPlan && dietPlan.doctor_confirmed) {
+    // 使用医生确认过的方案
+    recommendations = dietPlan.recommendations || {};
+    contraindications = dietPlan.contraindications || {};
+  } else {
+    // 使用本地规则库
+    const rule = DIET_RULES_LOCAL[constitutionLabel];
+    if (!rule) {
+      html += `
+        <div class="diet-empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">暂无该体质的膳食规则</div>
+          <div class="empty-desc">可点击「AI生成」通过AI为该体质生成膳食方案</div>
+        </div>`;
+      html += `<div class="diet-action-bar">
+        <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">🤖 AI生成膳食方案</button>
+      </div>`;
+      html += '</div>';
+      return html;
+    }
+    recommendations = {
+      foods: rule.foods,
+      recipes: rule.recipes,
+      teas: rule.teas
+    };
+    contraindications = {
+      foods: rule.contraindicatedFoods,
+      behaviors: rule.contraindicatedBehaviors
+    };
+  }
+
+  // 推荐食材
+  const foods = recommendations.foods || [];
+  if (foods.length > 0) {
+    html += '<div class="diet-section">';
+    html += '<div class="diet-section-title">✅ 推荐食材</div>';
+    html += '<div class="diet-food-tags">';
+    foods.forEach(f => {
+      html += `<span class="diet-food-tag recommend">${f}</span>`;
+    });
+    html += '</div></div>';
+  }
+
+  // 推荐食谱
+  const recipes = recommendations.recipes || [];
+  if (recipes.length > 0) {
+    html += '<div class="diet-section">';
+    html += '<div class="diet-section-title">🍲 推荐食疗方</div>';
+    recipes.forEach(r => {
+      html += `<div class="diet-recipe-item">
+        <div class="diet-recipe-name">${r.name}</div>
+        <div class="diet-recipe-detail">食材：${r.ingredients}</div>
+        ${r.method ? `<div class="diet-recipe-detail">做法：${r.method}</div>` : ''}
+        <span class="diet-recipe-freq">${r.freq}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // 推荐茶饮
+  const teas = recommendations.teas || [];
+  if (teas.length > 0) {
+    html += '<div class="diet-section">';
+    html += '<div class="diet-section-title">🍵 食疗茶饮</div>';
+    teas.forEach(t => {
+      html += `<div class="diet-tea-item">
+        <div class="diet-tea-name">${t.name}</div>
+        <div class="diet-tea-detail">食材：${t.ingredients} · ${t.method || '开水冲泡'}</div>
+        <span class="diet-recipe-freq">${t.freq}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // 禁忌
+  const contrFoods = contraindications.foods || [];
+  const contrBehaviors = contraindications.behaviors || [];
+  if (contrFoods.length > 0 || contrBehaviors.length > 0) {
+    html += '<div class="diet-section">';
+    html += '<div class="diet-section-title">❌ 禁忌</div>';
+    if (contrFoods.length > 0) {
+      html += '<div class="diet-food-tags" style="margin-bottom:8px;">';
+      contrFoods.forEach(f => {
+        html += `<span class="diet-food-tag contraindicate">${f}</span>`;
+      });
+      html += '</div>';
+    }
+    contrBehaviors.forEach(b => {
+      html += `<div class="diet-behavior-item">🚫 ${b}</div>`;
+    });
+    html += '</div>';
+  }
+
+  // 免责声明
+  html += `<div class="diet-disclaimer">
+    ⚠️ 以上膳食建议基于中医体质辨识，仅供健康管理参考。所有食材均限定在卫健委公布的药食同源目录内，不构成临床诊断或治疗建议。如有特殊饮食需求请咨询医生。
+  </div>`;
+
+  // 操作按钮
+  html += `<div class="diet-action-bar">
+    <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">🤖 AI重新生成</button>
+    <button class="btn btn-secondary btn-sm" onclick="AdminApp.dietToggleEdit()">✏️ 手动编辑</button>
+    <button class="btn btn-outline btn-sm" onclick="AdminApp.dietConfirm('${plan.patient_name}','${constitutionLabel}')">✅ 确认方案</button>
+    <button class="btn btn-outline btn-sm" onclick="AdminApp.dietPrint('${plan.patient_name}','${constitutionLabel}')">🖨️ 打印</button>
+  </div>`;
+
+  // 编辑区
+  html += `<div class="diet-edit-area" id="diet-edit-area">
+    <textarea id="diet-edit-content" placeholder="在此编辑膳食方案内容...">${JSON.stringify({ recommendations, contraindications }, null, 2)}</textarea>
+    <div style="margin-top:10px;display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="AdminApp.dietSaveEdit('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">💾 保存修改</button>
+      <button class="btn btn-outline btn-sm" onclick="AdminApp.dietToggleEdit()">取消</button>
+    </div>
+  </div>`;
+
+  html += '</div>';
+  return html;
+},
+
+/**
+ * 获取患者体质
+ */
+async _getPatientConstitution(name, phone) {
+  // 先从patients表查
+  if (supabaseClient) {
+    try {
+      let query = supabaseClient.from('patients').select('main_constitution,constitution_type').limit(1);
+      if (phone) query = query.eq('phone', phone);
+      else query = query.eq('name', name);
+      const { data } = await query;
+      if (data && data.length > 0) {
+        return data[0].constitution_type || data[0].main_constitution || '';
+      }
+    } catch(e) {}
+  }
+  // 兜底：从本地缓存查
+  try {
+    const patients = JSON.parse(localStorage.getItem('guiyuan_patients') || '[]');
+    const p = patients.find(p => p.name === name || (phone && p.phone === phone));
+    if (p) return p.constitution_type || p.main_constitution || '';
+  } catch(e) {}
+  return '';
+},
+
+/**
+ * AI生成膳食方案
+ */
+async dietAIGenerate(patientName, patientPhone, constitutionType) {
+  if (!confirm(`确定为 ${patientName}（${constitutionType}）生成AI膳食方案？\n将基于体质规则库和AI分析生成个性化建议。`)) return;
+
+  const apiKey = localStorage.getItem('coze_access_token');
+  if (!apiKey || !apiKey.startsWith('sk-')) {
+    alert('请先在设置中配置 DeepSeek API 密钥');
+    return;
+  }
+
+  const btn = event.target;
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ 生成中...'; btn.disabled = true;
+
+  try {
+    const prompt = `你是武汉市妇幼保健院女性生殖抗衰中心的AI膳食顾问。
+
+## 任务
+根据以下体质类型，生成个性化的辨证膳食方案。
+
+## 患者体质
+${constitutionType}
+
+## 硬性规则
+1. 所有推荐的食材和药材必须严格限定在卫健委公布的药食同源目录内
+2. 不可推荐超出药食同源范围的药材（如人参、冬虫夏草等非药食同源品种）
+3. 不区分治疗期与日常养生，统一为一个膳食方案层级
+4. 回复必须是纯JSON格式
+
+## 输出格式（纯JSON，不要用markdown代码块）
+{
+  "foods": ["食材1", "食材2", ...],
+  "recipes": [
+    {"name": "食疗方名称", "freq": "食用频率", "ingredients": "食材及用量", "method": "做法简述"}
+  ],
+  "teas": [
+    {"name": "茶饮名称", "freq": "饮用频率", "ingredients": "食材及用量", "method": "冲泡方法"}
+  ],
+  "contraindicatedFoods": ["禁忌食物1", "禁忌食物2", ...],
+  "contraindicatedBehaviors": ["禁忌行为1", "禁忌行为2", ...]
 }
+
+请确保推荐3-5个食疗方、2-3个茶饮方，食材用量具体明确。`;
+
+    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-ai/DeepSeek-V3',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 2000
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || 'AI接口错误');
+
+    const content = data.choices?.[0]?.message?.content || '';
+    // 提取JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AI返回格式异常，无法解析膳食方案');
+
+    const dietData = JSON.parse(jsonMatch[0]);
+
+    // 保存到数据库
+    if (supabaseClient) {
+      const plan = {
+        patient_name: patientName,
+        patient_phone: patientPhone || null,
+        constitution_type: constitutionType,
+        recommendations: {
+          foods: dietData.foods || [],
+          recipes: dietData.recipes || [],
+          teas: dietData.teas || []
+        },
+        contraindications: {
+          foods: dietData.contraindicatedFoods || [],
+          behaviors: dietData.contraindicatedBehaviors || []
+        },
+        ai_generated: true,
+        doctor_confirmed: false,
+        created_by: 'AI'
+      };
+      
+      await supabaseClient.from('diet_plans').insert(plan);
+    }
+
+    // 更新本地规则缓存
+    DIET_RULES_LOCAL[constitutionType] = {
+      foods: dietData.foods || [],
+      recipes: dietData.recipes || [],
+      teas: dietData.teas || [],
+      contraindicatedFoods: dietData.contraindicatedFoods || [],
+      contraindicatedBehaviors: dietData.contraindicatedBehaviors || []
+    };
+
+    alert('✅ AI膳食方案已生成！请查看并确认。');
+    // 刷新当前视图
+    if (this._currentPlanId) {
+      this.hpViewPlan(this._currentPlanId);
+    }
+  } catch(e) {
+    alert('AI生成失败：' + e.message);
+  } finally {
+    btn.innerHTML = origText; btn.disabled = false;
+  }
+},
+
+/**
+ * 切换编辑区域
+ */
+dietToggleEdit() {
+  const area = document.getElementById('diet-edit-area');
+  if (area) area.classList.toggle('show');
+},
+
+/**
+ * 保存手动编辑
+ */
+async dietSaveEdit(patientName, patientPhone, constitutionType) {
+  const textarea = document.getElementById('diet-edit-content');
+  if (!textarea) return;
+  
+  try {
+    const dietData = JSON.parse(textarea.value);
+    
+    if (supabaseClient) {
+      const plan = {
+        patient_name: patientName,
+        patient_phone: patientPhone || null,
+        constitution_type: constitutionType,
+        recommendations: dietData.recommendations || {},
+        contraindications: dietData.contraindications || {},
+        ai_generated: false,
+        doctor_confirmed: true,
+        created_by: '医生手动编辑'
+      };
+      await supabaseClient.from('diet_plans').insert(plan);
+    }
+
+    // 更新本地缓存
+    const rec = dietData.recommendations || {};
+    const con = dietData.contraindications || {};
+    DIET_RULES_LOCAL[constitutionType] = {
+      foods: rec.foods || [],
+      recipes: rec.recipes || [],
+      teas: rec.teas || [],
+      contraindicatedFoods: con.foods || [],
+      contraindicatedBehaviors: con.behaviors || []
+    };
+
+    alert('✅ 膳食方案已保存！');
+    this.dietToggleEdit();
+    if (this._currentPlanId) {
+      this.hpViewPlan(this._currentPlanId);
+    }
+  } catch(e) {
+    alert('保存失败，请检查JSON格式是否正确：' + e.message);
+  }
+},
+
+/**
+ * 医生确认方案
+ */
+async dietConfirm(patientName, constitutionType) {
+  if (!confirm('确认此膳食方案？确认后将推送至患者端。')) return;
+  
+  if (supabaseClient) {
+    try {
+      await supabaseClient.from('diet_plans')
+        .update({ doctor_confirmed: true, updated_at: new Date().toISOString() })
+        .eq('patient_name', patientName)
+        .eq('constitution_type', constitutionType);
+      alert('✅ 膳食方案已确认并推送至患者端！');
+    } catch(e) {
+      alert('确认失败：' + e.message);
+    }
+  }
+},
+
+/**
+ * 打印膳食方案
+ */
+dietPrint(patientName, constitutionType) {
+  const dietCard = document.getElementById('diet-card');
+  if (!dietCard) { alert('未找到膳食方案'); return; }
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>辨证膳食方案 - ${patientName}</title>
+    <style>
+      body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; padding: 32px; color: #333; line-height: 1.8; }
+      h1 { color: #4A9AC8; border-bottom: 2px solid #7EBEE8; padding-bottom: 8px; }
+      h3 { color: #5A4D7A; margin-top: 20px; }
+      .food-tag { display: inline-block; padding: 4px 12px; margin: 3px; border-radius: 12px; font-size: 13px; }
+      .food-tag.recommend { background: #E8F5E9; color: #2E7D32; }
+      .food-tag.contraindicate { background: #FFEBEE; color: #C62828; }
+      .recipe-item { background: #F0F8FF; padding: 12px; border-radius: 8px; margin: 8px 0; }
+      .tea-item { background: #FFF8E1; padding: 10px; border-radius: 8px; margin: 8px 0; }
+      .disclaimer { background: #FFF3E0; padding: 10px; border-radius: 6px; font-size: 12px; color: #E65100; margin-top: 24px; }
+      .header-info { font-size: 14px; color: #666; margin-bottom: 20px; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+    <h1>🥣 辨证膳食方案</h1>
+    <div class="header-info">患者：${patientName} | 体质：${constitutionType} | 日期：${new Date().toLocaleDateString('zh-CN')}</div>
+    ${dietCard.innerHTML}
+    <div class="disclaimer">⚠️ 以上膳食建议基于中医体质辨识，仅供健康管理参考。所有食材均限定在卫健委公布的药食同源目录内，不构成临床诊断或治疗建议。</div>
+    </body></html>`);
+  printWindow.document.close();
+  printWindow.print();
+},
+
+/**
+ * 在健康计划列表页显示膳食Tab
+ */
+async hpShowDietTab() {
+  // 切换tab样式
+  document.querySelectorAll('.hp-filter-btn').forEach(b => b.classList.remove('active'));
+  const dietBtn = document.getElementById('hp-diet-tab-btn');
+  if (dietBtn) dietBtn.classList.add('active');
+
+  const container = document.getElementById('health-plan-content');
+  
+  // 加载所有有体质信息的患者
+  let patientsWithConstitution = [];
+  if (supabaseClient) {
+    try {
+      const { data } = await supabaseClient.from('patients')
+        .select('id,name,phone,main_constitution,constitution_type')
+        .not('main_constitution', 'is', null)
+        .order('name');
+      if (data) patientsWithConstitution = data;
+    } catch(e) {}
+  }
+
+  // 加载已有膳食方案
+  let dietPlans = [];
+  if (supabaseClient) {
+    try {
+      const { data } = await supabaseClient.from('diet_plans')
+        .select('*').order('created_at', { ascending: false });
+      if (data) dietPlans = data;
+    } catch(e) {}
+  }
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="margin:0;">🥣 辨证膳食方案管理</h3>
+      <button class="btn btn-outline btn-sm" onclick="AdminApp.renderHealthPlan()">← 返回计划列表</button>
+    </div>`;
+
+  if (patientsWithConstitution.length === 0) {
+    html += `<div class="diet-empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">暂无体质辨识数据</div>
+      <div class="empty-desc">请先为患者完成中医体质辨识评估</div>
+    </div>`;
+  } else {
+    patientsWithConstitution.forEach(p => {
+      const constitution = CONSTITUTION_MAP[p.constitution_type || p.main_constitution] || p.main_constitution || '';
+      const existingPlan = dietPlans.find(dp => dp.patient_name === p.name);
+      
+      html += `<div class="hp-plan-card" style="border-left-color:#7EBEE8;cursor:default;">
+        <div class="hp-plan-header">
+          <div>
+            <span class="hp-plan-title">${p.name}</span>
+            <span class="diet-constitution-badge" style="font-size:12px;padding:3px 10px;margin-left:8px;">🧬 ${constitution}</span>
+            ${existingPlan ? (existingPlan.doctor_confirmed 
+              ? '<span style="color:var(--color-green);font-size:12px;margin-left:8px;">✅ 已确认</span>' 
+              : '<span style="color:var(--color-orange);font-size:12px;margin-left:8px;">⏳ 待确认</span>') 
+              : '<span style="color:var(--color-gray);font-size:12px;margin-left:8px;">未生成</span>'}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" style="background:#7EBEE8;color:white;border:none;font-size:12px;padding:6px 12px;" onclick="AdminApp.dietQuickGenerate('${p.name}','${p.phone || ''}','${constitution}')">🤖 生成方案</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+},
+
+/**
+ * 快速生成膳食方案（从列表页）
+ */
+async dietQuickGenerate(patientName, patientPhone, constitutionType) {
+  await this.dietAIGenerate(patientName, patientPhone, constitutionType);
+  // 刷新膳食Tab
+  this.hpShowDietTab();
+},
+,
 
 };
 
