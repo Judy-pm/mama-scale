@@ -13891,6 +13891,7 @@ const AdminApp = {
       { id: 'archive', label: '健康档案', icon: '📁' },
       { id: 'tcm', label: '中医诊疗', icon: '🏥' },
       { id: 'plan', label: '健康方案', icon: '💊' },
+      { id: 'healthplan', label: '健康计划', icon: '📋' },
       { id: 'tasks', label: '健康任务', icon: '✅' },
       { id: 'records', label: '客户记录', icon: '📝' },
       { id: 'aichat', label: 'AI对话', icon: '🤖' }
@@ -13939,6 +13940,7 @@ const AdminApp = {
       case 'archive': el.innerHTML = this._renderPdArchive(name, phone, p, records, checkupRecords, prescriptions); break;
       case 'tcm': el.innerHTML = this._renderPdTCM(name, phone); break;
       case 'plan': el.innerHTML = await this._renderPdPlan(name, phone); break;
+      case 'healthplan': el.innerHTML = await this._renderPdHealthPlan(name, phone); break;
       case 'tasks': el.innerHTML = await this._renderPdTasks(name, phone); break;
       case 'records': el.innerHTML = await this._renderPdRecords(name, phone); break;
       case 'aichat': el.innerHTML = await this._renderPdAIChat(name, phone); break;
@@ -14181,6 +14183,42 @@ const AdminApp = {
           <div class="hp-plan-meta">${pl.duration_days}天 · ${pl.start_date||''} ~ ${pl.end_date||''}</div>
           <div class="hp-progress-bar"><div class="hp-progress-fill${pl.status==='completed'?' completed':''}" style="width:${pl.completion_rate||0}%"></div></div>
           <div class="hp-progress-text">完成率 ${pl.completion_rate||0}%</div>
+        </div>`;
+      });
+    }
+    return html;
+  },
+
+  // 🆕 v3.3.1 健康计划 tab（从客户管理进入）
+  async _renderPdHealthPlan(name, phone) {
+    let healthPlans = [];
+    if (supabaseClient) {
+      try {
+        const { data } = await supabaseClient.from('health_plans').select('*').eq('patient_name', name).order('created_at', { ascending: false });
+        if (data) healthPlans = data;
+      } catch(e) {}
+    }
+
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h4 style="margin:0;font-size:15px;">📋 ${name} 的健康计划</h4>
+      <button class="btn btn-primary btn-sm" onclick="AdminApp.hpShowCreateModalForPatient('${(name||'').replace(/'/g,"\\'")}','${(phone||'').replace(/'/g,"\\'")}')">＋ 创建计划</button>
+    </div>`;
+
+    if (healthPlans.length === 0) {
+      html += '<div style="text-align:center;padding:40px;color:var(--color-gray);"><div style="font-size:32px;margin-bottom:8px;">📋</div><div>暂无健康计划</div><div style="font-size:13px;margin-top:4px;">点击"创建计划"为该患者制定健康管理计划</div></div>';
+    } else {
+      const statusLabels = { active: '活跃中', completed: '已完成', expired: '已过期', paused: '已暂停' };
+      const statusColors = { active: 'var(--color-green)', completed: 'var(--color-primary)', expired: 'var(--color-gray)', paused: 'var(--color-orange)' };
+      healthPlans.forEach(pl => {
+        const rate = pl.completion_rate || 0;
+        html += `<div class="hp-plan-card status-${pl.status}" onclick="AdminApp.hpViewPlanFromPatient('${pl.id}','${(name||'').replace(/'/g,"\\'")}','${(phone||'').replace(/'/g,"\\'")}')">
+          <div class="hp-plan-header">
+            <div class="hp-plan-title">${pl.title}</div>
+            <span class="hp-plan-status ${pl.status}">${statusLabels[pl.status]||pl.status}</span>
+          </div>
+          <div class="hp-plan-meta">${pl.duration_days}天 · ${pl.start_date||'未设定'} ~ ${pl.end_date||'未设定'}</div>
+          <div class="hp-progress-bar"><div class="hp-progress-fill${pl.status==='completed'?' completed':''}" style="width:${rate}%"></div></div>
+          <div class="hp-progress-text">完成率 ${rate}%</div>
         </div>`;
       });
     }
@@ -14972,6 +15010,41 @@ const AdminApp = {
     this._renderHealthPlanList();
   },
 
+  // 🆕 v3.3.1 从患者详情页创建计划，自动预填客户
+  async hpShowCreateModalForPatient(name, phone) {
+    await this.hpShowCreateModal();
+    // Pre-select patient in dropdown
+    const sel = document.getElementById('hp-patient');
+    if (sel) {
+      const opts = sel.options;
+      let found = false;
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value === `${name}|${phone}`) {
+          sel.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      // If not found in dropdown, fill manual inputs
+      if (!found) {
+        const manualName = document.getElementById('hp-patient-manual');
+        const manualPhone = document.getElementById('hp-phone-manual');
+        if (manualName) manualName.value = name;
+        if (manualPhone) manualPhone.value = phone || '';
+      }
+    }
+  },
+
+  // 🆕 v3.3.1 从患者详情页查看计划详情（切换到健康计划模块）
+  async hpViewPlanFromPatient(planId, name, phone) {
+    // Switch to health-plan page
+    switchPage('health-plan', document.querySelector('[data-page=health-plan]'));
+    // Load plans and view the specific one
+    await this._loadHealthPlans();
+    this._currentPlanId = planId;
+    this.hpViewPlan(planId);
+  },
+
   async hpShowCreateModal() {
     // Load patients for selection
     let patients = [];
@@ -15270,6 +15343,8 @@ const AdminApp = {
   },
 
   async hpViewPlan(planId) {
+    // Store current plan ID for diet plan refresh
+    this._currentPlanId = planId;
     // Load plan details
     let plan = this._healthPlans.find(p => p.id === planId);
     if (!plan) return;
@@ -15527,7 +15602,7 @@ const AdminApp = {
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
           <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">抗衰中心助手 健康管理平台</div></div>
-          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.0 用药安全核查</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.1 健康计划联动</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
@@ -19132,16 +19207,27 @@ async hpRenderDietCard(plan) {
   const constitution = await this._getPatientConstitution(plan.patient_name, plan.patient_phone);
   const constitutionLabel = CONSTITUTION_MAP[constitution] || constitution || '';
   
-  // 尝试从数据库加载已有膳食方案
+  // 尝试从数据库加载已有膳食方案（优先匹配 plan_id，其次按患者）
   let dietPlan = null;
   if (supabaseClient) {
     try {
+      // 🆕 v3.3.1 优先加载绑定到该健康计划的膳食方案
       const { data } = await supabaseClient.from('diet_plans')
         .select('*')
-        .eq('patient_name', plan.patient_name)
+        .eq('plan_id', plan.id)
         .order('created_at', { ascending: false })
         .limit(1);
-      if (data && data.length > 0) dietPlan = data[0];
+      if (data && data.length > 0) {
+        dietPlan = data[0];
+      } else {
+        // 降级：按患者加载最新膳食方案
+        const { data: byPatient } = await supabaseClient.from('diet_plans')
+          .select('*')
+          .eq('patient_name', plan.patient_name)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (byPatient && byPatient.length > 0) dietPlan = byPatient[0];
+      }
     } catch(e) { console.warn('[膳食] 加载方案失败:', e); }
   }
 
@@ -19184,7 +19270,7 @@ async hpRenderDietCard(plan) {
           <div class="empty-desc">可点击「AI生成」通过AI为该体质生成膳食方案</div>
         </div>`;
       html += `<div class="diet-action-bar">
-        <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">🤖 AI生成膳食方案</button>
+        <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}','${plan.id}')">🤖 AI生成膳食方案</button>
       </div>`;
       html += '</div>';
       return html;
@@ -19269,7 +19355,7 @@ async hpRenderDietCard(plan) {
 
   // 操作按钮
   html += `<div class="diet-action-bar">
-    <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">🤖 AI重新生成</button>
+    <button class="btn btn-primary btn-sm" onclick="AdminApp.dietAIGenerate('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}','${plan.id}')">🤖 AI重新生成</button>
     <button class="btn btn-secondary btn-sm" onclick="AdminApp.dietToggleEdit()">✏️ 手动编辑</button>
     <button class="btn btn-outline btn-sm" onclick="AdminApp.dietConfirm('${plan.patient_name}','${constitutionLabel}')">✅ 确认方案</button>
     <button class="btn btn-outline btn-sm" onclick="AdminApp.dietPrint('${plan.patient_name}','${constitutionLabel}')">🖨️ 打印</button>
@@ -19279,7 +19365,7 @@ async hpRenderDietCard(plan) {
   html += `<div class="diet-edit-area" id="diet-edit-area">
     <textarea id="diet-edit-content" placeholder="在此编辑膳食方案内容...">${JSON.stringify({ recommendations, contraindications }, null, 2)}</textarea>
     <div style="margin-top:10px;display:flex;gap:8px;">
-      <button class="btn btn-primary btn-sm" onclick="AdminApp.dietSaveEdit('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}')">💾 保存修改</button>
+      <button class="btn btn-primary btn-sm" onclick="AdminApp.dietSaveEdit('${plan.patient_name}','${plan.patient_phone || ''}','${constitutionLabel}','${plan.id}')">💾 保存修改</button>
       <button class="btn btn-outline btn-sm" onclick="AdminApp.dietToggleEdit()">取消</button>
     </div>
   </div>`;
@@ -19315,8 +19401,12 @@ async _getPatientConstitution(name, phone) {
 
 /**
  * AI生成膳食方案
+ * @param {string} patientName - 患者姓名
+ * @param {string} patientPhone - 患者手机号
+ * @param {string} constitutionType - 体质类型
+ * @param {string} planId - 健康计划ID（可选，用于绑定到计划）
  */
-async dietAIGenerate(patientName, patientPhone, constitutionType) {
+async dietAIGenerate(patientName, patientPhone, constitutionType, planId = null) {
   if (!confirm(`确定为 ${patientName}（${constitutionType}）生成AI膳食方案？\n将基于体质规则库和AI分析生成个性化建议。`)) return;
 
   const apiKey = localStorage.getItem('coze_access_token');
@@ -19330,6 +19420,24 @@ async dietAIGenerate(patientName, patientPhone, constitutionType) {
   btn.innerHTML = '⏳ 生成中...'; btn.disabled = true;
 
   try {
+    // 🆕 v3.3.1 获取患者详细信息，带入AI生成
+    let patientInfo = '';
+    if (supabaseClient && patientName) {
+      try {
+        const { data: pData } = await supabaseClient.from('patients')
+          .select('age,gender,chief_complaint,medical_history,allergy_history,constitution_type,main_constitution')
+          .eq('name', patientName).limit(1);
+        if (pData && pData.length > 0) {
+          const pt = pData[0];
+          if (pt.age) patientInfo += `\n年龄：${pt.age}岁`;
+          if (pt.gender) patientInfo += `\n性别：${pt.gender}`;
+          if (pt.chief_complaint) patientInfo += `\n主诉：${pt.chief_complaint}`;
+          if (pt.medical_history) patientInfo += `\n既往病史：${pt.medical_history}`;
+          if (pt.allergy_history) patientInfo += `\n过敏史：${pt.allergy_history}`;
+        }
+      } catch(e) {}
+    }
+
     const prompt = `你是武汉市妇幼保健院女性生殖抗衰中心的AI膳食顾问。
 
 ## 任务
@@ -19337,6 +19445,7 @@ async dietAIGenerate(patientName, patientPhone, constitutionType) {
 
 ## 患者体质
 ${constitutionType}
+${patientInfo}
 
 ## 硬性规则
 1. 所有推荐的食材和药材必须严格限定在卫健委公布的药食同源目录内
@@ -19386,6 +19495,7 @@ ${constitutionType}
     // 保存到数据库
     if (supabaseClient) {
       const plan = {
+        plan_id: planId,  // 🆕 v3.3.1 绑定到健康计划
         patient_name: patientName,
         patient_phone: patientPhone || null,
         constitution_type: constitutionType,
@@ -19438,7 +19548,7 @@ dietToggleEdit() {
 /**
  * 保存手动编辑
  */
-async dietSaveEdit(patientName, patientPhone, constitutionType) {
+async dietSaveEdit(patientName, patientPhone, constitutionType, planId = null) {
   const textarea = document.getElementById('diet-edit-content');
   if (!textarea) return;
   
@@ -19447,6 +19557,7 @@ async dietSaveEdit(patientName, patientPhone, constitutionType) {
     
     if (supabaseClient) {
       const plan = {
+        plan_id: planId,  // 🆕 v3.3.1 绑定到健康计划
         patient_name: patientName,
         patient_phone: patientPhone || null,
         constitution_type: constitutionType,
