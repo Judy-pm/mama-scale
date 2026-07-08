@@ -1506,6 +1506,51 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .diet-empty-state .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
 .diet-empty-state .empty-desc { font-size: 13px; }
 
+/* ========== 🆕 v3.3.2 标准方案缓存样式 ========== */
+.cache-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+  margin-left: 6px; vertical-align: middle;
+}
+.cache-badge.cached {
+  background: var(--color-sky-bg); color: var(--color-sky);
+  border: 1px solid var(--color-sky-light);
+}
+.cache-badge.ai-tuned {
+  background: #FFF8E0; color: #B8860B;
+  border: 1px solid #F0D080;
+}
+.cache-plan-card {
+  background: linear-gradient(135deg, var(--color-sky-bg), var(--color-white));
+  border: 1px solid var(--color-sky-light); border-radius: 12px;
+  padding: 16px; margin-bottom: 12px;
+}
+.cache-plan-card .cache-plan-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+}
+.cache-plan-card .cache-plan-title {
+  font-size: 15px; font-weight: 700; color: var(--color-sky);
+  display: flex; align-items: center; gap: 6px;
+}
+.cache-plan-card .cache-plan-body {
+  font-size: 13px; color: var(--color-text); line-height: 1.8;
+}
+.cache-plan-card .cache-plan-body .cp-label {
+  font-weight: 600; color: var(--color-primary-dark);
+  margin-right: 4px;
+}
+.cache-override-bar {
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+  align-items: center;
+}
+.cache-override-bar .btn { font-size: 12px; }
+.cache-save-prompt {
+  background: #FFF8E0; border: 1px solid #F0D080; border-radius: 8px;
+  padding: 10px 14px; margin-top: 10px; font-size: 12px; color: #8B6914;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
 /* ========== 用药安全核查 v3.3.0 ========== */
 .drug-check-container { max-width: 960px; margin: 0 auto; }
 .drug-check-header {
@@ -13183,6 +13228,356 @@ function doChangePwd() {
 //   v2 → v3 沿用项：角色设定/速查表/十九畏十八反分类别混用/避开表内冲突药对
 const TCM_PROMPT_PREAMBLE = '\n【中医配伍禁忌与临床回答规范（必须严格遵守）】\n【角色】你是武汉市妇幼保健院女性抗衰门诊的资深中医师，30 年临床经验，所有回答以《中国药典》和《伤寒论》《金匮要略》等经典为准。\n【速查表·十九畏 9对】硫黄-朴硝 / 水银-砒霜 / 狼毒-密陀僧 / 巴豆-牵牛 / 丁香-郁金 / 川乌草乌-犀角 / 牙硝-三棱 / 官桂-石脂 / 人参-五灵脂。\n【速查表·十八反 3组】(1)甘草-甘遂/大戟/芫花/海藻 (2)藜芦-人参/丹参/玄参/沙参/细辛/芍药 (3)乌头(川乌/草乌/附子)-贝母/瓜蒌/半夏/白蔹/白及。\n【其他临床警示】麻黄-旋覆花合用：致心率失常的现代药理警示（动物实验+临床报道）；旋覆花绒毛刺激咽喉需包煎。\n【回答流程】1.【分析】先判断问题类型（配伍禁忌/剂量煎服/特殊人群/临床诊断）2.【依据】查上述速查表+经典方剂，不要凭直觉 3.【结论】给出明确答案 3.5【补充】如适用，补充临床表现/方剂组成/煎服法/古籍出处/关键药对等关键信息，让答案更完整 4.【不确定项】如有不明确，明确说"建议医生面诊"或"建议参考《中国药典》" 5.【置信度】自评本次回答的确定性——高/中/低 + 1 句话说明（高=有药典/经典明确依据；中=基于证型推断；低=仅凭一般原则），让医生一眼看到你犹豫的地方。\n【5条铁律】(1)严格依据速查表，不要凭直觉联想 (2)患者所问组合若不在表内，明确答"未见该组合在传统十九畏/十八反中的明确记载" (3)十九畏和十八反是两个不同体系，不要混用——硫黄-朴硝是十九畏，不是十八反 (4)禁止编造任何具体数字（剂量克数/煎服分钟/毒性倍数/监测频率/服药天数等）。在以下软场景下，无药典/文献明确依据时必须答"具体时间因人而异，建议医生面诊"或"建议参考最新版《中国药典》"，禁止给具体小时数/克数/倍数/天数——软场景包括：饮食间隔（如"服药后几小时喝绿豆汤"）、煎服时长（如"附子先煎几分钟"）、监测频率（如"INR 多久查一次"）、起效时间（如"几天见效"）、症状缓解时间（如"疼痛多久缓解"） (5)开方时自动避开表内冲突药对。(6)开方不为药味数设限——方子大小由辨证需要决定，不硬性设 "12 味" 等数字框架（精简用药是好习惯，但应以证型需要为准）。\n';
 
+// ========== 🆕 v3.3.2 标准辨证方案缓存 ==========
+// 公主指令：省 token + 提准确度。高频病种标准方案内置缓存，命中后 AI 只做个性化微调
+// 数据来源：公主的五步法体系 + 归元AI知识体系/中医学习/方剂/ 笔记
+// 匹配逻辑：根据主诉关键词 + 舌脉特征 → 匹配病种和证型 → 展示标准方案 → AI 微调
+
+const STANDARD_PLANS_CACHE = {
+  // ──── 1. PMOS（多囊卵巢综合征，原 PCOS） ────
+  'PMOS': {
+    disease: 'PMOS（多囊卵巢综合征）',
+    keywords: ['多囊', 'PCOS', 'PMOS', '卵巢多囊', '闭经肥胖', '月经稀发', '无排卵', '高雄'],
+    plans: {
+      '痰湿型': {
+        syndrome: '痰湿内阻',
+        core_pathogenesis: '脾虚失运，痰湿壅盛，气机郁滞，冲任受阻。痰湿壅塞胞宫，"躯脂满溢，闭塞子宫"。',
+        treatment: '燥湿化痰、理气调经、健脾和胃',
+        base_formula: '苍附导痰丸加减：苍术12g、香附10g、半夏9g（姜制）、胆南星6g、陈皮9g、枳壳9g、茯苓12g、神曲9g、生姜3片、甘草3g',
+        formula_explanation: '君：苍术燥湿健脾+香附疏肝理气（气顺则痰消）；臣：半夏+胆南星化痰消痞；佐：陈皮+枳壳+茯苓+神曲健脾理气消食；使：甘草调和诸药。全方标本兼顾，肝脾同调。',
+        modifications: '闭经严重→+当归10g、桃仁6g、红花6g（活血通经）\n兼肾虚→+菟丝子15g、杜仲12g（补肾助孕）\n兼肝郁→+柴胡6g、郁金10g（疏肝解郁）\n带下量多→+芡实15g、山药15g（健脾固涩）\n备孕助孕→+菟丝子15g、淫羊藿12g、路路通10g（补肾化痰通络）\n排卵期→+益母草15g（促排卵）\n胸闷腹胀→+厚朴6g、木香6g（行气消胀）',
+        acupuncture: '取穴：中极、子宫、三阴交、丰隆、阴陵泉（化痰要穴）。手法：平补平泻，留针30分钟。每周2-3次。',
+        external_treatment: '① 艾灸：中脘、足三里、丰隆（健脾化痰），每穴10分钟\n② 耳穴压豆：脾、胃、内分泌、卵巢、皮质下\n③ 中药灌肠：适用于合并盆腔炎/输卵管不通者',
+        notes: '五步法定位：第一步·开路先锋。先化痰湿，再谈补肾。PMOS胰岛素抵抗型约占70%，需常规代谢筛查。'
+      },
+      '肾虚型': {
+        syndrome: '肾精亏虚',
+        core_pathogenesis: '先天禀赋不足或后天失养，肾精亏虚，天癸不充，冲任空虚，卵泡发育障碍。',
+        treatment: '补肾填精、调理冲任',
+        base_formula: '归肾丸合毓麟珠加减：熟地黄20g、山药15g、山茱萸12g、茯苓10g、枸杞子15g、杜仲12g、菟丝子15g、当归10g、党参10g、白术10g、白芍12g',
+        formula_explanation: '归肾丸（景岳）补阴益阳、养血填精；合毓麟珠八珍汤底补气血、温肾助孕。菟丝子平补肾阴肾阳为现代生殖第一要药。',
+        modifications: '卵泡发育不良→+覆盆子10g、车前子6g（五子衍宗丸意）\n宫寒明显→+鹿角霜9g、川椒3g（温肾暖宫）\n月经量少→+鸡血藤15g、川芎6g（活血生血）\n失眠多梦→+远志6g、酸枣仁15g（养心安神）\nIVF前准备→+紫河车3g（研冲）（改善内膜容受性）',
+        acupuncture: '取穴：关元、气海、肾俞、太溪、三阴交。手法：补法，可加灸。',
+        external_treatment: '① 艾灸：关元、气海、肾俞（温补肾阳），每穴15分钟\n② 穴位贴敷：肾俞、命门（温肾助阳）\n③ 足浴：艾叶+红花+桂枝，温经通络',
+        notes: '五步法定位：第二步·中场补给。适用于痰湿消退后转补肾阶段，或瘦型PMOS（75%也存在胰岛素抵抗！）。'
+      },
+      '肝郁型': {
+        syndrome: '肝郁气滞',
+        core_pathogenesis: '情志不畅，肝气郁结，气滞血瘀，冲任失调。肝郁克脾，脾失健运，痰湿内生。',
+        treatment: '疏肝解郁、理气调经',
+        base_formula: '逍遥散合启宫丸加减：柴胡6g、当归10g、白芍12g、茯苓12g、白术10g、薄荷3g（后下）、香附10g、川芎6g、半夏9g、陈皮6g、甘草3g',
+        formula_explanation: '逍遥散疏肝健脾，解郁调经；合启宫丸化痰活血、疏肝健脾。香附为"气病之总司，女科之主帅"。',
+        modifications: '肝郁化火→+丹皮9g、栀子6g（丹栀逍遥散意）\n胸胁胀痛→+郁金10g、延胡索10g（理气止痛）\n月经后期→+益母草15g、泽兰10g（活血调经）\n乳房胀痛→+青皮6g、王不留行10g（通络散结）',
+        acupuncture: '取穴：太冲、合谷（开四关）、期门、三阴交。手法：泻法。',
+        external_treatment: '① 耳穴压豆：肝、内分泌、卵巢、神门\n② 药枕：柴胡+薄荷+玫瑰花（疏肝安神）\n③ 情志疏导+运动处方（每日有氧30分钟）',
+        notes: 'PMOS肾上腺型约占15%，DHEA-S↑为主、体重正常但焦虑突出，需重视心理评估（PHQ-9/GAD-7常规筛查）。'
+      }
+    }
+  },
+
+  // ──── 2. DOR/POI（卵巢储备功能减退/卵巢早衰） ────
+  'DOR_POI': {
+    disease: 'DOR/POI（卵巢储备功能减退/卵巢早衰）',
+    keywords: ['卵巢储备', 'DOR', 'POI', '卵巢早衰', 'AMH低', 'FSH高', '卵泡少', '获卵少', '闭经'],
+    plans: {
+      '肾虚型': {
+        syndrome: '肾精亏虚',
+        core_pathogenesis: '先天不足或后天耗损，肾精匮乏，天癸渐竭，卵巢功能减退。',
+        treatment: '补肾填精、益养冲任',
+        base_formula: '归肾丸加减：熟地黄20g、山药15g、山茱萸12g、茯苓10g、枸杞子15g、杜仲12g、菟丝子15g、当归10g、紫河车3g（研冲）、覆盆子10g',
+        formula_explanation: '归肾丸为景岳补阴益阳名方，纯补无泻。加紫河车血肉有情之品峻补精血；覆盆子益肾固精。',
+        modifications: '腰膝酸软明显→+怀牛膝9g、狗脊12g（强腰膝）\n失眠多梦→+远志6g、酸枣仁15g\n腹胀→+木香6g（行气防滞）\n月经量少→+鸡血藤15g、川芎6g\n阴虚火旺→+龟板15g、女贞子15g、墨旱莲15g+少量黄连3g',
+        acupuncture: '取穴：关元、中极、肾俞、太溪、三阴交、足三里。手法：补法，可加灸。',
+        external_treatment: '① 艾灸：关元、肾俞、命门（温肾填精）\n② 穴位贴敷：肾俞、关元\n③ 足浴：菟丝子+枸杞+艾叶',
+        notes: '归肾丸2026研究：抑制细胞自噬和凋亡、改善AMH/FSH/E2水平、增加卵泡数量。五步法：第二步·中场补给为核心。'
+      },
+      '阴虚火旺型': {
+        syndrome: '肝肾阴虚，虚火内扰',
+        core_pathogenesis: '肝肾阴虚，水不制火，虚火灼伤冲任，精血暗耗。',
+        treatment: '滋阴降火、益肾填精',
+        base_formula: '左归丸合二至丸加减：熟地黄20g、山药15g、山茱萸12g、枸杞15g、菟丝子12g、鹿角胶12g（烊化）、龟甲胶12g（烊化）、女贞子15g、旱莲草15g、知母9g、黄柏9g',
+        formula_explanation: '左归丸（景岳）纯甘壮水、大补真阴；合二至丸（女贞子+旱莲草）滋补肝肾、清虚热。知母黄柏清降虚火（大补阴丸意）。',
+        modifications: '潮热盗汗明显→+地骨皮12g、白薇9g\n口干口渴→+麦冬12g、天花粉10g\n失眠→+酸枣仁20g、柏子仁12g\n月经量少→+阿胶10g（烊化）、当归9g\n骨蒸潮热→+银柴胡9g、胡黄连6g',
+        acupuncture: '取穴：太溪、三阴交、照海、肾俞。手法：补法，不宜灸。',
+        external_treatment: '① 耳穴压豆：肾、肝、内分泌、卵巢、神门\n② 药枕：女贞子+旱莲草+菊花（清肝滋阴）\n③ 足浴：生地+丹皮+知母（滋阴降火，水温宜低）',
+        notes: '左归丸滋阴力峻，脾虚湿盛/苔厚腻者慎用。五步法：第二步为核心，第四步清补兼施可配合。'
+      }
+    }
+  },
+
+  // ──── 3. RPL（复发性流产） ────
+  'RPL': {
+    disease: 'RPL（复发性流产）',
+    keywords: ['复发性流产', 'RPL', '反复流产', '习惯性流产', '滑胎', '保胎', '先兆流产', '胎动不安'],
+    plans: {
+      '脾肾两虚型': {
+        syndrome: '脾肾两虚，冲任不固',
+        core_pathogenesis: '先天肾气不足或后天脾虚失养，脾肾两虚，冲任不固，胎元失养。',
+        treatment: '补肾健脾、固冲安胎',
+        base_formula: '寿胎丸合泰山磐石散加减：菟丝子20g、桑寄生15g、续断15g、阿胶10g（烊化）、党参15g、黄芪12g、白术10g、熟地黄15g、白芍12g、砂仁4g（后下）',
+        formula_explanation: '寿胎丸（张锡纯）补肾安胎祖方，菟丝子为君平补肾阴肾阳；合泰山磐石散四君+四物补气养血。减黄芩（妊娠慎用）。脾肾双补，冲任自固。',
+        modifications: '腰酸明显→+杜仲12g、狗脊12g（强腰固肾）\n出血量多→+艾叶炭10g、仙鹤草15g、藕节15g（止血安胎）\n肾阳虚明显→+补骨脂12g、巴戟天12g\n恶心呕吐→+砂仁4g（后下）、陈皮6g、竹茹9g\n黄体功能不全→+紫河车3g（研冲）、鹿角胶10g（烊化）\nOAPS患者→+红参10g、黑艾叶15g（合LDA+LMWH）',
+        acupuncture: '孕期慎针！可选：足三里、三阴交（轻刺激）。禁针：合谷、三阴交（重刺激）、至阴。',
+        external_treatment: '① 艾灸（非孕期）：关元、气海、足三里（培补脾肾）\n② 卧床休息+禁房事\n③ 情志疏导（心理干预同等重要）\n④ 药膳：山药莲子粥、杜仲腰花汤',
+        notes: '寿胎丸2025 Meta分析：活产率↑88%（RR=1.88），安全性良好。用至超过既往流产孕周+2周。必须排除异位妊娠+胎物已殒。'
+      },
+      '血瘀型': {
+        syndrome: '肾虚血瘀',
+        core_pathogenesis: '肾气不足，冲任失调，瘀血内阻，血不养胎。肾虚为本，血瘀为标。',
+        treatment: '补肾活血、化瘀安胎',
+        base_formula: '寿胎丸加味：菟丝子20g、桑寄生15g、续断15g、阿胶10g（烊化）、丹参15g、三七粉3g（冲）、五灵脂10g、蒲黄10g',
+        formula_explanation: '寿胎丸补肾安胎为底；合失笑散（五灵脂+蒲黄）化瘀止痛；加丹参、三七活血不伤正。肾虚血瘀并治。',
+        modifications: '妊娠后→停用桃红等峻烈之品，保留三七、丹参\nD-二聚体升高→+水蛭3g（研冲）（抗凝改善微循环）\n合并OAPS→+黄芪20g（益气活血，合LDA+LMWH）\n腹痛明显→+白芍15g、甘草6g（缓急止痛）',
+        acupuncture: '孕期慎针！非孕期可选：血海、地机、三阴交。',
+        external_treatment: '① 非孕期中药灌肠：丹参+赤芍+桃仁（改善盆腔微循环）\n② 卧床休息+心理干预\n③ 密切监测β-HCG、凝血功能、D-二聚体',
+        notes: '活血药剂量宜小，妊娠后减停峻烈活血之品。肾虚血瘀是RPL最常见复合证型。'
+      }
+    }
+  },
+
+  // ──── 4. 更年期综合征（围绝经期综合征） ────
+  'MENOPAUSE': {
+    disease: '更年期综合征（围绝经期综合征）',
+    keywords: ['更年期', '围绝经', '潮热', '出汗', '烘热', '绝经', '烦躁', '失眠'],
+    plans: {
+      '肝肾阴虚型': {
+        syndrome: '肝肾阴虚',
+        core_pathogenesis: '天癸渐竭，肾阴不足，水不涵木，肝肾同亏，虚热内生，冲任失调。',
+        treatment: '滋补肝肾、养阴清热',
+        base_formula: '左归丸合二至丸加减：熟地黄20g、山药15g、山茱萸12g、枸杞15g、菟丝子12g、女贞子15g、旱莲草15g、龟甲胶12g（烊化）、知母9g、酸枣仁20g',
+        formula_explanation: '左归丸大补真阴；二至丸滋补肝肾清虚热；知母清降虚火；酸枣仁养心安神助眠。',
+        modifications: '潮热汗出明显→+地骨皮12g、白薇9g、浮小麦30g\n失眠多梦→+柏子仁12g、远志6g\n烦躁易怒→+柴胡6g、白芍15g（柔肝缓急）\n腰膝酸软→+杜仲12g、怀牛膝9g\n心悸→+五味子6g、麦冬12g（生脉散意）\n骨质疏松→+煅牡蛎30g（先煎）、黄芪15g',
+        acupuncture: '取穴：太溪、三阴交、照海、肝俞、肾俞。手法：补法。',
+        external_treatment: '① 耳穴压豆：肾、肝、心、内分泌、神门\n② 足浴：生地+丹皮+酸枣仁（滋阴安神）\n③ 药枕：菊花+合欢花+酸枣仁\n④ 配合MHT（激素替代）效果更佳',
+        notes: '围绝经期肾阴虚是DOR/POI的延伸，左归丸可改善HPO轴功能。2026指南建议常规PHQ-9/GAD-7筛查心理健康。'
+      },
+      '肝郁化火型': {
+        syndrome: '肝郁化火',
+        core_pathogenesis: '情志不畅，肝气郁结，郁久化火，肝火上炎，扰动心神。',
+        treatment: '疏肝解郁、清肝泻火',
+        base_formula: '丹栀逍遥散合滋水清肝饮加减：柴胡6g、当归10g、白芍15g、茯苓12g、白术10g、薄荷3g（后下）、丹皮9g、栀子6g、生地15g、酸枣仁20g、甘草6g',
+        formula_explanation: '丹栀逍遥散疏肝清热；合滋水清肝饮滋阴清肝。丹皮+栀子清泻肝火而不伤阴。',
+        modifications: '头痛→+菊花10g、钩藤12g（后下）\n口苦咽干→+黄芩6g、夏枯草10g\n潮热→+地骨皮12g、白薇9g\n大便秘结→+决明子15g\n烦躁失眠→+黄连3g、阿胶10g（烊化）（黄连阿胶汤意）',
+        acupuncture: '取穴：太冲、行间（清肝泻火）、合谷、三阴交。手法：泻法。',
+        external_treatment: '① 耳穴压豆：肝、心、神门、内分泌\n② 药枕：菊花+夏枯草+薄荷（清肝安神）\n③ 运动处方：瑜伽/太极（疏肝理气）',
+        notes: '肝郁化火型需重视情志疏导。可配合MHT。更年期综合征需排除甲亢等器质性疾病。'
+      }
+    }
+  },
+
+  // ──── 5. 子宫内膜异位症 ────
+  'ENDOMETRIOSIS': {
+    disease: '子宫内膜异位症',
+    keywords: ['子宫内膜异位', '内异症', '巧囊', '巧克力囊肿', '痛经', '进行性痛经', '性交痛', '盆腔痛'],
+    plans: {
+      '气滞血瘀型': {
+        syndrome: '气滞血瘀',
+        core_pathogenesis: '肝气郁结，气滞血瘀，瘀血内阻胞宫冲任，经行不畅，不通则痛。瘀久成癥。',
+        treatment: '理气活血、化瘀消癥',
+        base_formula: '桂枝茯苓丸合失笑散加减：桂枝9g、茯苓12g、牡丹皮9g、桃仁9g、白芍12g、五灵脂10g、蒲黄10g（包煎）、延胡索10g、香附10g',
+        formula_explanation: '桂枝茯苓丸（仲景）活血化瘀、缓消癥块；合失笑散化瘀止痛。桂枝温通+桃仁破瘀=化瘀消癥核心。牡丹皮凉血防瘀热。',
+        modifications: '痛经剧烈→+乳香6g、没药6g（活血止痛）\n经量多→+三七粉3g（冲）（化瘀止血）\n合并巧囊→+夏枯草12g、牡蛎20g（软坚散结）\n合并腺肌病→+三棱6g、莪术6g（破血消癥，经前用）\nIVF前预处理→+丹参15g、赤芍10g（改善盆腔微环境）',
+        acupuncture: '取穴：中极、子宫、地机、血海、三阴交。手法：泻法，经前1周开始。',
+        external_treatment: '① 中药灌肠：丹参+赤芍+桃仁+红藤（改善盆腔粘连）\n② 穴位贴敷：中极、关元（活血化瘀膏药）\n③ 艾灸（非经期）：关元、气海（温通血脉）',
+        notes: '桂枝茯苓丸为金匮消癥第一方，2026指南强力推荐。化瘀不动血，止血不留瘀。IVF前建议预处理2-3个月。'
+      },
+      '寒凝血瘀型': {
+        syndrome: '寒凝血瘀',
+        core_pathogenesis: '寒邪客于冲任胞宫，血为寒凝，瘀阻不通，不通则痛。',
+        treatment: '温经散寒、化瘀止痛',
+        base_formula: '少腹逐瘀汤加减：小茴香6g、干姜6g、延胡索10g、当归12g、川芎6g、肉桂3g（后下）、赤芍10g、蒲黄10g（包煎）、五灵脂10g、没药6g',
+        formula_explanation: '少腹逐瘀汤为温经散寒化瘀代表方。小茴香+干姜+肉桂温经散寒；当归+川芎+赤芍养血活血；蒲黄+五灵脂+延胡索+没药化瘀止痛。',
+        modifications: '经行腹痛剧烈→+乳香6g（加强止痛）\n畏寒肢冷→+附子6g（先煎）、吴茱萸3g\n经血量多有块→+艾叶炭10g、三七粉3g（冲）\n合并巧囊→+桂枝9g、茯苓12g（合桂枝茯苓丸意）\n不孕→+菟丝子15g、路路通10g',
+        acupuncture: '取穴：关元、气海、归来、地机。手法：泻法+重灸。',
+        external_treatment: '① 艾灸：关元、气海、中极（温经散寒，每穴15分钟）\n② 中药热敷：小茴香+艾叶+干姜（炒热布包热敷小腹）\n③ 足浴：桂枝+艾叶+红花（温经通络）',
+        notes: '寒凝血瘀型痛经特点是得温则减、遇寒加重。少腹逐瘀汤温经散寒力强于桂枝茯苓丸。'
+      }
+    }
+  },
+
+  // ──── 6. 月经不调 ────
+  'MENSTRUAL': {
+    disease: '月经不调',
+    keywords: ['月经不调', '月经先期', '月经后期', '月经先后无定期', '经期延长', '月经过多', '月经过少', '崩漏', '经间期出血'],
+    plans: {
+      '气虚型': {
+        syndrome: '脾气虚弱，冲任不固',
+        core_pathogenesis: '脾气虚弱，统摄无权，冲任不固，经血失约。',
+        treatment: '补气摄血、固冲调经',
+        base_formula: '归脾汤加减：黄芪20g、党参15g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g、荆芥炭10g',
+        formula_explanation: '归脾汤补气摄血，心脾双调。黄芪+党参+白术补脾益气为君；当归养血和血；茯神+酸枣仁+远志+龙眼肉养心安神；木香行气防滞；荆芥炭收涩止血。',
+        modifications: '经量过多→+仙鹤草15g、棕榈炭10g（收敛止血）\n气短乏力明显→+人参6g（另炖）\n崩漏→+乌贼骨15g、茜草炭10g（固冲止血）\n失眠→+柏子仁12g\n经间期出血→+女贞子15g、旱莲草15g（滋阴固冲）',
+        acupuncture: '取穴：气海、足三里、三阴交、脾俞。手法：补法+灸。',
+        external_treatment: '① 艾灸：气海、关元、足三里（补气固冲）\n② 药膳：黄芪当归炖鸡汤、山药莲子粥\n③ 耳穴压豆：脾、心、内分泌、子宫',
+        notes: '归脾汤适用于气虚型月经过多/崩漏/经期延长。辨证要点：经血色淡质稀+面色萎黄+倦怠+舌淡脉弱。'
+      },
+      '血热型': {
+        syndrome: '血热妄行',
+        core_pathogenesis: '热扰冲任，迫血妄行，经血非时而下。实热多因肝郁化火或外感热邪；虚热多因阴虚内热。',
+        treatment: '清热凉血、固冲止血',
+        base_formula: '清热固经汤加减：生地15g、黄芩9g、黄柏9g、地骨皮12g、龟板15g（先煎）、牡蛎20g（先煎）、阿胶10g（烊化）、栀子6g、棕榈炭10g、甘草3g',
+        formula_explanation: '清热固经汤为血热型崩漏/月经先期代表方。生地+黄芩+黄柏+地骨皮清热凉血；龟板+牡蛎滋阴潜阳固涩；阿胶养血止血；栀子清心除烦。',
+        modifications: '实热为主（经色鲜红量多）→+丹皮9g、赤芍10g（凉血活血）\n虚热为主（经色鲜红量少淋漓）→+女贞子15g、旱莲草15g（二至丸滋阴止血）\n烦躁易怒→+柴胡6g、白芍12g（柔肝清热）\n口干→+麦冬12g、天花粉10g',
+        acupuncture: '取穴：血海、三阴交、行间。手法：泻法，不宜灸。',
+        external_treatment: '① 耳穴压豆：肝、肾、内分泌、子宫\n② 足浴：生地+丹皮+黄柏（清热凉血，水温宜凉）\n③ 饮食：忌辛辣刺激，多食绿豆、莲藕、银耳',
+        notes: '血热型分实热和虚热。实热：经色鲜红量多+舌红苔黄+脉数；虚热：经色鲜红量少淋漓+舌红少苔+脉细数。'
+      },
+      '血寒型': {
+        syndrome: '寒凝胞宫',
+        core_pathogenesis: '寒邪客于冲任胞宫，血为寒凝，经脉不畅，经期错乱或经行不畅。',
+        treatment: '温经散寒、暖宫调经',
+        base_formula: '温经汤（《金匮要略》）加减：吴茱萸6g、当归12g、白芍12g、川芎6g、人参6g（另炖）、桂枝9g、牡丹皮9g、生姜3片、半夏9g、麦冬12g、甘草3g',
+        formula_explanation: '温经汤为仲景妇科温经调经第一方。吴茱萸+桂枝+生姜温经散寒；当归+川芎+白芍养血活血调经；人参补气扶正；牡丹皮凉血防温燥太过。',
+        modifications: '痛经明显→+延胡索10g、小茴香6g（温经止痛）\n月经后期→+艾叶10g、香附10g（温经理气）\n经量少有块→+桃仁6g、红花6g（活血通经）\n畏寒肢冷→+附子6g（先煎）（温阳散寒）\n宫寒不孕→+艾叶10g、紫石英15g（先煎）',
+        acupuncture: '取穴：关元、气海、归来、足三里。手法：补法+重灸。',
+        external_treatment: '① 艾灸：关元、气海、中极（温经散寒）\n② 中药热敷小腹\n③ 足浴：桂枝+艾叶+干姜\n④ 药膳：当归生姜羊肉汤（仲景方）',
+        notes: '温经汤为虚实寒热并调之方，适用于寒热错杂型月经不调。纯寒型可用少腹逐瘀汤。'
+      }
+    }
+  }
+};
+
+// 🆕 v3.3.2 缓存匹配函数：根据主诉+舌脉 → 匹配病种+证型
+function tcmMatchStandardPlan(chiefComplaint, consultData) {
+  if (!chiefComplaint) return null;
+  const cc = chiefComplaint.toLowerCase();
+
+  // 遍历所有病种，按关键词匹配
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const [diseaseKey, diseaseData] of Object.entries(STANDARD_PLANS_CACHE)) {
+    let diseaseScore = 0;
+    for (const kw of diseaseData.keywords) {
+      if (cc.includes(kw.toLowerCase())) {
+        diseaseScore += kw.length; // 长关键词权重更高
+      }
+    }
+    if (diseaseScore > bestScore) {
+      bestScore = diseaseScore;
+      // 根据舌脉进一步匹配证型
+      const plans = diseaseData.plans;
+      let planKey = null;
+      const tongueData = (consultData || '').toLowerCase();
+
+      // 按证型特征词打分
+      const syndromeScores = {};
+      for (const [pKey, pData] of Object.entries(plans)) {
+        let pScore = 0;
+        const hints = {
+          '痰湿型': ['痰湿', '胖大', '齿痕', '白腻', '滑脉', '肥胖', '苔腻', '痰'],
+          '肾虚型': ['肾虚', '腰膝酸软', '腰酸', '夜尿', '沉弱', '淡苔白', '精亏'],
+          '肝郁型': ['肝郁', '情志', '烦躁', '焦虑', '弦脉', '胸胁', '乳房胀痛'],
+          '阴虚火旺型': ['阴虚', '潮热', '盗汗', '五心烦热', '舌红少苔', '细数'],
+          '脾肾两虚型': ['脾肾', '倦怠', '面色', '面色苍白', '脉弱', '气血', '面色萎黄'],
+          '血瘀型': ['血瘀', '色暗', '有块', '瘀点', '涩脉', '刺痛', '固定'],
+          '肝肾阴虚型': ['肝肾', '头晕', '目眩', '失眠', '潮热', '细数', '少苔'],
+          '肝郁化火型': ['化火', '口苦', '烦躁', '易怒', '弦数', '头痛'],
+          '气滞血瘀型': ['气滞', '胀痛', '色暗', '有块', '弦', '涩'],
+          '寒凝血瘀型': ['寒凝', '冷痛', '得温', '畏寒', '迟', '紧'],
+          '气虚型': ['气虚', '色淡', '质稀', '倦怠', '乏力', '脉弱', '淡苔白'],
+          '血热型': ['血热', '鲜红', '量多', '舌红', '苔黄', '数脉', '热'],
+          '血寒型': ['血寒', '冷痛', '后期', '量少', '色暗', '畏寒', '迟']
+        };
+        const kwList = hints[pKey] || [];
+        for (const kw of kwList) {
+          if (tongueData.includes(kw) || cc.includes(kw)) pScore += 1;
+        }
+        syndromeScores[pKey] = pScore;
+      }
+
+      // 选得分最高的证型
+      const sortedPlans = Object.entries(syndromeScores).sort((a, b) => b[1] - a[1]);
+      if (sortedPlans.length > 0 && sortedPlans[0][1] > 0) {
+        planKey = sortedPlans[0][0];
+      } else {
+        planKey = Object.keys(plans)[0]; // 默认第一个证型
+      }
+
+      bestMatch = {
+        diseaseKey,
+        diseaseName: diseaseData.disease,
+        planKey,
+        plan: plans[planKey],
+        confidence: diseaseScore
+      };
+    }
+  }
+
+  return bestMatch;
+}
+
+// 🆕 v3.3.2 结构化辨证 Prompt 模板
+// 把自由 prompt 改成结构化模板，约束 AI 按公主五步法体系输出
+function tcmBuildStructuredPrompt(consultData) {
+  return TCM_PROMPT_PREAMBLE +
+`你现在是武汉市妇幼保健院抗衰中心的中医诊疗助手，请严格按以下结构化格式进行辨证论治。
+
+【患者信息】
+${consultData}
+
+【辨证要求】
+1. 先辨病机归属（参照五步法：气机→虚实→攻补）
+   - 第一步·开路先锋：有无痰湿/气滞/瘀血需先疏通？
+   - 第二步·中场补给：虚证为主？气血/阴阳哪个不足？
+   - 第三步·攻坚克难：有无癥瘕/包块/粘连需攻逐？
+   - 第四步·清补兼施：虚实夹杂？如何清补并施？
+   - 第五步·长治久安：缓调收功方案？
+2. 再定治法（按优先级：疏肝→健脾→活血→补肾→清热）
+3. 最后组方（标注君臣佐使）
+
+【输出格式】
+请用**纯JSON格式**返回（不要用代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：
+syndrome（证型诊断，如：肝郁脾虚，痰湿内阻，肾虚血瘀）
+pathogenesis（核心病机，100字以内，含五步法定位）
+treatment_principle（治法，含治法优先级说明）
+main_formula（处方：药物+剂量+煎法，标注君臣佐使）
+modification（随症加减规则，至少3条）
+acupuncture（外治建议：针灸取穴+手法+艾灸/耳穴/灌肠等）
+lifestyle（生活调护：饮食+运动+情志+作息）
+prognosis（预后判断+监测指标）`;
+}
+
+// 🆕 v3.3.2 缓存命中时的 AI 微调 Prompt
+// 传入模板方案 + 患者个体信息，让 AI 只做个性化调整
+function tcmBuildTuningPrompt(cachedPlan, consultData) {
+  return TCM_PROMPT_PREAMBLE +
+`你收到了一个标准辨证方案模板，请根据患者个体情况进行个性化微调。
+注意：只调整需要变化的部分，不要改动的部分保持原样。
+
+【标准方案模板】
+病种：${cachedPlan.diseaseName}
+证型：${cachedPlan.plan.syndrome}
+核心病机：${cachedPlan.plan.core_pathogenesis}
+治法：${cachedPlan.plan.treatment}
+基础方：${cachedPlan.plan.base_formula}
+方解：${cachedPlan.plan.formula_explanation}
+加减规则：${cachedPlan.plan.modifications}
+针灸建议：${cachedPlan.plan.acupuncture}
+外治建议：${cachedPlan.plan.external_treatment}
+注意事项：${cachedPlan.plan.notes}
+
+【患者个体信息】
+${consultData}
+
+【微调要求】
+1. 对照患者四诊信息与标准方案，确认证型是否匹配
+2. 如证型有偏差，调整证型诊断和治法
+3. 根据患者个体情况调整方药（加减药物、调整剂量）
+4. 保留标准方案中适用的部分，只改需要改的部分
+5. 在"预后"中说明哪些来自标准方案、哪些做了个性化调整
+
+请用**纯JSON格式**返回（不要用代码块包裹），每个字段必须是**字符串类型**：
+syndrome（证型诊断）
+pathogenesis（核心病机）
+treatment_principle（治法）
+main_formula（处方+剂量+煎法+君臣佐使）
+modification（加减变化及理由）
+acupuncture（针灸/外治建议）
+lifestyle（生活调护建议）
+prognosis（预后判断，标注哪些来自标准方案、哪些做了调整）`;
+}
+
 // 🆕 v3.1.0 共享指令块：任务2+3 自动补充识别 + 会话共识识别
 const TCM_MEMORY_INSTRUCTION = `
 
@@ -15602,7 +15997,7 @@ const AdminApp = {
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
           <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">抗衰中心助手 健康管理平台</div></div>
-          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.1 健康计划联动</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.2 缓存+Prompt结构化</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
@@ -17350,11 +17745,19 @@ _tcmRenderExistingAIDiagnosis(diagnosis, sourceTime, sourceLabel) {
   ];
   const timeStr = sourceTime ? new Date(sourceTime).toLocaleString('zh-CN', { hour12: false }) : '';
 
+  // 🆕 v3.3.2 缓存标识：如果 diagnosis 有 _cacheSource 则显示缓存徽章
+  const cacheBadge = diagnosis._cacheSource
+    ? `<span class="cache-badge cached">📋 标准方案（已缓存）</span><span class="cache-badge ai-tuned">🤖 AI 个性化调整</span>`
+    : (diagnosis._override ? '<span class="cache-badge" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;">✏️ 医生覆盖方案</span>' : '');
+
   let h = `<div class="tcm-ai-result">
     <h3 style="color:var(--color-primary);">🤖 AI辨证论治</h3>
-    <p style="font-size:11px;color:#7B5A00;background:#fff8e0;padding:6px 10px;border-radius:4px;margin-bottom:12px;">
-      📋 ${sourceLabel}${timeStr ? ' · ' + timeStr : ''}
-    </p>`;
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+      <p style="font-size:11px;color:#7B5A00;background:#fff8e0;padding:6px 10px;border-radius:4px;margin:0;">
+        📋 ${sourceLabel}${timeStr ? ' · ' + timeStr : ''}
+      </p>
+      ${cacheBadge}
+    </div>`;
   sections.forEach(s => {
     const val = toStr(diagnosis[s.key]);
     if (val) {
@@ -17775,8 +18178,23 @@ async tcmAIDiagnosis(e) {
 })()}`;
 
   try {
-    const prompt = TCM_PROMPT_PREAMBLE + '你现在是抗衰中心助手的中医诊疗助手，请按专业标准进行辨证论治。\n\n请根据以下四诊信息进行辨证论治：\n1. 首先明确证型\n2. 分析病机（说明辨证思路）\n3. 确立治法\n4. 给出主方及组成，说明选方思路和化裁依据\n5. 列出加减变化及理由\n6. 针灸建议\n7. 生活调护建议\n8. 预后判断\n\n请用**纯JSON格式**返回（不要用【JSON块】【ENDJSON】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串，如：肝郁脾虚，心肾阳虚，痰湿内阻）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。示例：归脾汤加减：黄芪15g、党参10g、白术10g、茯神10g、酸枣仁15g、龙眼肉10g、木香6g、炙甘草6g、当归10g、远志6g）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n患者四诊数据：\n' + consultData;
-    // 🆕 2026-06-08 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素（背景：C2 在 1.0 温度下漏脾虚）
+    // 🆕 v3.3.2 缓存匹配 + 结构化 Prompt
+    // 1) 先尝试匹配标准方案缓存
+    const cacheMatch = tcmMatchStandardPlan(chief, consultData);
+    let prompt, cacheSource = null;
+    
+    if (cacheMatch) {
+      // 命中缓存：先用缓存方案展示，再用 AI 做个性化微调
+      cacheSource = cacheMatch;
+      prompt = tcmBuildTuningPrompt(cacheMatch, consultData);
+      console.log('[v3.3.2] 缓存命中:', cacheMatch.diseaseName, '-', cacheMatch.planKey, '| 置信度:', cacheMatch.confidence);
+    } else {
+      // 未命中缓存：走完整结构化辨证流程
+      prompt = tcmBuildStructuredPrompt(consultData);
+      console.log('[v3.3.2] 缓存未命中，走完整结构化辨证');
+    }
+    
+    // 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
     const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
     // 清理末尾 JSON 块用于展示
@@ -17786,6 +18204,16 @@ async tcmAIDiagnosis(e) {
     let diagnosis;
     try { const m = content.match(/\{[\s\S]*\}/); diagnosis = m ? JSON.parse(m[0]) : { syndrome: content }; } catch(e) { diagnosis = { syndrome: content }; }
     
+    // 🆕 v3.3.2 如果命中缓存，在 diagnosis 上标记来源
+    if (cacheSource) {
+      diagnosis._cacheSource = {
+        diseaseKey: cacheSource.diseaseKey,
+        diseaseName: cacheSource.diseaseName,
+        planKey: cacheSource.planKey,
+        confidence: cacheSource.confidence
+      };
+    }
+
     // Save AI diagnosis
     if(this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
       CloudBaseManager.sb.from('tcm_consultations').update({ai_diagnosis:diagnosis,updated_at:new Date().toISOString()}).eq('id',this.tcmCurrentRecord.id);
@@ -17797,7 +18225,7 @@ async tcmAIDiagnosis(e) {
         consultation_id: this.tcmCurrentRecord.id,
         patient_id: this.tcmCurrentPatient?.id || null,
         model: 'deepseek-ai/DeepSeek-V3',
-        task_type: 'tcm_diagnosis',
+        task_type: cacheSource ? 'tcm_diagnosis_cached' : 'tcm_diagnosis',
         diagnosis: diagnosis,
         prompt_tokens: prompt.length
       });
@@ -17812,11 +18240,19 @@ async tcmAIDiagnosis(e) {
         { key: 'treatment_principle', title: '⚖️ 治法', icon: '⚖️' },
         { key: 'main_formula', title: '💊 主方', icon: '💊' },
         { key: 'modification', title: '📝 加减', icon: '📝' },
-        { key: 'acupuncture', title: '🪡 针灸建议', icon: '🪡' },
+        { key: 'acupuncture', title: '🪡 针灸/外治', icon: '🪡' },
         { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
         { key: 'prognosis', title: '📈 预后', icon: '📈' }
       ];
-      let h = '<div class="tcm-ai-result"><h3 style="color: var(--color-primary) !important;">🤖 AI辨证论治</h3><p style="font-size:12px;color:#000000 !important;margin-bottom:12px;">由抗衰中心助手生成，仅供医生参考</p>';
+      // 🆕 v3.3.2 缓存标识：命中显示"📋 标准方案（已缓存）"+ "🤖 AI 个性化调整"
+      const cacheBadge = cacheSource
+        ? `<span class="cache-badge cached">📋 标准方案（已缓存）</span><span class="cache-badge ai-tuned">🤖 AI 个性化调整</span>`
+        : '';
+      let h = '<div class="tcm-ai-result"><h3 style="color: var(--color-primary) !important;">🤖 AI辨证论治</h3>';
+      h += `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:12px;">`;
+      h += `<p style="font-size:12px;color:var(--color-text-secondary);margin:0;">由抗衰中心助手生成，仅供医生参考</p>`;
+      h += cacheBadge;
+      h += '</div>';
       // 兜底：把对象/数组安全转字符串（防止 AI 偶尔返回嵌套结构导致 [object Object]）
       const toStr = (v) => {
         if (v == null) return '';
@@ -17830,13 +18266,38 @@ async tcmAIDiagnosis(e) {
         }
         return String(v);
       };
+
+      // 🆕 v3.3.2 如果命中缓存，先展示标准方案卡片
+      if (cacheSource) {
+        const cp = cacheSource.plan;
+        h += `<div class="cache-plan-card">`;
+        h += `<div class="cache-plan-header">`;
+        h += `<div class="cache-plan-title">📋 ${cacheSource.diseaseName} · ${cacheSource.planKey}</div>`;
+        h += `</div>`;
+        h += `<div class="cache-plan-body">`;
+        h += `<div><span class="cp-label">核心病机：</span>${cp.core_pathogenesis}</div>`;
+        h += `<div><span class="cp-label">治法：</span>${cp.treatment}</div>`;
+        h += `<div><span class="cp-label">基础方：</span>${cp.base_formula}</div>`;
+        h += `<div><span class="cp-label">方解：</span>${cp.formula_explanation}</div>`;
+        h += `<div><span class="cp-label">加减：</span>${cp.modifications.replace(/\n/g, '<br>')}</div>`;
+        h += `<div><span class="cp-label">针灸：</span>${cp.acupuncture}</div>`;
+        h += `<div><span class="cp-label">外治：</span>${cp.external_treatment.replace(/\n/g, '<br>')}</div>`;
+        h += `<div style="font-size:11px;color:var(--color-text-secondary);margin-top:6px;">📌 ${cp.notes}</div>`;
+        h += `</div>`;
+        h += `<div class="cache-override-bar">`;
+        h += `<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmOverrideCachePlan()">✏️ 医生手动覆盖</button>`;
+        h += `</div>`;
+        h += `</div>`;
+        h += `<div style="font-size:13px;color:var(--color-sky);font-weight:600;margin:8px 0;">🤖 AI 个性化调整结果：</div>`;
+      }
+
       sections.forEach(s => {
         const val = toStr(diagnosis[s.key]);
         if(val) {
           h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color: var(--color-text) !important;background: transparent;">${val}</div></div>`;
         }
       });
-      h += '<div style="margin-top:12px;display:flex;gap:8px;">';
+      h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">';
       h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
       h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新生成</button>';
       h += '</div>';
@@ -18053,6 +18514,180 @@ _showHistoryPreviewModal(data) {
       if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); cleanup(false); }
     });
   });
+},
+
+// 🆕 v3.3.2 医生手动覆盖缓存方案
+tcmOverrideCachePlan() {
+  const container = document.getElementById('tcm-ai-result');
+  if (!container) return;
+
+  // 找到缓存方案卡片区域，替换为可编辑文本框
+  const cacheCard = container.querySelector('.cache-plan-card');
+  if (!cacheCard) { alert('未找到缓存方案'); return; }
+
+  // 获取当前 AI 诊断结果
+  const sections = container.querySelectorAll('.tcm-ai-section');
+  let currentDiagnosis = {};
+  sections.forEach(s => {
+    const titleEl = s.querySelector('.tcm-ai-section-title');
+    const contentEl = s.querySelector('.tcm-ai-section-content');
+    if (titleEl && contentEl) {
+      const title = titleEl.textContent.trim();
+      const content = contentEl.textContent.trim();
+      // 映射标题到 key
+      const titleMap = {
+        '🎯 证型': 'syndrome', '🔬 病机分析': 'pathogenesis',
+        '⚖️ 治法': 'treatment_principle', '💊 主方': 'main_formula',
+        '📝 加减': 'modification', '🪡 针灸/外治': 'acupuncture',
+        '🌿 生活调护': 'lifestyle', '📈 预后': 'prognosis'
+      };
+      const key = titleMap[title];
+      if (key) currentDiagnosis[key] = content;
+    }
+  });
+
+  // 将诊断结果转为可编辑文本
+  const editableText = Object.entries(currentDiagnosis).map(([k, v]) => {
+    const labelMap = {
+      syndrome: '证型', pathogenesis: '病机', treatment_principle: '治法',
+      main_formula: '主方', modification: '加减', acupuncture: '针灸/外治',
+      lifestyle: '生活调护', prognosis: '预后'
+    };
+    return `【${labelMap[k] || k}】\n${v}`;
+  }).join('\n\n');
+
+  // 替换整个内容为可编辑区域
+  const savedCacheCard = cacheCard.outerHTML;
+  container.innerHTML = `
+    <div class="tcm-ai-result">
+      <h3 style="color:var(--color-primary);">✏️ 医生手动覆盖方案</h3>
+      <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">编辑下方方案后保存，可选择是否存为新缓存模板</p>
+      <textarea id="tcm-override-editor" class="tcm-textarea" rows="16" style="width:100%;font-size:13px;line-height:1.8;">${editableText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="AdminApp.tcmSaveOverridePlan()">💾 保存覆盖方案</button>
+        <button class="btn btn-outline btn-sm" onclick="AdminApp.tcmCancelOverride()">↩️ 取消</button>
+      </div>
+    </div>`;
+  
+  // 保存原始内容用于取消恢复
+  this._tcmOverrideBackup = container.innerHTML;
+  this._tcmSavedCacheCard = savedCacheCard;
+},
+
+// 🆕 v3.3.2 保存医生覆盖的方案
+async tcmSaveOverridePlan() {
+  const editor = document.getElementById('tcm-override-editor');
+  if (!editor) return;
+  const text = editor.value.trim();
+  if (!text) { alert('方案内容不能为空'); return; }
+
+  // 解析编辑器文本为 diagnosis 对象
+  const diagnosis = {};
+  const patterns = [
+    { key: 'syndrome', label: '证型' },
+    { key: 'pathogenesis', label: '病机' },
+    { key: 'treatment_principle', label: '治法' },
+    { key: 'main_formula', label: '主方' },
+    { key: 'modification', label: '加减' },
+    { key: 'acupuncture', label: '针灸' },
+    { key: 'lifestyle', label: '生活调护' },
+    { key: 'prognosis', label: '预后' }
+  ];
+  patterns.forEach(p => {
+    const regex = new RegExp(`【${p.label}】\\s*([\\s\\S]*?)(?=【|$)`, 'i');
+    const match = text.match(regex);
+    if (match) diagnosis[p.key] = match[1].trim();
+  });
+  if (Object.keys(diagnosis).length === 0) {
+    // 如果解析失败，把整个文本放到 syndrome 字段
+    diagnosis.syndrome = text;
+  }
+  diagnosis._override = true;
+
+  // 保存到数据库
+  if (this.tcmCurrentRecord && this.tcmCurrentRecord.id) {
+    await CloudBaseManager.sb.from('tcm_consultations').update({
+      ai_diagnosis: diagnosis,
+      updated_at: new Date().toISOString()
+    }).eq('id', this.tcmCurrentRecord.id);
+
+    await CloudBaseManager.sb.from('tcm_ai_diagnosis_history').insert({
+      consultation_id: this.tcmCurrentRecord.id,
+      patient_id: this.tcmCurrentPatient?.id || null,
+      model: 'doctor_override',
+      task_type: 'tcm_diagnosis_override',
+      diagnosis: diagnosis,
+      prompt_tokens: 0
+    });
+  }
+
+  // 重新渲染
+  const container = document.getElementById('tcm-ai-result');
+  if (container) {
+    const toStr = (v) => {
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v)) return v.map(toStr).filter(Boolean).join('；');
+      return String(v);
+    };
+    const sections = [
+      { key: 'syndrome', title: '🎯 证型', icon: '🎯' },
+      { key: 'pathogenesis', title: '🔬 病机分析', icon: '🔬' },
+      { key: 'treatment_principle', title: '⚖️ 治法', icon: '⚖️' },
+      { key: 'main_formula', title: '💊 主方', icon: '💊' },
+      { key: 'modification', title: '📝 加减', icon: '📝' },
+      { key: 'acupuncture', title: '🪡 针灸/外治', icon: '🪡' },
+      { key: 'lifestyle', title: '🌿 生活调护', icon: '🌿' },
+      { key: 'prognosis', title: '📈 预后', icon: '📈' }
+    ];
+    let h = '<div class="tcm-ai-result"><h3 style="color:var(--color-primary);">✏️ 医生覆盖方案</h3>';
+    h += '<p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">由医生手动编辑，已覆盖AI方案</p>';
+    sections.forEach(s => {
+      const val = toStr(diagnosis[s.key]);
+      if (val) {
+        h += `<div class="tcm-ai-section"><div class="tcm-ai-section-title">${s.icon} ${s.title}</div><div class="tcm-ai-section-content" style="color:var(--color-text)!important;background:transparent;">${val}</div></div>`;
+      }
+    });
+    h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">';
+    h += '<button class="btn btn-primary btn-sm" onclick="AdminApp.tcmConfirmDiagnosis()">✅ 确认方案并存档</button>';
+    h += '<button class="btn btn-outline btn-sm" onclick="AdminApp.tcmAIDiagnosis(event)">🔄 重新AI生成</button>';
+    h += '</div>';
+    h += '</div>';
+    container.innerHTML = h;
+  }
+
+  // 🆕 v3.3.2 询问是否保存为新缓存条目
+  const saveToCache = confirm('是否将此方案保存为新缓存模板？\n保存后，相同病种的后续患者可自动匹配此方案。');
+  if (saveToCache && diagnosis.syndrome) {
+    const cacheName = prompt('请输入缓存模板名称（如：PMOS-痰湿型v2）：', '');
+    if (cacheName) {
+      // 存入 localStorage 的自定义缓存（补充内置缓存）
+      try {
+        const customCache = JSON.parse(localStorage.getItem('tcm_custom_plans_cache') || '{}');
+        customCache[cacheName] = {
+          syndrome: diagnosis.syndrome || '',
+          core_pathogenesis: diagnosis.pathogenesis || '',
+          treatment: diagnosis.treatment_principle || '',
+          base_formula: diagnosis.main_formula || '',
+          formula_explanation: '',
+          modifications: diagnosis.modification || '',
+          acupuncture: diagnosis.acupuncture || '',
+          external_treatment: '',
+          notes: '医生自定义缓存模板'
+        };
+        localStorage.setItem('tcm_custom_plans_cache', JSON.stringify(customCache));
+        alert('✅ 已保存为新缓存模板：' + cacheName);
+      } catch(e) {
+        alert('保存缓存失败: ' + e.message);
+      }
+    }
+  }
+},
+
+// 🆕 v3.3.2 取消覆盖，恢复原始内容
+tcmCancelOverride() {
+  // 重新触发 AI 辨证来恢复
+  this.tcmAIDiagnosis({ target: { closest: () => null } });
 },
 
 async tcmConfirmDiagnosis() {
