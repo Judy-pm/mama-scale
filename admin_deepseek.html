@@ -270,6 +270,107 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .stat-card.red { border-top-color: var(--color-red); }
 .stat-card.red .stat-number { color: var(--color-red); }
 
+/* ========== 🆕 v3.3.3 AI 用量统计卡片 ========== */
+.token-stats-card {
+  background: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-top: 28px;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+.token-stats-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgba(126,190,232,0.08), rgba(240,166,132,0.08));
+  cursor: pointer;
+  user-select: none;
+}
+.token-stats-header h3 {
+  font-size: 16px; font-weight: 700; color: var(--color-primary-dark);
+  display: flex; align-items: center; gap: 8px; margin: 0;
+}
+.token-stats-expand {
+  font-size: 13px; color: var(--color-sky);
+  display: flex; align-items: center; gap: 4px;
+  transition: transform 0.2s;
+}
+.token-stats-expand.open { transform: rotate(180deg); }
+.token-stats-body { padding: 20px; }
+.token-stats-overview {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 20px;
+}
+.token-overview-item {
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--color-primary-bg);
+  border-radius: 10px;
+}
+.token-overview-item .toi-value {
+  font-size: 24px; font-weight: 700; line-height: 1.3;
+}
+.token-overview-item .toi-label {
+  font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;
+}
+.token-overview-item.tok-tokens .toi-value { color: var(--color-sky); }
+.token-overview-item.tok-calls .toi-value { color: var(--color-peach); }
+.token-overview-item.tok-cost .toi-value { color: var(--color-primary); }
+.token-overview-item.tok-quota .toi-value { color: var(--color-green); }
+
+.token-progress-wrap {
+  margin-bottom: 0;
+}
+.token-progress-label {
+  display: flex; justify-content: space-between; font-size: 12px;
+  color: var(--color-text-secondary); margin-bottom: 6px;
+}
+.token-progress-bar {
+  height: 10px; background: #EDE7F6; border-radius: 5px; overflow: hidden;
+}
+.token-progress-fill {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--color-sky), var(--color-peach));
+  transition: width 0.5s ease;
+}
+
+/* 明细表格 */
+.token-stats-details {
+  display: none;
+  border-top: 1px solid var(--color-border);
+  padding: 16px 20px;
+}
+.token-stats-details.show { display: block; }
+.token-detail-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.token-detail-table th {
+  text-align: left; padding: 8px 12px; font-weight: 600;
+  color: var(--color-text-secondary); border-bottom: 2px solid var(--color-border);
+}
+.token-detail-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--color-border);
+}
+.token-detail-table tr:last-child td { border-bottom: none; }
+.token-detail-table .td-module {
+  display: flex; align-items: center; gap: 8px; font-weight: 600;
+}
+.td-module-icon { font-size: 16px; }
+.td-token { color: var(--color-sky); font-weight: 600; }
+.td-calls { color: var(--color-peach); font-weight: 600; }
+.td-cost { color: var(--color-primary); font-weight: 600; }
+.td-bar { width: 100px; height: 6px; background: #EDE7F6; border-radius: 3px; overflow: hidden; }
+.td-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.td-bar-fill.bar-tcm { background: #7EBEE8; }
+.td-bar-fill.bar-diet { background: #F0A684; }
+.td-bar-fill.bar-drug { background: #27AE60; }
+.td-bar-fill.bar-checkup { background: #7B68AE; }
+
+@media (max-width: 768px) {
+  .token-stats-overview { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
 .quick-actions {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px; margin-bottom: 28px;
@@ -13951,10 +14052,21 @@ const AdminApp = {
         ${activityHtml || '<div style="text-align:center;color:var(--color-gray);padding:20px;">暂无活动记录</div>'}
       </div>
 
+      <div class="token-stats-card">
+        <div class="token-stats-header" onclick="AdminApp.toggleTokenStatsDetail()">
+          <h3>📊 AI 用量统计</h3>
+          <div class="token-stats-expand" id="token-stats-expand">展开明细 ▾</div>
+        </div>
+        <div class="token-stats-body" id="token-stats-body"></div>
+        <div class="token-stats-details" id="token-stats-details"></div>
+      </div>
+
       <div id="risk-alert-container"></div>
     `;
     // 异步加载风险预警
     this.loadRiskAlerts();
+    // 🆕 v3.3.3: 渲染 AI 用量统计
+    this.renderTokenStats();
   },
 
   // ========== 风险预警 ==========
@@ -14063,6 +14175,110 @@ const AdminApp = {
       console.warn('[RiskAlerts] 更新状态失败:', e.message);
       alert('更新失败，请重试');
     }
+  },
+
+  // ========== 🆕 v3.3.3 AI Token 用量统计 ==========
+  renderTokenStats() {
+    const usage = AdminApp.getTokenUsage();
+    const DAILY_QUOTA = 500000;
+    const COST_PER_MILLION = 1; // 1元/百万token
+    const estimatedCost = (usage.totalTokens / 1000000 * COST_PER_MILLION).toFixed(4);
+    const progressPct = Math.min(100, (usage.totalTokens / DAILY_QUOTA * 100)).toFixed(1);
+    const remaining = Math.max(0, DAILY_QUOTA - usage.totalTokens);
+
+    const bodyEl = document.getElementById('token-stats-body');
+    if (!bodyEl) return;
+
+    bodyEl.innerHTML = `
+      <div class="token-stats-overview">
+        <div class="token-overview-item tok-tokens">
+          <div class="toi-value">${usage.totalTokens.toLocaleString()}</div>
+          <div class="toi-label">今日已用 Token</div>
+        </div>
+        <div class="token-overview-item tok-calls">
+          <div class="toi-value">${usage.totalCalls}</div>
+          <div class="toi-label">今日调用次数</div>
+        </div>
+        <div class="token-overview-item tok-cost">
+          <div class="toi-value">¥${estimatedCost}</div>
+          <div class="toi-label">估算费用</div>
+        </div>
+        <div class="token-overview-item tok-quota">
+          <div class="toi-value">${remaining.toLocaleString()}</div>
+          <div class="toi-label">剩余配额</div>
+        </div>
+      </div>
+      <div class="token-progress-wrap">
+        <div class="token-progress-label">
+          <span>日配额进度</span>
+          <span>${progressPct}%（${usage.totalTokens.toLocaleString()} / ${DAILY_QUOTA.toLocaleString()}）</span>
+        </div>
+        <div class="token-progress-bar">
+          <div class="token-progress-fill" style="width:${progressPct}%"></div>
+        </div>
+      </div>
+    `;
+
+    // 同时渲染明细（如果已展开）
+    this._renderTokenStatsDetails(usage);
+  },
+
+  _tokenStatsExpanded: false,
+
+  toggleTokenStatsDetail() {
+    this._tokenStatsExpanded = !this._tokenStatsExpanded;
+    const expandEl = document.getElementById('token-stats-expand');
+    const detailEl = document.getElementById('token-stats-details');
+    if (this._tokenStatsExpanded) {
+      expandEl.classList.add('open');
+      expandEl.textContent = '收起明细 ▴';
+      detailEl.classList.add('show');
+    } else {
+      expandEl.classList.remove('open');
+      expandEl.textContent = '展开明细 ▾';
+      detailEl.classList.remove('show');
+    }
+    const usage = AdminApp.getTokenUsage();
+    this._renderTokenStatsDetails(usage);
+  },
+
+  _renderTokenStatsDetails(usage) {
+    const detailEl = document.getElementById('token-stats-details');
+    if (!detailEl || !this._tokenStatsExpanded) return;
+
+    const moduleInfo = [
+      { key: 'tcm', label: '辨证论治', icon: '🏥', barClass: 'bar-tcm' },
+      { key: 'diet', label: '膳食方案', icon: '🍽️', barClass: 'bar-diet' },
+      { key: 'drug-interaction', label: '用药核查', icon: '💊', barClass: 'bar-drug' },
+      { key: 'checkup', label: '体检解读', icon: '🧬', barClass: 'bar-checkup' },
+    ];
+
+    const maxModuleTokens = Math.max(1, ...moduleInfo.map(m => usage.modules[m.key].tokens));
+    const COST_PER_MILLION = 1;
+
+    let rows = '';
+    moduleInfo.forEach(m => {
+      const mod = usage.modules[m.key];
+      const pct = (mod.tokens / maxModuleTokens * 100).toFixed(1);
+      const cost = (mod.tokens / 1000000 * COST_PER_MILLION).toFixed(4);
+      rows += `
+        <tr>
+          <td><div class="td-module"><span class="td-module-icon">${m.icon}</span>${m.label}</div></td>
+          <td class="td-token">${mod.tokens.toLocaleString()}</td>
+          <td class="td-calls">${mod.calls}</td>
+          <td class="td-cost">¥${cost}</td>
+          <td><div class="td-bar"><div class="td-bar-fill ${m.barClass}" style="width:${pct}%"></div></div></td>
+        </tr>`;
+    });
+
+    detailEl.innerHTML = `
+      <table class="token-detail-table">
+        <thead>
+          <tr><th>模块</th><th>Token 数</th><th>调用次数</th><th>估算费用</th><th>占比</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
   },
 
   // ========== 客户管理 ==========
@@ -15259,7 +15475,7 @@ const AdminApp = {
       }
 
       // 自由对话/病案探讨：保留 V3
-      const response = await callCozeBot(fullPrompt, 'deepseek-ai/DeepSeek-V3');
+      const response = await callCozeBot(fullPrompt, 'deepseek-ai/DeepSeek-V3', 1.0, null);
       
       // Remove typing indicator
       const typingEl = document.getElementById('ai-typing');
@@ -15997,7 +16213,7 @@ const AdminApp = {
         <div class="info-card">
           <h4>ℹ️ 关于</h4>
           <div class="info-row"><div class="info-label">系统名称</div><div class="info-value">抗衰中心助手 健康管理平台</div></div>
-          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.2 缓存+Prompt结构化</div></div>
+          <div class="info-row"><div class="info-label">版本</div><div class="info-value">3.3.3 AI用量统计</div></div>
           <div class="info-row"><div class="info-label">技术架构</div><div class="info-value">Supabase + 单页应用</div></div>
           <div class="info-row"><div class="info-label">主题</div><div class="info-value">归元紫 · #7B68AE</div></div>
         </div>
@@ -16842,7 +17058,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
     if (!apiKey || !apiKey.startsWith('sk-')) { alert('请先配置 API 密钥'); return; }
     const prompt = '你是体检报告补充分析助手。以下是一份【零散体检报告】（无医生"结论"段），请把所有"无法归入结构化字段"的文字发现（影像结论/超声结论/医生手写诊断/主诉等）整理成 markdown 格式：分部位小标题（## 标题）+ 列表。保留报告原文措辞，不要意译、不要推断严重程度。报告：\n' + input;
     try {
-      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
+      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B', 1.0, 'checkup');
       // 提取 markdown（去掉可能的代码块包裹）
       let md = result.trim();
       const codeMatch = md.match(/```(?:markdown|md)?\s*([\s\S]*?)```/);
@@ -16922,7 +17138,7 @@ CREATE POLICY "Allow anonymous delete" ON patients FOR DELETE TO anon USING (tru
       // 🆕 v3.2.13：妇科/心血管字段强制提取 + 阳性带型号 + 阴性必填
       const prompt = '你是体检报告数据提取助手。请严格按 JSON 格式输出（不要任何多余文字、不要 markdown 包裹）。\n\n【第一步：判断报告类型】\n- "standard"：报告末尾有"检查结论"/"结论"/"健康建议"/"异常发现"等医生总结段（绝大多数体检报告属于此类）\n- "scattered"：只有散装指标数据，无医生"结论"段（如医院电子病历粘贴、手写报告 OCR 等）\n\n【第二步：按类型处理】\n\n■ A. 如果是【standard 标准报告】：\n1. 定位"结论"段落（一般在报告末尾，以"检查结论"/"结论"/"异常"等标题开头）\n2. 把结论段落【逐字抄写】作为阳性发现\n3. 按"句号/分号/换行/编号（1./（1）/①）"自然拆分，每条 = 一个独立发现\n4. 每条 item 字段 = 报告原文完整措辞（一字不改）\n5. location 字段 = AI 从上下文判断的部位（可选：妇科/甲状腺/乳腺/胃肠/肝胆/泌尿/心血管/呼吸/神经/皮肤/口腔/眼耳鼻喉/血液/免疫/其他）\n\n■ B. 如果是【scattered 零散报告】：\n1. 把可识别的数值填进 indicators 字段\n2. 把"无法归入现有结构化字段"的所有发现（影像结论/超声结论/医生手写诊断/主诉等）→ 全部放进 supplementary_text 字段\n3. supplementary_text 用 markdown：分部位小标题（## 标题）+ 列表，保留报告原文措辞\n\n【第三步：妇科/心血管字段强制提取（必须填，不要漏）】\n\n■ TCT（宫颈细胞学）\n- 报告写"未见上皮内病变或恶性细胞"/"NILM" → 填 "NILM(未见上皮内病变)"\n- 报告写"ASC-US" / "ASC-H" / "LSIL" / "HSIL" / "不满意的标本" → 照填\n- 报告写其他 → 用最接近的选项\n\n■ HPV\n- 报告写"阴性"/"未检出" → 填 "阴性"（必须填，不要漏）\n- 报告写"阳性" → 填 "阳性"，同时把具体型号（如 HPV 16, HPV 52/58）写到 hpv_detail 字段\n- 常见高危型：16/18/31/33/35/39/45/51/52/56/58/59/66/68\n- 常见低危型：6/11/40/42/43/44/54/55/57/61\n\n■ 心电图（ECG）\n- 报告写"窦性心律" → 填 "正常"（窦性心律 = 正常，临床意义上属于正常心律）\n- 报告写"窦性心动过速" / "窦性心动过缓" / "ST-T改变" / "房颤" / "房扑" / "室性早搏" → 照填\n- 报告写"正常" / "未见明显异常" → 填 "正常"\n\n【铁律】\n- 阳性发现 item 字段：一字不差保留报告原文，不要意译、不要概括、不要 AI 推断严重程度\n- 不要遗漏结论里的任何一条\n- TCT/HPV/ECG 三个字段在妇科/心血管体检中**几乎必有**，报告里有数据就必须填，不要漏\n- 指标数值只写数字不带单位，未找到的留空字符串""\n\n需要提取的指标字段（key=字段名, n=中文名, u=单位）：\n' + fieldList + '\n\n返回严格 JSON（只返回 JSON，不要多余文字）：\n{"report_type":"standard|scattered","indicators":{"height":"","weight":"","bmi":"","sbp":"","dbp":"","wbc":"","rbc":"","hgb":"","plt":"","u_pro":"","u_glu":"","u_bld":"","alt":"","ast":"","ggt":"","tbil":"","alb":"","cr":"","bun":"","ua":"","fbg":"","hba1c":"","tc":"","tg":"","hdl":"","ldl":"","tsh":"","ft3":"","ft4":"","fsh":"","lh":"","e2":"","prog":"","testo":"","prl":"","amh":"","bmd_t":"","vitd":"","ca":"","phos":"","afp":"","cea":"","ca125":"","ca199":"","tct":"","hpv":"","hpv_detail":"","ecg":""},"positive_findings":[{"item":"原文措辞","location":"部位"}],"supplementary_text":""}\n\n【最后备注】本报告所有指标参考值、正常范围、临床意义均以各体检报告原文为准。AI 仅辅助提取，不替代医生判断。\n\n体检报告文本：\n' + input;
       // 高频结构化任务：走 Qwen3-8B（永久免费，严格 JSON 输出 Qwen 也能干）
-      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
+      const result = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B', 1.0, 'checkup');
       let jsonStr = result;
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) jsonStr = jsonMatch[0];
@@ -17855,7 +18071,7 @@ async tcmAISummarizeTranscript(e) {
 ${transcript.value}`;
     
     // 高频结构化任务：走 Qwen3-8B（永久免费）
-    const content = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B');
+    const content = await this.callCozeBot(prompt, 'Qwen/Qwen3-8B', 1.0, 'tcm');
     let summary = {};
     try { 
       const m = content.match(/\{[\s\S]*\}/); 
@@ -18196,7 +18412,7 @@ async tcmAIDiagnosis(e) {
     
     // 温度分层：辨证论治 0.4，让 AI 更收敛不漏证候要素
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
-    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4);
+    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.4, 'tcm');
     // 清理末尾 JSON 块用于展示
     const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【ENDJSON】\s*$/, '').trim();
     // 触发弹窗
@@ -18837,6 +19053,9 @@ async tcmDialogueSend() {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error?.message || data.message || 'API 错误');
+    // 🆕 v3.3.3: token 统计
+    const tcmDialogueTokens = data.usage && data.usage.total_tokens ? data.usage.total_tokens : 0;
+    AdminApp.trackTokenUsage(tcmDialogueTokens, 'tcm');
     const rawAiMsg = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(AI 无响应)';
     // 🆕 v3.1.0 任务 2+3：清理末尾 JSON 块，触发弹窗
     const aiMsg = rawAiMsg.replace(/【JSON块】\s*[\s\S]*?【ENDJSON】\s*$/, '').trim();
@@ -18902,7 +19121,7 @@ async tcmDialogueApply() {
     const prompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是一位资深中医师。请根据以下与抗衰中心助手探讨的对话内容，整理出最终辨证论治结论。\n\n【⚠️ 关键约束 ⚠️】\n1. 上述对话中，医生和 AI 已经经过多轮讨论，并**已经明确确认最终方案**（通常是对话最后一轮被医生明确认可的方剂）\n2. main_formula 字段**必须严格遵循对话中已确认的最终方剂**——**严禁换方、严禁自由发挥新方子、严禁重新辨证**\n3. 其他字段（syndrome/pathogenesis/treatment_principle/modification/acupuncture/lifestyle/prognosis）也要**严格围绕该最终方剂**展开\n4. 如果对话中存在多个版本的方剂，**以医生最后明确确认的那一版为准**\n\n请用**纯JSON格式**返回（不要用【JSON块】【ENDJSON】代码块包裹），每个字段必须是**字符串类型**（严禁嵌套对象或数组）：\nsyndrome（证型，字符串）\npathogenesis（病机分析，字符串）\ntreatment_principle（治法，字符串）\nmain_formula（主方及组成，字符串。**直接使用对话中已确认的最终方剂，不要换方**）\nmodification（加减变化，字符串）\nacupuncture（针灸建议，字符串）\nlifestyle（生活调护建议，字符串）\nprognosis（预后判断，字符串）\n\n对话内容：\n' + conversation;
     // 🆕 2026-06-08 温度分层：应用最终结论 0.3，开方要严谨少自由发挥
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
-    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3);
+    const rawContent = await this.callCozeBot(prompt, 'deepseek-ai/DeepSeek-V3', 0.3, 'tcm');
     const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【ENDJSON】\s*$/, '').trim();
     // 🆕 v3.1.8: await 处理弹窗（避免 race condition 导致后续 update 没执行）
     await this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmDialogueApply');
@@ -19370,7 +19589,7 @@ async tcmAIFollowupAnalysis(e) {
     const cozePrompt = TCM_PROMPT_PREAMBLE + memoryPrompt + '你是抗衰中心助手的中医诊疗助手。对比上次和本次诊疗数据，给出治疗变化总结。用JSON返回：treatment_summary（治疗变化总结）、symptom_comparison（症状对比分析：改善/加重/无变化的具体项目）、formula_adjustment（方药调整建议）、overall_assessment（总体评估：好转/稳定/需调整）。\n\n' + prompt;
     // 医学深度任务：保留 V3（对比分析需要顶级能力）
     // 🆕 v3.1.0 任务 2+3：解析 supplements 和 doctor_agreements
-    const rawContent = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3');
+    const rawContent = await this.callCozeBot(cozePrompt, 'deepseek-ai/DeepSeek-V3', 1.0, 'tcm');
     const content = rawContent.replace(/【JSON块】\s*[\s\S]*?【ENDJSON】\s*$/, '').trim();
     this._tcmHandleSupplementsAndAgreements(rawContent, 'tcmAIFollowupAnalysis');
     let analysis;
@@ -19754,11 +19973,44 @@ async _tcmConfirmAgreements() {
   window._tcmCurrentAgreements = null;
 },
 
+// ========== 🆕 v3.3.3 AI Token 用量统计 ==========
+// 用量数据结构: { date, totalTokens, totalCalls, modules: { tcm:{tokens,calls}, diet:{tokens,calls}, 'drug-interaction':{tokens,calls}, checkup:{tokens,calls} } }
+trackTokenUsage(tokens, moduleName) {
+  const today = new Date().toISOString().slice(0, 10);
+  const STORAGE_KEY = 'admin_daily_token_usage';
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) {}
+  // 按日期自动重置
+  if (!data || data.date !== today) {
+    data = { date: today, totalTokens: 0, totalCalls: 0, modules: { tcm:{tokens:0,calls:0}, diet:{tokens:0,calls:0}, 'drug-interaction':{tokens:0,calls:0}, checkup:{tokens:0,calls:0} } };
+  }
+  data.totalTokens += (tokens || 0);
+  data.totalCalls += 1;
+  if (moduleName && data.modules[moduleName]) {
+    data.modules[moduleName].tokens += (tokens || 0);
+    data.modules[moduleName].calls += 1;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  console.log('[Token统计] 模块:', moduleName, '| 本次token:', tokens, '| 今日累计:', data.totalTokens, '| 调用次数:', data.totalCalls);
+},
+
+getTokenUsage() {
+  const today = new Date().toISOString().slice(0, 10);
+  const STORAGE_KEY = 'admin_daily_token_usage';
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) {}
+  if (!data || data.date !== today) {
+    data = { date: today, totalTokens: 0, totalCalls: 0, modules: { tcm:{tokens:0,calls:0}, diet:{tokens:0,calls:0}, 'drug-interaction':{tokens:0,calls:0}, checkup:{tokens:0,calls:0} } };
+  }
+  return data;
+},
+
 // ========== DeepSeek配置 ==========
 // ========== DeepSeek配置 ==========
 // 双模型策略：高频结构化任务走 Qwen3-8B（永久免费），低频医学深度任务走 DeepSeek-V3（付费）
 // 调用时传 model 参数指定；不传默认 V3
-async callCozeBot(prompt, model, temperature = 1.0) {
+// 🆕 v3.3.3: 新增 moduleName 参数，用于 token 分模块统计
+async callCozeBot(prompt, model, temperature = 1.0, moduleName) {
   // 兼容旧代码，仍叫 callCozeBot，实际调用 SiliconFlow
   // 🆕 2026-06-08 公主陛下拍板：温度分层方案
   //   tcmAIDiagnosis（辨证论治）→ 0.4：让 AI 更收敛，不漏证候要素（C2 漏脾虚就是这个原因）
@@ -19792,6 +20044,9 @@ async callCozeBot(prompt, model, temperature = 1.0) {
   }
 
   const result = await response.json();
+  // 🆕 v3.3.3: 提取 usage 统计
+  const totalTokens = result.usage && result.usage.total_tokens ? result.usage.total_tokens : 0;
+  AdminApp.trackTokenUsage(totalTokens, moduleName);
   return result.choices && result.choices[0] && result.choices[0].message
     ? result.choices[0].message.content
     : '';
@@ -20119,6 +20374,10 @@ ${patientInfo}
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error?.message || 'AI接口错误');
+
+    // 🆕 v3.3.3: token 统计
+    const dietTokens = data.usage && data.usage.total_tokens ? data.usage.total_tokens : 0;
+    AdminApp.trackTokenUsage(dietTokens, 'diet');
 
     const content = data.choices?.[0]?.message?.content || '';
     // 提取JSON
@@ -20748,6 +21007,9 @@ ${drugList}
     }
 
     const data = await response.json();
+    // 🆕 v3.3.3: token 统计
+    const drugTokens = data.usage && data.usage.total_tokens ? data.usage.total_tokens : 0;
+    AdminApp.trackTokenUsage(drugTokens, 'drug-interaction');
     const content = data.choices?.[0]?.message?.content || 'AI未返回有效内容';
 
     // 将AI结果追加到结果区域
