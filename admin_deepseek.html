@@ -12907,7 +12907,834 @@ const SCALES = [
         }
       ]
     }
+  },
+{
+  "id": "wuxing_constitution",
+  "name": "五行体质评估",
+  "category": "待补充",
+  "description": "通过日常场景中的自然反应，了解你的身心特质，获得个性化健康建议",
+  "questions": [
+    {
+      "text": "你在开会时，别人提出了一个你觉得明显有问题的方案：",
+      "type": "select",
+      "options": [
+        {
+          "text": "你会直接指出问题所在，语气可能有点冲",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "你会先观察其他人的反应，然后找到一个大家都能接受的方式说",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "你会在心里反复想“他为什么会这样想”，可能会后私下聊",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "你会沉默，觉得说了也没用，心里有点凉",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "你会避开这个话题，等会后再私下处理",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你一个人在家，突然停电了：",
+      "type": "select",
+      "options": [
+        {
+          "text": "立刻找手电/手机，动作很快，觉得“怎么又出这种事”",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "第一反应是打电话给朋友/家人说说这件事",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "坐在原地想“是不是电费忘了交/跳闸了”，开始想各种可能",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "觉得有点孤单/凄凉，叹了口气",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "有点紧张，开始想“万一有坏人怎么办”",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你收到一个久未联系的朋友的消息，说想见你：",
+      "type": "select",
+      "options": [
+        {
+          "text": "“好啊，定个时间吧”——干脆利落",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "很开心，开始想“去哪里吃/聊什么”",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "“好呀好呀，你最近怎么样？”——开始关心对方",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "“好的，不过我最近有点忙...”——先保持距离",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "有点犹豫，想“要不要见/会不会尴尬”",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你做了一个重要的决定，但结果不如预期：",
+      "type": "select",
+      "options": [
+        {
+          "text": "会想“是不是哪个环节出了问题”，想复盘",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "会找信任的人聊聊，说说自己的感受",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "会反复想“如果当时选了另一个就好了”",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "会有点沮丧，但很快告诉自己“算了，过去了”",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "会担心“下一次会不会也这样”",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "有人在你面前讲了一个你很不同意的观点：",
+      "type": "select",
+      "options": [
+        {
+          "text": "会忍不住反驳，觉得“这不对”",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "会笑着听，然后说“我有一个不同的看法...”",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "会想“他为什么这样想”，试图理解",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "懒得争论，心里想“随他去吧”",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "不表态，但心里已经开始想怎么避开这个人",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的工作/生活节奏突然被打乱：",
+      "type": "select",
+      "options": [
+        {
+          "text": "烦躁，觉得“计划都被打乱了”",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "有点慌，想赶紧找人商量怎么办",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "开始重新规划，但总觉得哪里不对",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "觉得失落，原来的安排挚好的",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "想躲起来，不想被打扰",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你在一个聚会上，不太认识其他人：",
+      "type": "select",
+      "options": [
+        {
+          "text": "找个话题主动跟人聊，很快就能搭上话",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "到处看看，找到看起来友善的人开始聊",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "待在主人/熟人旁边，慢慢认识别人",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "找个安静的角落，观察别人",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "想早点离开，或者一直看手机",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你做了一个很满意的成果，但没得到预期的认可：",
+      "type": "select",
+      "options": [
+        {
+          "text": "有点生气，觉得“他们没看到吗”",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "有点失落，想找人倾诉“我做了很多...”",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "开始想“是不是我做得还不够好”",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "觉得“算了，自己知道就好”",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "开始怀疑自己“是不是真的不行”",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "别人形容你说话的语气：",
+      "type": "select",
+      "options": [
+        {
+          "text": "干脆、有力、像在安排事情",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "热情、有感染力、像在讲故事",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "温和、缓慢、让人觉得很舒服",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "平淡、克制、像在汇报",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "很轻、很慢、要凑近才能听清",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你笑的方式：",
+      "type": "select",
+      "options": [
+        {
+          "text": "大笑/爽朗的笑/短促的笑",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "爱笑/笑点低/自带笑意",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "微笑/不好意思地笑/温暖的笑",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "很少笑/礼貌性微笑/带距离感",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "几乎不笑/或突然笑一下又收住",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "别人跟你聊天时的感受：",
+      "type": "select",
+      "options": [
+        {
+          "text": "觉得你在“教”他什么/有点被压制",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "觉得很开心/被关注/想继续聊",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "觉得很舒服/被照顾/想靠近",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "觉得有距离/不太敢多说/你很理性",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "觉得你有点神秘/看不透/想保护你",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你讲电话/发语音时：",
+      "type": "select",
+      "options": [
+        {
+          "text": "语速快、声音大、直奔主题",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "语气活泼、语气词多、像在聊天",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "语速慢、尾音长、有点柔和",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "简短、公事公办、不带感情色彩",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "声音小、犹豫、经常停顿",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你在表达不同意见时：",
+      "type": "select",
+      "options": [
+        {
+          "text": "直接说“不对/不行”，然后说理由",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "先笑着说“你说的有道理，但是...”",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "绕个弯子说“我在想是不是还可以...”",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "不说/或者冷冷地来一句",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "不说/但身体语言明显不认同",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的口头禅：",
+      "type": "select",
+      "options": [
+        {
+          "text": "“烦死了/气死了/怎么这样”",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "“哎呀/天哪/我的妈呀”",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "“嗯...我想想/是不是...”",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "“算了/无所谓/都行”",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "“嗯.../啊.../”（无意义的低声）",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你在紧张/压力下的说话方式：",
+      "type": "select",
+      "options": [
+        {
+          "text": "语速更快、声音更大、像在命令",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "话变多、有点语无伦次/笑场",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "话变多、开始解释/寻求理解",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "话变少、声音变平/像在陈述事实",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "话变少、声音变低/甚至说不出话",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你放松/减压的方式：",
+      "type": "select",
+      "options": [
+        {
+          "text": "运动/做事/让自己忙起来",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "找朋友聊天/聚会/分享",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "吃好吃的/睡觉/待着不动",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "独处/看书/散步/整理",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "泡澡/听音乐/发呆/躲起来",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你身体的紧张/不舒服通常在哪里：",
+      "type": "select",
+      "options": [
+        {
+          "text": "头/脖子/肩膀/眼睛/两肋",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "胸口/心脏/脸/舌头",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "肚子/胃/四肢/嘴巴",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "胸部/皮肤/鼻子/肩背",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "腰/膝盖/耳朵/腿",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的睡眠模式：",
+      "type": "select",
+      "options": [
+        {
+          "text": "入睡难/脑子停不下来/凌晨1-3点醒",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "睡眠浅/多梦/说梦话/半夜醒",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "嗜睡/饭后困/睡了还想睡",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "早醒/凌晨3-5点醒/醒来就睡不着",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "整夜多梦/夜尿多/怕冷/睡不暖",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你生病时的状态：",
+      "type": "select",
+      "options": [
+        {
+          "text": "硬扛/不想让人看到自己虚弱",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "赶紧告诉别人/寻求关心",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "躺在床上不动/不想吃东西",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "安静地休息/不想被打扰",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "特别害怕/担心严重/想躲起来",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的饮食特点：",
+      "type": "select",
+      "options": [
+        {
+          "text": "吃得快/不挑食/饿了自己找吃的",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "喜欢吃热的/辣的/刺激性食物",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "喜欢吃甜的/主食/慢慢吃",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "食欲不稳定/情绪化进食/或没胃口",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "喜欢咸的/热汤/吃得少但规律",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的能量节律：",
+      "type": "select",
+      "options": [
+        {
+          "text": "早上最有精力/晚上容易亢奋",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "上午一般/下午和晚上最活跃",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "上午到中午最好/下午犯困",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "清晨最好/下午开始低落",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "晚上比较有精神/白天没劲",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你对环境温度的感受：",
+      "type": "select",
+      "options": [
+        {
+          "text": "怕热/容易出汗/喜欢凉爽",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "怕热/脸容易红/手脚心热",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "对温度不太敏感/但怕潮湿",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "怕冷/容易起鸡皮疙瘩/皮肤干",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "怕冷/手脚冰凉/腰膝冷",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你的运动方式：",
+      "type": "select",
+      "options": [
+        {
+          "text": "高强度/竞技类/快节奏",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "团体运动/热闹的/有互动",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "散步/瑜伽/不太剧烈",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "独自跑步/游泳/有节奏感",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "不太爱动/或喜欢水中运动/太极",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你最喜欢的季节：",
+      "type": "select",
+      "options": [
+        {
+          "text": "春天 — 万物复苏，充满生机",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "夏天 — 热烈奔放，活力满满",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "初秋 — 温暖舒适，收获充实",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "深秋 — 天高云淡，清爽通透",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "冬天 — 安静深沉，适合蓄养",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你最喜欢的味道：",
+      "type": "select",
+      "options": [
+        {
+          "text": "酸味 — 柠檬/醋/酸梅",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "苦味 — 咖啡/黑巧/苦菊",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "甜味 — 甜点/水果/主食",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "辛辣 — 辣椒/姜/薄荷",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "咸味 — 海鲜/咸汤/酱类",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    },
+    {
+      "text": "你最喜欢的颜色：",
+      "type": "select",
+      "options": [
+        {
+          "text": "绿色/青色 — 自然清新",
+          "score": 1,
+          "element": "wood"
+        },
+        {
+          "text": "红色/橙色 — 温暖热烈",
+          "score": 1,
+          "element": "fire"
+        },
+        {
+          "text": "黄色/棕色 — 踏实厚重",
+          "score": 1,
+          "element": "earth"
+        },
+        {
+          "text": "白色/银色 — 简洁纯净",
+          "score": 1,
+          "element": "metal"
+        },
+        {
+          "text": "蓝色/黑色 — 深沉宁静",
+          "score": 1,
+          "element": "water"
+        }
+      ]
+    }
+  ],
+  "scoring": {
+    "formula": "wuxing",
+    "maxScore": 58,
+    "levels": [
+      {
+        "min": 0,
+        "max": 58,
+        "label": "五行体质评估完成",
+        "color": "green"
+      }
+    ]
   }
+}
+
 ];
 
 
