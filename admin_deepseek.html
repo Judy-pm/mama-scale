@@ -2236,6 +2236,9 @@ const CloudBaseManager = {
         depression_score: record.depressionScore || null,
         anxiety_level: record.anxietyLevel || null,
         depression_level: record.depressionLevel || null,
+        dominant_element: record.dominantElement || null,
+        element_scores: record.elementScores || null,
+        element_percentages: record.elementPercentages || null,
         eval_date: record.date,
         eval_time: record.time,
         created_by: 'self'
@@ -2296,7 +2299,10 @@ const CloudBaseManager = {
           anxietyScore: doc.anxiety_score || null,
           depressionScore: doc.depression_score || null,
           anxietyLevel: doc.anxiety_level || null,
-          depressionLevel: doc.depression_level || null
+          depressionLevel: doc.depression_level || null,
+          dominantElement: doc.dominant_element || null,
+          elementScores: doc.element_scores || null,
+          elementPercentages: doc.element_percentages || null
         };
         // 去重：同一量表同一天不重复
         const existIdx = patientMap[key].records.findIndex(r =>
@@ -2382,7 +2388,10 @@ const CloudBaseManager = {
           anxietyScore: doc.anxiety_score || null,
           depressionScore: doc.depression_score || null,
           anxietyLevel: doc.anxiety_level || null,
-          depressionLevel: doc.depression_level || null
+          depressionLevel: doc.depression_level || null,
+          dominantElement: doc.dominant_element || null,
+          elementScores: doc.element_scores || null,
+          elementPercentages: doc.element_percentages || null
         };
         // 去重
         const existIdx = records.findIndex(r =>
@@ -12907,834 +12916,7 @@ const SCALES = [
         }
       ]
     }
-  },
-{
-  "id": "wuxing_constitution",
-  "name": "五行体质评估",
-  "category": "待补充",
-  "description": "通过日常场景中的自然反应，了解你的身心特质，获得个性化健康建议",
-  "questions": [
-    {
-      "text": "你在开会时，别人提出了一个你觉得明显有问题的方案：",
-      "type": "select",
-      "options": [
-        {
-          "text": "你会直接指出问题所在，语气可能有点冲",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "你会先观察其他人的反应，然后找到一个大家都能接受的方式说",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "你会在心里反复想“他为什么会这样想”，可能会后私下聊",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "你会沉默，觉得说了也没用，心里有点凉",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "你会避开这个话题，等会后再私下处理",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你一个人在家，突然停电了：",
-      "type": "select",
-      "options": [
-        {
-          "text": "立刻找手电/手机，动作很快，觉得“怎么又出这种事”",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "第一反应是打电话给朋友/家人说说这件事",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "坐在原地想“是不是电费忘了交/跳闸了”，开始想各种可能",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "觉得有点孤单/凄凉，叹了口气",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "有点紧张，开始想“万一有坏人怎么办”",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你收到一个久未联系的朋友的消息，说想见你：",
-      "type": "select",
-      "options": [
-        {
-          "text": "“好啊，定个时间吧”——干脆利落",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "很开心，开始想“去哪里吃/聊什么”",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "“好呀好呀，你最近怎么样？”——开始关心对方",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "“好的，不过我最近有点忙...”——先保持距离",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "有点犹豫，想“要不要见/会不会尴尬”",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你做了一个重要的决定，但结果不如预期：",
-      "type": "select",
-      "options": [
-        {
-          "text": "会想“是不是哪个环节出了问题”，想复盘",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "会找信任的人聊聊，说说自己的感受",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "会反复想“如果当时选了另一个就好了”",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "会有点沮丧，但很快告诉自己“算了，过去了”",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "会担心“下一次会不会也这样”",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "有人在你面前讲了一个你很不同意的观点：",
-      "type": "select",
-      "options": [
-        {
-          "text": "会忍不住反驳，觉得“这不对”",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "会笑着听，然后说“我有一个不同的看法...”",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "会想“他为什么这样想”，试图理解",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "懒得争论，心里想“随他去吧”",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "不表态，但心里已经开始想怎么避开这个人",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的工作/生活节奏突然被打乱：",
-      "type": "select",
-      "options": [
-        {
-          "text": "烦躁，觉得“计划都被打乱了”",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "有点慌，想赶紧找人商量怎么办",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "开始重新规划，但总觉得哪里不对",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "觉得失落，原来的安排挚好的",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "想躲起来，不想被打扰",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你在一个聚会上，不太认识其他人：",
-      "type": "select",
-      "options": [
-        {
-          "text": "找个话题主动跟人聊，很快就能搭上话",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "到处看看，找到看起来友善的人开始聊",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "待在主人/熟人旁边，慢慢认识别人",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "找个安静的角落，观察别人",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "想早点离开，或者一直看手机",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你做了一个很满意的成果，但没得到预期的认可：",
-      "type": "select",
-      "options": [
-        {
-          "text": "有点生气，觉得“他们没看到吗”",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "有点失落，想找人倾诉“我做了很多...”",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "开始想“是不是我做得还不够好”",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "觉得“算了，自己知道就好”",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "开始怀疑自己“是不是真的不行”",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "别人形容你说话的语气：",
-      "type": "select",
-      "options": [
-        {
-          "text": "干脆、有力、像在安排事情",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "热情、有感染力、像在讲故事",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "温和、缓慢、让人觉得很舒服",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "平淡、克制、像在汇报",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "很轻、很慢、要凑近才能听清",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你笑的方式：",
-      "type": "select",
-      "options": [
-        {
-          "text": "大笑/爽朗的笑/短促的笑",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "爱笑/笑点低/自带笑意",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "微笑/不好意思地笑/温暖的笑",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "很少笑/礼貌性微笑/带距离感",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "几乎不笑/或突然笑一下又收住",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "别人跟你聊天时的感受：",
-      "type": "select",
-      "options": [
-        {
-          "text": "觉得你在“教”他什么/有点被压制",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "觉得很开心/被关注/想继续聊",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "觉得很舒服/被照顾/想靠近",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "觉得有距离/不太敢多说/你很理性",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "觉得你有点神秘/看不透/想保护你",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你讲电话/发语音时：",
-      "type": "select",
-      "options": [
-        {
-          "text": "语速快、声音大、直奔主题",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "语气活泼、语气词多、像在聊天",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "语速慢、尾音长、有点柔和",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "简短、公事公办、不带感情色彩",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "声音小、犹豫、经常停顿",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你在表达不同意见时：",
-      "type": "select",
-      "options": [
-        {
-          "text": "直接说“不对/不行”，然后说理由",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "先笑着说“你说的有道理，但是...”",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "绕个弯子说“我在想是不是还可以...”",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "不说/或者冷冷地来一句",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "不说/但身体语言明显不认同",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的口头禅：",
-      "type": "select",
-      "options": [
-        {
-          "text": "“烦死了/气死了/怎么这样”",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "“哎呀/天哪/我的妈呀”",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "“嗯...我想想/是不是...”",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "“算了/无所谓/都行”",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "“嗯.../啊.../”（无意义的低声）",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你在紧张/压力下的说话方式：",
-      "type": "select",
-      "options": [
-        {
-          "text": "语速更快、声音更大、像在命令",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "话变多、有点语无伦次/笑场",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "话变多、开始解释/寻求理解",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "话变少、声音变平/像在陈述事实",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "话变少、声音变低/甚至说不出话",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你放松/减压的方式：",
-      "type": "select",
-      "options": [
-        {
-          "text": "运动/做事/让自己忙起来",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "找朋友聊天/聚会/分享",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "吃好吃的/睡觉/待着不动",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "独处/看书/散步/整理",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "泡澡/听音乐/发呆/躲起来",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你身体的紧张/不舒服通常在哪里：",
-      "type": "select",
-      "options": [
-        {
-          "text": "头/脖子/肩膀/眼睛/两肋",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "胸口/心脏/脸/舌头",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "肚子/胃/四肢/嘴巴",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "胸部/皮肤/鼻子/肩背",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "腰/膝盖/耳朵/腿",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的睡眠模式：",
-      "type": "select",
-      "options": [
-        {
-          "text": "入睡难/脑子停不下来/凌晨1-3点醒",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "睡眠浅/多梦/说梦话/半夜醒",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "嗜睡/饭后困/睡了还想睡",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "早醒/凌晨3-5点醒/醒来就睡不着",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "整夜多梦/夜尿多/怕冷/睡不暖",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你生病时的状态：",
-      "type": "select",
-      "options": [
-        {
-          "text": "硬扛/不想让人看到自己虚弱",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "赶紧告诉别人/寻求关心",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "躺在床上不动/不想吃东西",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "安静地休息/不想被打扰",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "特别害怕/担心严重/想躲起来",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的饮食特点：",
-      "type": "select",
-      "options": [
-        {
-          "text": "吃得快/不挑食/饿了自己找吃的",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "喜欢吃热的/辣的/刺激性食物",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "喜欢吃甜的/主食/慢慢吃",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "食欲不稳定/情绪化进食/或没胃口",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "喜欢咸的/热汤/吃得少但规律",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的能量节律：",
-      "type": "select",
-      "options": [
-        {
-          "text": "早上最有精力/晚上容易亢奋",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "上午一般/下午和晚上最活跃",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "上午到中午最好/下午犯困",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "清晨最好/下午开始低落",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "晚上比较有精神/白天没劲",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你对环境温度的感受：",
-      "type": "select",
-      "options": [
-        {
-          "text": "怕热/容易出汗/喜欢凉爽",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "怕热/脸容易红/手脚心热",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "对温度不太敏感/但怕潮湿",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "怕冷/容易起鸡皮疙瘩/皮肤干",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "怕冷/手脚冰凉/腰膝冷",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你的运动方式：",
-      "type": "select",
-      "options": [
-        {
-          "text": "高强度/竞技类/快节奏",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "团体运动/热闹的/有互动",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "散步/瑜伽/不太剧烈",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "独自跑步/游泳/有节奏感",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "不太爱动/或喜欢水中运动/太极",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你最喜欢的季节：",
-      "type": "select",
-      "options": [
-        {
-          "text": "春天 — 万物复苏，充满生机",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "夏天 — 热烈奔放，活力满满",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "初秋 — 温暖舒适，收获充实",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "深秋 — 天高云淡，清爽通透",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "冬天 — 安静深沉，适合蓄养",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你最喜欢的味道：",
-      "type": "select",
-      "options": [
-        {
-          "text": "酸味 — 柠檬/醋/酸梅",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "苦味 — 咖啡/黑巧/苦菊",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "甜味 — 甜点/水果/主食",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "辛辣 — 辣椒/姜/薄荷",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "咸味 — 海鲜/咸汤/酱类",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    },
-    {
-      "text": "你最喜欢的颜色：",
-      "type": "select",
-      "options": [
-        {
-          "text": "绿色/青色 — 自然清新",
-          "score": 1,
-          "element": "wood"
-        },
-        {
-          "text": "红色/橙色 — 温暖热烈",
-          "score": 1,
-          "element": "fire"
-        },
-        {
-          "text": "黄色/棕色 — 踏实厚重",
-          "score": 1,
-          "element": "earth"
-        },
-        {
-          "text": "白色/银色 — 简洁纯净",
-          "score": 1,
-          "element": "metal"
-        },
-        {
-          "text": "蓝色/黑色 — 深沉宁静",
-          "score": 1,
-          "element": "water"
-        }
-      ]
-    }
-  ],
-  "scoring": {
-    "formula": "wuxing",
-    "maxScore": 58,
-    "levels": [
-      {
-        "min": 0,
-        "max": 58,
-        "label": "五行体质评估完成",
-        "color": "green"
-      }
-    ]
   }
-}
-
 ];
 
 
@@ -15494,10 +14676,186 @@ const AdminApp = {
         <div id="pd-ans-${ansKey}" style="display:none;margin:4px 0 8px 4px;padding:8px 0 8px 12px;border-left:2px solid var(--color-primary);">
           ${ansHtml}
         </div>`;
+        
+        // 🔥 五行体质评估 - v2 完整报告（蜘蛛网图+条形图+详细分析）
+        if (r.scaleId === 'wuxing_constitution' && r.elementPercentages) {
+          html += AdminApp._renderWuxingReport(r);
+        }
       });
       html += '</div>';
     }
 
+    return html;
+  },
+
+  _renderWuxingReport(r) {
+    const elNames = {wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
+    const elNamesCn = {wood:'行动型',fire:'热情型',earth:'稳重型',metal:'思考型',water:'沉静型'};
+    const elEmoji = {wood:'🌳',fire:'🔥',earth:'🌾',metal:'⚔️',water:'💧'};
+    const elColors = {wood:'#4CAF50',fire:'#E53935',earth:'#FFA726',metal:'#90A4AE',water:'#1E88E5'};
+    const elements = ['wood','fire','earth','metal','water'];
+    const ep = r.elementPercentages;
+    const es = r.elementScores || {};
+    const maxEl = r.dominantElement || 'wood';
+    
+    const elInfo = {
+      wood:{organ:'肝 / 胆',core:'前进的、有生命力的、朝气蓬勃',
+        balanced:['充满干劲，目标明确','决策果断，执行力强','有方向感，知道要去哪里','仗义豪爽，有担当'],
+        imbalanced:['易怒或压抑愤怒','偏头痛、眼疾','月经不调','绝望感'],
+        care:['疏肝理气，调畅气机','适当运动发泄（跑步、拳击）','亲近自然，多在绿色环境中','学会放手，接受不完美']},
+      fire:{organ:'心 / 小肠 + 心包 / 三焦',core:'温暖的、敞开的、连接的',
+        balanced:['热情温暖，善于交流','关系和谐，让人放松','有感染力，充满喜悦','情感丰富，表达自然'],
+        imbalanced:['焦虑失眠、心悸','社交障碍或过度社交','过度热情或冷漠','喜悦缺失或情绪过激'],
+        care:['安神定志，养心宁神','建立安全的关系','适度社交，避免过度消耗','学会独处，内在安定']},
+      earth:{organ:'脾 / 胃',core:'厚重的、稳定的、滋养的',
+        balanced:['安心满足，内心富足','善于照顾他人，有包容力','消化良好，食欲稳定','让人想依靠，值得信赖'],
+        imbalanced:['过度思虑，反复纠结','消化问题（胃胀、便溏）','四肢无力，倦怠嗜睡','过度依赖或封闭自我'],
+        care:['规律饮食，定时定量','接地气运动（散步、太极）','减少思虑，专注当下','学会接受，不过度付出']},
+      metal:{organ:'肺 / 大肠',core:'收束的、有空间感的、淡然的',
+        balanced:['自尊自爱，有边界感','有序有节，条理分明','皮肤光泽，容光焕发','独立自主，不依附'],
+        imbalanced:['悲伤放不下，沉溺过去','皮肤问题（湿疹、过敏）','便秘或排便不畅','自我价值低，与世隔绝'],
+        care:['呼吸训练（腹式呼吸、冥想）','释放悲伤情绪','建立内在价值感','学会连接，打开边界']},
+      water:{organ:'肾 / 膀胱',core:'下沉的、潜藏的、流动的',
+        balanced:['智慧深沉，洞察力强','安全感充足，内心笃定','精力充沛，生命力旺盛','灵活流动，适应力强'],
+        imbalanced:['恐惧退缩，缺乏安全感','腰膝酸软，耳鸣','夜尿多，生殖功能下降','极度恐惧或麻木'],
+        care:['温补肾阳，避免寒凉','建立安全感，找到根基','静养蓄能（打坐、站桩）','适度冒险，突破恐惧']}
+    };
+    const refTableData = {
+      '情志':{wood:'怒',fire:'喜',earth:'思',metal:'悲',water:'恐'},
+      '声音':{wood:'呼/ shout',fire:'笑/ laugh',earth:'歌/ sing',metal:'哭/ weep',water:'呻/ groan'},
+      '颜色':{wood:'绿/青',fire:'红/赤',earth:'黄',metal:'白',water:'黑/蓝'},
+      '气味':{wood:'臊/腥酸',fire:'焦',earth:'香',metal:'腥',water:'腐'},
+      '季节':{wood:'春',fire:'夏',earth:'长夏',metal:'秋',water:'冬'},
+      '脏腑':{wood:'肝/胆',fire:'心/小肠',earth:'脾/胃',metal:'肺/大肠',water:'肾/膀胱'},
+      '味':{wood:'酸',fire:'苦',earth:'甘',metal:'辛',water:'咸'},
+      '核心':{wood:'生机·决断',fire:'温暖·连接',earth:'厚重·滋养',metal:'收束·独立',water:'潜藏·流动'}
+    };
+
+    // 排序
+    const sorted = elements.slice().sort((a,b) => (ep[b]||0) - (ep[a]||0));
+    const secondEl = sorted[1];
+    const totalScore = Object.values(es).reduce((a,b)=>a+b,0) || 1;
+
+    // === 条形图 ===
+    let barHtml = '<div style="margin:12px 0">';
+    elements.forEach(el => {
+      const pct = ep[el] || 0;
+      const score = Math.round(es[el] || 0);
+      barHtml += `<div style="display:flex;align-items:center;margin-bottom:6px;">
+        <div style="width:40px;font-size:12px;font-weight:600;text-align:right;padding-right:8px;">${elEmoji[el]}${elNames[el]}</div>
+        <div style="flex:1;height:20px;background:#eef3f7;border-radius:10px;overflow:hidden;position:relative;">
+          <div style="height:100%;width:${pct}%;background:${elColors[el]};border-radius:10px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:30px;transition:width .8s ease;">
+            <span style="font-size:10px;color:#fff;font-weight:700;">${pct}%</span>
+          </div>
+        </div>
+        <div style="width:30px;font-size:11px;color:#8a9bae;text-align:right;padding-left:4px;">${score}分</div>
+      </div>`;
+    });
+    barHtml += '</div>';
+
+    // === 蜘蛛网图（SVG 雷达图）===
+    const cx=150,cy=150,R=110;
+    const angles = elements.map((_,i) => -Math.PI/2 + i * 2*Math.PI/5);
+    // 网格
+    let radarSvg = `<svg viewBox="0 0 300 300" style="max-width:280px;width:100%;">`;
+    [0.25,0.5,0.75,1].forEach(ratio => {
+      const pts = angles.map(a => `${cx+R*ratio*Math.cos(a)},${cy+R*ratio*Math.sin(a)}`).join(' ');
+      radarSvg += `<polygon points="${pts}" fill="none" stroke="#e0e8ef" stroke-width="${ratio===1?1.5:0.5}"/>`;
+    });
+    // 轴线
+    angles.forEach(a => {
+      radarSvg += `<line x1="${cx}" y1="${cy}" x2="${cx+R*Math.cos(a)}" y2="${cy+R*Math.sin(a)}" stroke="#e0e8ef" stroke-width="0.5"/>`;
+    });
+    // 轴标签
+    elements.forEach((el,i) => {
+      const x = cx + (R+20)*Math.cos(angles[i]);
+      const y = cy + (R+20)*Math.sin(angles[i]);
+      radarSvg += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="${elColors[el]}" font-weight="600">${elEmoji[el]}${elNames[el]}</text>`;
+    });
+    // 数据多边形
+    const dataPts = elements.map((el,i) => {
+      const ratio = (ep[el]||0)/100;
+      return `${cx+R*ratio*Math.cos(angles[i])},${cy+R*ratio*Math.sin(angles[i])}`;
+    }).join(' ');
+    radarSvg += `<defs><radialGradient id="wxRg"><stop offset="0%" style="stop-color:#7EBEE8;stop-opacity:.2"/><stop offset="100%" style="stop-color:#F0A684;stop-opacity:.2"/></radialGradient></defs>`;
+    radarSvg += `<polygon points="${dataPts}" fill="url(#wxRg)" stroke="#7EBEE8" stroke-width="2" stroke-linejoin="round"/>`;
+    elements.forEach((el,i) => {
+      const ratio = (ep[el]||0)/100;
+      const x = cx+R*ratio*Math.cos(angles[i]);
+      const y = cy+R*ratio*Math.sin(angles[i]);
+      radarSvg += `<circle cx="${x}" cy="${y}" r="4" fill="${elColors[el]}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+    radarSvg += '</svg>';
+
+    // === 详细卡片 ===
+    let detailHtml = '<div style="margin:16px 0">';
+    elements.forEach((el,i) => {
+      const info = elInfo[el];
+      const isMain = el === maxEl;
+      const opacity = isMain ? '1' : '.85';
+      const borderColor = elColors[el];
+      const bgColor = elColors[el] + '18';
+      detailHtml += `<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 8px rgba(0,0,0,.04);border-left:${isMain?'4px':'3px'} solid ${borderColor};opacity:${opacity};">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="font-size:1.1rem;">${elEmoji[el]}</span>
+          <strong style="font-size:14px;color:#2c3e50;">${elNames[el]}${isMain?' ★':''}</strong>
+          <span style="font-size:11px;color:#8a9bae;">${info.organ}</span>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:${elColors[el]};margin-bottom:8px;padding:3px 8px;background:${bgColor};border-radius:6px;display:inline-block;">${info.core}</div>
+        <div style="font-size:11px;font-weight:600;color:#6b7d8e;margin:4px 0 2px;">✅ 平衡表现</div>
+        <ul style="list-style:none;padding:0;margin:0;">${info.balanced.map(b=>`<li style="font-size:11px;color:#3d5066;padding:1px 0 1px 12px;position:relative;"><span style="position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:${borderColor};opacity:.5;"></span>${b}</li>`).join('')}</ul>
+        <div style="font-size:11px;font-weight:600;color:#6b7d8e;margin:4px 0 2px;">⚠️ 失衡信号</div>
+        <ul style="list-style:none;padding:0;margin:0;">${info.imbalanced.map(b=>`<li style="font-size:11px;color:#3d5066;padding:1px 0 1px 12px;position:relative;"><span style="position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:${borderColor};opacity:.5;"></span>${b}</li>`).join('')}</ul>
+        <div style="font-size:11px;font-weight:600;color:#6b7d8e;margin:4px 0 2px;">💊 调理方向</div>
+        <ul style="list-style:none;padding:0;margin:0;">${info.care.map(b=>`<li style="font-size:11px;color:#3d5066;padding:1px 0 1px 12px;position:relative;"><span style="position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:${borderColor};opacity:.5;"></span>${b}</li>`).join('')}</ul>
+      </div>`;
+    });
+    detailHtml += '</div>';
+
+    // === 五行对照表 ===
+    let tableHtml = '<table style="width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;font-size:11px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04);">';
+    tableHtml += '<tr>' + elements.map(el => `<th style="background:linear-gradient(135deg,#7EBEE8,#5ba8d8);color:#fff;padding:8px 4px;font-weight:600;text-align:center;">${elEmoji[el]}${elNames[el]}</th>`).join('') + '</tr>';
+    Object.keys(refTableData).forEach(rowKey => {
+      tableHtml += '<tr>' + elements.map(el => `<td style="padding:6px 4px;text-align:center;border-bottom:1px solid #f0f4f7;color:#3d5066;">${refTableData[rowKey][el]}</td>`).join('') + '</tr>';
+    });
+    // 加上行标签列 - 重建表格
+    tableHtml = '<table style="width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;font-size:11px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04);">';
+    tableHtml += '<tr><th style="background:linear-gradient(135deg,#7EBEE8,#5ba8d8);color:#fff;padding:8px;text-align:left;">属性</th>' + elements.map(el => `<th style="background:linear-gradient(135deg,#7EBEE8,#5ba8d8);color:#fff;padding:8px 4px;font-weight:600;text-align:center;">${elEmoji[el]}${elNames[el]}</th>`).join('') + '</tr>';
+    Object.keys(refTableData).forEach(rowKey => {
+      tableHtml += `<tr><td style="font-weight:600;color:#6b7d8e;background:#f8fbfd;text-align:left;padding:6px 8px;border-bottom:1px solid #f0f4f7;">${rowKey}</td>` + elements.map(el => `<td style="padding:6px 4px;text-align:center;border-bottom:1px solid #f0f4f7;color:#3d5066;">${refTableData[rowKey][el]}</td>`).join('') + '</tr>';
+    });
+    tableHtml += '</table>';
+
+    // === 体质分析摘要 ===
+    const mainInfo = elInfo[maxEl];
+    const secondInfo = elInfo[secondEl];
+    let analysisHtml = `<div style="background:#fff;border-radius:10px;padding:14px;margin:12px 0;box-shadow:0 1px 8px rgba(0,0,0,.04);border-left:4px solid #7EBEE8;">
+      <div style="font-size:13px;font-weight:700;color:#2c3e50;margin-bottom:8px;">📋 体质分析摘要</div>
+      <div style="font-size:12px;color:#3d5066;line-height:1.8;">
+        <strong style="color:${elColors[maxEl]};">主导体质：${elEmoji[maxEl]} ${elNamesCn[maxEl]}（${elNames[maxEl]}）</strong> — ${mainInfo.core}<br>
+        <strong style="color:${elColors[secondEl]};">次要倾向：${elEmoji[secondEl]} ${elNamesCn[secondEl]}（${elNames[secondEl]}）</strong> — ${secondInfo.core}<br>
+        <strong>中医调理方向：</strong>以调${elNames[maxEl]}为主，兼顾${elNames[secondEl]}。${mainInfo.care[0]}，${secondInfo.care[0]}。
+      </div>
+    </div>`;
+
+    // === 组装完整报告 ===
+    let html = `<div style="background:#f8fbfd;border-radius:12px;padding:16px;margin:8px 0 16px;border:1px solid #e8eef3;">
+      <div style="text-align:center;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:#2c3e50;">🩺 五行体质评估报告</div>
+        <div style="font-size:11px;color:#8a9bae;">评估日期：${r.date}</div>
+      </div>
+      <div style="text-align:center;font-size:2rem;margin:4px 0;">${elEmoji[maxEl]}</div>
+      <div style="text-align:center;font-size:18px;font-weight:800;color:${elColors[maxEl]};">${elNamesCn[maxEl]}特质</div>
+      <div style="text-align:center;font-size:12px;color:#6b7d8e;margin-bottom:8px;">${mainInfo.core}</div>
+      ${analysisHtml}
+      <div style="display:flex;justify-content:center;margin:12px 0;">${radarSvg}</div>
+      ${barHtml}
+      ${detailHtml}
+      <div style="font-size:12px;font-weight:700;color:#2c3e50;margin:12px 0 6px;">📊 五行属性对照</div>
+      ${tableHtml}
+      <div style="text-align:center;font-size:10px;color:#a0b0c0;padding:8px 0;line-height:1.6;">基于五行针灸诊断体系 · 仅供临床参考</div>
+    </div>`;
+    
     return html;
   },
 
