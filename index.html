@@ -546,6 +546,27 @@ body {
   z-index: 100;
 }
 
+/* ========== 五行体质结果图表 ========== */
+.wuxing-result { margin: 16px 0; }
+.wuxing-result .wuxing-hero { text-align: center; padding: 20px 0 12px; }
+.wuxing-result .wuxing-hero .wuxing-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+.wuxing-result .wuxing-hero .wuxing-type { font-size: 1.3rem; font-weight: 800; color: #2c3e50; }
+.wuxing-result .wuxing-hero .wuxing-tagline { font-size: 0.82rem; color: #6b7d8e; margin-top: 4px; }
+.wuxing-chart { margin: 16px 0; }
+.wuxing-bar-item { display: flex; align-items: center; margin-bottom: 10px; }
+.wuxing-bar-label { width: 72px; font-size: 0.82rem; font-weight: 600; text-align: right; padding-right: 10px; color: #3d5066; }
+.wuxing-bar-track { flex: 1; height: 22px; background: #eef3f7; border-radius: 11px; overflow: hidden; }
+.wuxing-bar-fill { height: 100%; border-radius: 11px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; min-width: 36px; transition: width 0.8s ease; }
+.wuxing-bar-fill span { font-size: 0.7rem; color: #fff; font-weight: 700; }
+.wuxing-bar-item:nth-child(1) .wuxing-bar-fill { background: linear-gradient(90deg,#7EBEE8,#5ba8d8); }
+.wuxing-bar-item:nth-child(2) .wuxing-bar-fill { background: linear-gradient(90deg,#F0A684,#e8937a); }
+.wuxing-bar-item:nth-child(3) .wuxing-bar-fill { background: linear-gradient(90deg,#8BC7A3,#72b88e); }
+.wuxing-bar-item:nth-child(4) .wuxing-bar-fill { background: linear-gradient(90deg,#B0A4D4,#9b8fc8); }
+.wuxing-bar-item:nth-child(5) .wuxing-bar-fill { background: linear-gradient(90deg,#E8A0BF,#d98db0); }
+.wuxing-diagnosis { background: #f8fafb; border-radius: 12px; padding: 16px; margin: 12px 0; }
+.wuxing-diagnosis .diag-title { font-size: 0.88rem; font-weight: 700; color: #2c3e50; margin-bottom: 8px; }
+.wuxing-diagnosis .diag-text { font-size: 0.84rem; color: #3d5066; line-height: 1.7; }
+
 /* ========== 结果展示 ========== */
 .result-header {
   text-align: center;
@@ -13764,7 +13785,10 @@ const App = {
       anxietyScore: result.anxietyScore || null,
       depressionScore: result.depressionScore || null,
       anxietyLevel: result.anxietyLevel || null,
-      depressionLevel: result.depressionLevel || null
+      depressionLevel: result.depressionLevel || null,
+      dominantElement: result.dominantElement || null,
+      elementScores: result.elementScores || null,
+      elementPercentages: result.elementPercentages || null
     };
     
     StorageManager.saveRecord(this.currentPatient.name, this.currentPatient.phone, record);
@@ -13841,6 +13865,47 @@ const App = {
         `;
       });
       html += '</div></div>';
+    }
+    
+    // 五行体质特殊显示
+    if (record.scaleId === 'wuxing_constitution' && record.elementPercentages) {
+      const elInfo = {
+        wood: {name:'行动型', icon:'🌿', tagline:'目标明确、雷厉风行', diag:'木行人肝气旺盛，生机蓬勃。核心特质是Forward-moving的生命力——有方向感、有决断力。优势在于执行力强、敢于开拓；压力过大时易怒、头痛、胁肋不适。调理方向：疏肝理气，多接触自然，适合舒展性运动。'},
+        fire: {name:'热情型', icon:'☀️', tagline:'热情洋溢、善于连接', diag:'火行人心气充沛，温暖敞开。核心特质是Connection——善于与人建立深层联系，感染力十足。优势在于共情力强、表达丰富；压力过大时易心悸、失眠、多语。调理方向：养心安神，适度安静独处，避免过度消耗。'},
+        earth: {name:'稳重型', icon:'🌾', tagline:'踏实包容、善于照顾', diag:'土行人脾气健运，厚重稳定。核心特质是Nurturing——善于照顾他人、包容力强。优势在于可靠踏实、消化力好；压力过大时易忧思、腹胀、倦怠。调理方向：健脾化湿，规律饮食，避免过度思虑。'},
+        metal: {name:'思考型', icon:'🍃', tagline:'理性有序、边界清晰', diag:'金行人肺气清肃，收束有序。核心特质是Structure——追求秩序、边界清晰、独立思考。优势在于判断精准、自律性强；压力过大时易悲忧、皮肤干燥、咳嗽。调理方向：润肺养魄，练习放下完美，适当接触自然。'},
+        water: {name:'沉静型', icon:'💧', tagline:'内敛深邃、洞察力强', diag:'水行人肾气充沛，深沉宁静。核心特质是Depth——洞察力强、思维深邃、适应力极佳。优势在于智慧沉稳、意志坚定；压力过大时易恐惧、腰酸、精力下降。调理方向：补肾固本，充足睡眠，适合静坐冥想。'}
+      };
+      const sorted = Object.keys(record.elementPercentages).sort((a,b) => record.elementPercentages[b] - record.elementPercentages[a]);
+      const dominant = sorted[0];
+      const info = elInfo[dominant] || elInfo.wood;
+      
+      html += '<div class="wuxing-result">';
+      html += '<div class="wuxing-hero"><span class="wuxing-icon">' + info.icon + '</span>';
+      html += '<div class="wuxing-type">' + info.name + '特质</div>';
+      html += '<div class="wuxing-tagline">' + info.tagline + '</div></div>';
+      
+      html += '<div class="wuxing-chart">';
+      sorted.forEach(function(el) {
+        var pct = record.elementPercentages[el];
+        var w = Math.max(pct, 8);
+        html += '<div class="wuxing-bar-item">';
+        html += '<div class="wuxing-bar-label">' + elInfo[el].name + '</div>';
+        html += '<div class="wuxing-bar-track"><div class="wuxing-bar-fill" style="width:' + w + '%"><span>' + pct + '%</span></div></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      
+      html += '<div class="wuxing-diagnosis">';
+      html += '<div class="diag-title">🩺 体质分析报告</div>';
+      html += '<div class="diag-text">根据评估结果，您的主要体质类型为<strong>' + info.name + '</strong>（占比' + record.elementPercentages[dominant] + '%）。';
+      if (sorted.length > 1 && record.elementPercentages[sorted[1]] > 20) {
+        html += '次要体质倾向为<strong>' + elInfo[sorted[1]].name + '</strong>（占比' + record.elementPercentages[sorted[1]] + '%），表现为' + elInfo[sorted[1]].tagline + '。';
+      }
+      html += '</div>';
+      html += '<div class="diag-text" style="margin-top:10px">' + info.diag + '</div>';
+      html += '</div>';
+      html += '</div>';
     }
     
     // 建议
