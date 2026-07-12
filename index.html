@@ -11907,7 +11907,7 @@ const SCALES = [
 {
   "id": "wuxing_constitution",
   "name": "五行体质评估",
-  "category": "五行体质",
+  "category": "待补充",
   "description": "通过日常场景中的自然反应，了解你的身心特质，获得个性化健康建议",
   "questions": [
     {
@@ -12778,9 +12778,7 @@ const SCALE_CATEGORIES = {
     "fss",
     "gsrs",
     "fsfi",
-    "skin_aging"
-  ],
-  "五行体质": [
+    "skin_aging",
     "wuxing_constitution"
   ]
 };
@@ -13124,7 +13122,7 @@ const App = {
     });
     
     let html = '<div class="scale-categories">';
-    const categoryOrder = ['认知评估', '情绪评估', '更年期评估', '睡眠评估', '营养评估', '骨骼评估', '盆底评估', '运动评估', '待补充', '五行体质'];
+    const categoryOrder = ['认知评估', '情绪评估', '更年期评估', '睡眠评估', '营养评估', '骨骼评估', '盆底评估', '运动评估', '待补充'];
     
     categoryOrder.forEach(cat => {
       if (!categories[cat]) return;
