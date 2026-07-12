@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>个人体质评估</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#7EBEE8;--warm:#F0A684;--bg:#F8FBFD;
+  --radius:14px;--shadow:0 2px 16px rgba(0,0,0,.06);
+  --neutral:#7EBEE8;--neutral2:#F0A684;--neutral3:#8BC7A3;--neutral4:#B0A4D4;--neutral5:#E8A0BF;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:#2c3e50;line-height:1.6;min-height:100vh;overflow-x:hidden}
+.container{max-width:520px;margin:0 auto;padding:0 16px 100px}
+
+.header{text-align:center;padding:32px 0 20px}
+.header h1{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--warm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+.header .subtitle{font-size:.82rem;color:#8a9bae;margin-top:6px;letter-spacing:1px}
+
+.progress-wrap{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);padding:12px 20px 20px;z-index:100;border-top:1px solid rgba(0,0,0,.05)}
+.progress-bar{max-width:520px;margin:0 auto}
+.progress-track{height:4px;background:#e8eef3;border-radius:4px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--warm));border-radius:4px;transition:width .4s ease;width:0%}
+.progress-info{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:#8a9bae}
+.progress-step{font-weight:600;color:var(--primary)}
+
+.section{display:none;animation:fadeUp .4s ease}
+.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.section-header{margin:20px 0 16px}
+.section-header .part-label{display:inline-block;font-size:.7rem;font-weight:600;color:var(--warm);background:rgba(240,166,132,.12);padding:3px 12px;border-radius:20px;letter-spacing:1px}
+.section-header h2{font-size:1.15rem;font-weight:700;color:#2c3e50;margin-top:10px;line-height:1.4}
+.section-header p{font-size:.8rem;color:#8a9bae;margin-top:4px}
+
+.q-card{background:#fff;border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.q-num{font-size:.7rem;font-weight:600;color:var(--primary);margin-bottom:6px}
+.q-text{font-size:.92rem;font-weight:600;color:#2c3e50;margin-bottom:14px;line-height:1.5}
+
+.option{position:relative;display:flex;align-items:flex-start;padding:12px 14px;margin-bottom:8px;border-radius:10px;border:1.5px solid #e8eef3;cursor:pointer;transition:all .25s;background:#fafcfd}
+.option:hover{border-color:#c8d8e8;background:#f5f9fc}
+.option.selected{border-color:var(--primary);background:rgba(126,190,232,.06)}
+.option .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;margin-right:10px;background:#c8d8e8;transition:all .25s}
+.option.selected .dot{background:var(--primary);box-shadow:0 0 0 3px rgba(126,190,232,.2)}
+.option .opt-text{font-size:.85rem;color:#3d5066;line-height:1.45;flex:1}
+
+.nav-row{display:flex;gap:10px;margin-top:20px;justify-content:center}
+.btn{padding:12px 32px;border-radius:25px;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all .3s}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#5ba8d8);color:#fff;box-shadow:0 4px 14px rgba(126,190,232,.3)}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(126,190,232,.4);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-outline:hover{background:rgba(126,190,232,.06)}
+
+.result-page{display:none;animation:fadeUp .5s ease}
+.result-page.active{display:block}
+
+.result-hero{text-align:center;padding:30px 0 20px}
+.result-hero .icon{font-size:3rem;display:block;margin-bottom:12px;width:80px;height:80px;line-height:80px;border-radius:50%;margin:0 auto 12px;background:linear-gradient(135deg,rgba(126,190,232,.15),rgba(240,166,132,.15))}
+.result-hero .type-name{font-size:1.6rem;font-weight:800;color:#2c3e50;margin-bottom:4px}
+.result-hero .type-tagline{font-size:.88rem;color:#6b7d8e;max-width:320px;margin:0 auto;line-height:1.6}
+
+.trait-chart{margin:20px 0 24px}
+.trait-item{display:flex;align-items:center;margin-bottom:12px}
+.trait-label{width:80px;font-size:.82rem;font-weight:600;text-align:right;padding-right:12px;color:#3d5066}
+.trait-track{flex:1;height:22px;background:#eef3f7;border-radius:11px;overflow:hidden;position:relative}
+.trait-fill{height:100%;border-radius:11px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:36px}
+.trait-score{font-size:.7rem;color:#fff;font-weight:700}
+.trait-item:nth-child(1) .trait-fill{background:linear-gradient(90deg,#7EBEE8,#5ba8d8)}
+.trait-item:nth-child(2) .trait-fill{background:linear-gradient(90deg,#F0A684,#e8937a)}
+.trait-item:nth-child(3) .trait-fill{background:linear-gradient(90deg,#8BC7A3,#72b88e)}
+.trait-item:nth-child(4) .trait-fill{background:linear-gradient(90deg,#B0A4D4,#9b8fc8)}
+.trait-item:nth-child(5) .trait-fill{background:linear-gradient(90deg,#E8A0BF,#d98db0)}
+
+.result-card{background:#fff;border-radius:var(--radius);padding:24px;margin-bottom:14px;box-shadow:var(--shadow)}
+.result-card h3{font-size:1rem;font-weight:700;color:#2c3e50;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.result-card .card-sub{font-size:.78rem;color:#8a9bae;margin-bottom:14px}
+.result-card .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.result-card .tag{display:inline-block;font-size:.75rem;padding:4px 12px;border-radius:16px;font-weight:500}
+.tag-positive{background:rgba(126,190,232,.12);color:#4a8db7}
+.tag-stress{background:rgba(240,166,132,.12);color:#c47d60}
+.result-card .advice-list{list-style:none;padding:0}
+.result-card .advice-list li{font-size:.84rem;color:#3d5066;padding:8px 0 8px 24px;position:relative;border-bottom:1px solid #f0f4f7}
+.result-card .advice-list li:last-child{border-bottom:none}
+.result-card .advice-list li::before{content:"";position:absolute;left:0;top:14px;width:8px;height:8px;border-radius:50%;background:rgba(126,190,232,.3)}
+
+.body-signals{margin-top:8px}
+.body-signals .signal-group{margin-bottom:10px}
+.body-signals .signal-label{font-size:.78rem;font-weight:600;color:#6b7d8e;margin-bottom:4px}
+.body-signals .signal-text{font-size:.84rem;color:#3d5066;line-height:1.5}
+
+.disclaimer{text-align:center;font-size:.72rem;color:#a0b0c0;padding:24px 0;line-height:1.8}
+
+.welcome{text-align:center;padding:40px 0}
+.welcome .icon-row{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.welcome .icon-row span{font-size:1.6rem;width:48px;height:48px;line-height:48px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.welcome h2{font-size:1.2rem;font-weight:700;margin-bottom:8px}
+.welcome p{font-size:.84rem;color:#6b7d8e;max-width:360px;margin:0 auto 24px;line-height:1.7}
+.welcome .info-box{background:#fff;border-radius:var(--radius);padding:16px;text-align:left;margin-bottom:20px;box-shadow:var(--shadow)}
+.welcome .info-box .info-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:.82rem;color:#3d5066}
+.welcome .info-box .info-item:last-child{margin-bottom:0}
+.welcome .info-box .info-icon{font-size:1rem;flex-shrink:0}
+
+@media print{
+  .progress-wrap,.nav-row,.btn,.no-print{display:none!important}
+  .section,.result-page{display:block!important;page-break-inside:avoid}
+  body{background:#fff}
+  .container{max-width:100%;padding:20px}
+}
+@media(max-width:380px){
+  .header h1{font-size:1.35rem}
+  .q-card{padding:16px}
+  .option{padding:10px 12px}
+  .result-hero .type-name{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>个人体质评估</h1>
+    <div class="subtitle">了解你的身心特质 · 获取个性化健康建议</div>
+  </div>
+
+  <div class="section active" id="sec-welcome">
+    <div class="welcome">
+      <div class="icon-row"><span>🌿</span><span>☀️</span><span>🌾</span><span>🍃</span><span>💧</span></div>
+      <h2>探索你的身心特质</h2>
+      <p>每个人都有自己的身心节奏。这份评估通过日常场景中的自然反应，帮你了解自己的核心特质，获得个性化的健康建议。</p>
+      <div class="info-box">
+        <div class="info-item"><span class="info-icon">📝</span><span>共26道题，分4个部分，约需4-6分钟</span></div>
+        <div class="info-item"><span class="info-icon">🎯</span><span>请凭第一直觉作答，没有对错之分</span></div>
+        <div class="info-item"><span class="info-icon">🔒</span><span>数据仅在你的设备上处理，不会上传或保存</span></div>
+      </div>
+      <button class="btn btn-primary" onclick="startQuiz()">开始评估</button>
+    </div>
+  </div>
+
+  <div class="section" id="sec-quiz"></div>
+  <div class="result-page" id="resultPage"></div>
+</div>
+
+<div class="progress-wrap no-print" id="progressWrap" style="display:none">
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-info">
+      <span class="progress-step" id="progressStep">第 1 部分</span>
+      <span id="progressCount">0 / 26</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Patient-facing labels - NO element names exposed
+const traitNames = {wood:'行动型',fire:'热情型',earth:'稳重金型',metal:'思考型',water:'沉静型'};
+const patientSections = [
+  {
+    id:'scenario',title:'日常反应',desc:'以下是生活中的常见场景，选择你最自然的反应',prefix:'第一部分',weight:2,questions:[
+      {q:'你在开会时，别人提出了一个你觉得明显有问题的方案：',opts:[
+        {el:'wood',t:'你会直接指出问题所在，语气可能有点冲'},
+        {el:'fire',t:'你会先观察其他人的反应，然后找到一个大家都能接受的方式说'},
+        {el:'earth',t:'你会在心里反复想"他为什么会这样想"，可能会后私下聊'},
+        {el:'metal',t:'你会沉默，觉得说了也没用，心里有点凉'},
+        {el:'water',t:'你会避开这个话题，等会后再私下处理'}
+      ]},
+      {q:'你一个人在家，突然停电了：',opts:[
+        {el:'wood',t:'立刻找手电/手机，动作很快，觉得"怎么又出这种事"'},
+        {el:'fire',t:'第一反应是打电话给朋友/家人说说这件事'},
+        {el:'earth',t:'坐在原地想"是不是电费忘了交/跳闸了"，开始想各种可能'},
+        {el:'metal',t:'觉得有点孤单/凄凉，叹了口气'},
+        {el:'water',t:'有点紧张，开始想"万一有坏人怎么办"'}
+      ]},
+      {q:'你收到一个久未联系的朋友的消息，说想见你：',opts:[
+        {el:'wood',t:'"好啊，定个时间吧"——干脆利落'},
+        {el:'fire',t:'很开心，开始想"去哪里吃/聊什么"'},
+        {el:'earth',t:'"好呀好呀，你最近怎么样？"——开始关心对方'},
+        {el:'metal',t:'"好的，不过我最近有点忙..."——先保持距离'},
+        {el:'water',t:'有点犹豫，想"要不要见/会不会尴尬"'}
+      ]},
+      {q:'你做了一个重要的决定，但结果不如预期：',opts:[
+        {el:'wood',t:'会想"是不是哪个环节出了问题"，想复盘'},
+        {el:'fire',t:'会找信任的人聊聊，说说自己的感受'},
+        {el:'earth',t:'会反复想"如果当时选了另一个就好了"'},
+        {el:'metal',t:'会有点沮丧，但很快告诉自己"算了，过去了"'},
+        {el:'water',t:'会担心"下一次会不会也这样"'}
+      ]},
+      {q:'有人在你面前讲了一个你很不同意的观点：',opts:[
+        {el:'wood',t:'会忍不住反驳，觉得"这不对"'},
+        {el:'fire',t:'会笑着听，然后说"我有一个不同的看法..."'},
+        {el:'earth',t:'会想"他为什么这样想"，试图理解'},
+        {el:'metal',t:'懒得争论，心里想"随他去吧"'},
+        {el:'water',t:'不表态，但心里已经开始想怎么避开这个人'}
+      ]},
+      {q:'你的工作/生活节奏突然被打乱：',opts:[
+        {el:'wood',t:'烦躁，觉得"计划都被打乱了"'},
+        {el:'fire',t:'有点慌，想赶紧找人商量怎么办'},
+        {el:'earth',t:'开始重新规划，但总觉得哪里不对'},
+        {el:'metal',t:'觉得失落，原来的安排挺好的'},
+        {el:'water',t:'想躲起来，不想被打扰'}
+      ]},
+      {q:'你在一个聚会上，不太认识其他人：',opts:[
+        {el:'wood',t:'找个话题主动跟人聊，很快就能搭上话'},
+        {el:'fire',t:'到处看看，找到看起来友善的人开始聊'},
+        {el:'earth',t:'待在主人/熟人旁边，慢慢认识别人'},
+        {el:'metal',t:'找个安静的角落，观察别人'},
+        {el:'water',t:'想早点离开，或者一直看手机'}
+      ]},
+      {q:'你做了一个很满意的成果，但没得到预期的认可：',opts:[
+        {el:'wood',t:'有点生气，觉得"他们没看到吗"'},
+        {el:'fire',t:'有点失落，想找人倾诉"我做了很多..."'},
+        {el:'earth',t:'开始想"是不是我做得还不够好"'},
+        {el:'metal',t:'觉得"算了，自己知道就好"'},
+        {el:'water',t:'开始怀疑自己"是不是真的不行"'}
+      ]}
+    ]
+  },
+  {
+    id:'voice',title:'说话与交流',desc:'这部分关注你日常的沟通风格',prefix:'第二部分',weight:2,questions:[
+      {q:'别人形容你说话的语气：',opts:[
+        {el:'wood',t:'干脆、有力、像在安排事情'},
+        {el:'fire',t:'热情、有感染力、像在讲故事'},
+        {el:'earth',t:'温和、缓慢、让人觉得很舒服'},
+        {el:'metal',t:'平淡、克制、像在汇报'},
+        {el:'water',t:'很轻、很慢、要凑近才能听清'}
+      ]},
+      {q:'你笑的方式：',opts:[
+        {el:'wood',t:'大笑/爽朗的笑/短促的笑'},
+        {el:'fire',t:'爱笑/笑点低/自带笑意'},
+        {el:'earth',t:'微笑/不好意思地笑/温暖的笑'},
+        {el:'metal',t:'很少笑/礼貌性微笑/带距离感'},
+        {el:'water',t:'几乎不笑/或突然笑一下又收住'}
+      ]},
+      {q:'别人跟你聊天时的感受：',opts:[
+        {el:'wood',t:'觉得你在"教"他什么/有点被压制'},
+        {el:'fire',t:'觉得很开心/被关注/想继续聊'},
+        {el:'earth',t:'觉得很舒服/被照顾/想靠近'},
+        {el:'metal',t:'觉得有距离/不太敢多说/你很理性'},
+        {el:'water',t:'觉得你有点神秘/看不透/想保护你'}
+      ]},
+      {q:'你讲电话/发语音时：',opts:[
+        {el:'wood',t:'语速快、声音大、直奔主题'},
+        {el:'fire',t:'语气活泼、语气词多、像在聊天'},
+        {el:'earth',t:'语速慢、尾音长、有点柔和'},
+        {el:'metal',t:'简短、公事公办、不带感情色彩'},
+        {el:'water',t:'声音小、犹豫、经常停顿'}
+      ]},
+      {q:'你在表达不同意见时：',opts:[
+        {el:'wood',t:'直接说"不对/不行"，然后说理由'},
+        {el:'fire',t:'先笑着说"你说的有道理，但是..."'},
+        {el:'earth',t:'绕个弯子说"我在想是不是还可以..."'},
+        {el:'metal',t:'不说/或者冷冷地来一句'},
+        {el:'water',t:'不说/但身体语言明显不认同'}
+      ]},
+      {q:'你的口头禅：',opts:[
+        {el:'wood',t:'"烦死了/气死了/怎么这样"'},
+        {el:'fire',t:'"哎呀/天哪/我的妈呀"'},
+        {el:'earth',t:'"嗯...我想想/是不是..."'},
+        {el:'metal',t:'"算了/无所谓/都行"'},
+        {el:'water',t:'"嗯.../啊.../"（无意义的低声）'}
+      ]},
+      {q:'你在紧张/压力下的说话方式：',opts:[
+        {el:'wood',t:'语速更快、声音更大、像在命令'},
+        {el:'fire',t:'话变多、有点语无伦次/笑场'},
+        {el:'earth',t:'话变多、开始解释/寻求理解'},
+        {el:'metal',t:'话变少、声音变平/像在陈述事实'},
+        {el:'water',t:'话变少、声音变低/甚至说不出话'}
+      ]}
+    ]
+  },
+  {
+    id:'behavior',title:'身体与生活习惯',desc:'这些是你日常生活中身体和行为的自然倾向',prefix:'第三部分',weight:1.5,questions:[
+      {q:'你放松/减压的方式：',opts:[
+        {el:'wood',t:'运动/做事/让自己忙起来'},
+        {el:'fire',t:'找朋友聊天/聚会/分享'},
+        {el:'earth',t:'吃好吃的/睡觉/待着不动'},
+        {el:'metal',t:'独处/看书/散步/整理'},
+        {el:'water',t:'泡澡/听音乐/发呆/躲起来'}
+      ]},
+      {q:'你身体的紧张/不舒服通常在哪里：',opts:[
+        {el:'wood',t:'头/脖子/肩膀/眼睛/两肋'},
+        {el:'fire',t:'胸口/心脏/脸/舌头'},
+        {el:'earth',t:'肚子/胃/四肢/嘴巴'},
+        {el:'metal',t:'胸部/皮肤/鼻子/肩背'},
+        {el:'water',t:'腰/膝盖/耳朵/腿'}
+      ]},
+      {q:'你的睡眠模式：',opts:[
+        {el:'wood',t:'入睡难/脑子停不下来/凌晨1-3点醒'},
+        {el:'fire',t:'睡眠浅/多梦/说梦话/半夜醒'},
+        {el:'earth',t:'嗜睡/饭后困/睡了还想睡'},
+        {el:'metal',t:'早醒/凌晨3-5点醒/醒来就睡不着'},
+        {el:'water',t:'整夜多梦/夜尿多/怕冷/睡不暖'}
+      ]},
+      {q:'你生病时的状态：',opts:[
+        {el:'wood',t:'硬扛/不想让人看到自己虚弱'},
+        {el:'fire',t:'赶紧告诉别人/寻求关心'},
+        {el:'earth',t:'躺在床上不动/不想吃东西'},
+        {el:'metal',t:'安静地休息/不想被打扰'},
+        {el:'water',t:'特别害怕/担心严重/想躲起来'}
+      ]},
+      {q:'你的饮食特点：',opts:[
+        {el:'wood',t:'吃得快/不挑食/饿了自己找吃的'},
+        {el:'fire',t:'喜欢吃热的/辣的/刺激性食物'},
+        {el:'earth',t:'喜欢吃甜的/主食/慢慢吃'},
+        {el:'metal',t:'食欲不稳定/情绪化进食/或没胃口'},
+        {el:'water',t:'喜欢咸的/热汤/吃得少但规律'}
+      ]},
+      {q:'你的能量节律：',opts:[
+        {el:'wood',t:'早上最有精力/晚上容易亢奋'},
+        {el:'fire',t:'上午一般/下午和晚上最活跃'},
+        {el:'earth',t:'上午到中午最好/下午犯困'},
+        {el:'metal',t:'清晨最好/下午开始低落'},
+        {el:'water',t:'晚上比较有精神/白天没劲'}
+      ]},
+      {q:'你对环境温度的感受：',opts:[
+        {el:'wood',t:'怕热/容易出汗/喜欢凉爽'},
+        {el:'fire',t:'怕热/脸容易红/手脚心热'},
+        {el:'earth',t:'对温度不太敏感/但怕潮湿'},
+        {el:'metal',t:'怕冷/容易起鸡皮疙瘩/皮肤干'},
+        {el:'water',t:'怕冷/手脚冰凉/腰膝冷'}
+      ]},
+      {q:'你的运动方式：',opts:[
+        {el:'wood',t:'高强度/竞技类/快节奏'},
+        {el:'fire',t:'团体运动/热闹的/有互动'},
+        {el:'earth',t:'散步/瑜伽/不太剧烈'},
+        {el:'metal',t:'独自跑步/游泳/有节奏感'},
+        {el:'water',t:'不太爱动/或喜欢水中运动/太极'}
+      ]}
+    ]
+  },
+  {
+    id:'preference',title:'偏好',desc:'最后几个小问题，选你最喜欢的就好',prefix:'第四部分',weight:1,questions:[
+      {q:'你最喜欢的季节：',opts:[
+        {el:'wood',t:'春天 — 万物复苏，充满生机'},
+        {el:'fire',t:'夏天 — 热烈奔放，活力满满'},
+        {el:'earth',t:'初秋 — 温暖舒适，收获充实'},
+        {el:'metal',t:'深秋 — 天高云淡，清爽通透'},
+        {el:'water',t:'冬天 — 安静深沉，适合蓄养'}
+      ]},
+      {q:'你最喜欢的味道：',opts:[
+        {el:'wood',t:'酸味 — 柠檬/醋/酸梅'},
+        {el:'fire',t:'苦味 — 咖啡/黑巧/苦菊'},
+        {el:'earth',t:'甜味 — 甜点/水果/主食'},
+        {el:'metal',t:'辛辣 — 辣椒/姜/薄荷'},
+        {el:'water',t:'咸味 — 海鲜/咸汤/酱类'}
+      ]},
+      {q:'你最喜欢的颜色：',opts:[
+        {el:'wood',t:'绿色/青色 — 自然清新'},
+        {el:'fire',t:'红色/橙色 — 温暖热烈'},
+        {el:'earth',t:'黄色/棕色 — 踏实厚重'},
+        {el:'metal',t:'白色/银色 — 简洁纯净'},
+        {el:'water',t:'蓝色/黑色 — 深沉宁静'}
+      ]}
+    ]
+  }
+];
+
+// Patient-facing result content (NO element names, NO organ names)
+const patientResults = {
+  wood:{
+    icon:'🌿',name:'行动型',tagline:'你是天生的推动者——目标明确、雷厉风行，像春天破土而出的力量',
+    strengths:['决策果断，执行力强','有方向感，知道要去哪里','充满干劲，不怕挑战','仗义直率，有担当'],
+    stress:['容易急躁或生闷气','计划被打乱时特别烦躁','可能偏头痛、眼睛疲劳','对自己和他人要求高'],
+    advice:['找到合理的运动出口（跑步、拳击等）','学会"放手"——不是所有事都需要你控制','亲近自然，多在绿色环境中待着','练习"慢半拍"反应——先深呼吸再回应'],
+    bodyTips:'注意头部、肩颈和眼睛的放松。你的紧张往往从上半身开始。定期做颈部拉伸和眼部休息。凌晨1-3点容易醒的话，试试睡前不做需要动脑的事。'
+  },
+  fire:{
+    icon:'☀️',name:'热情型',tagline:'你是温暖的连接者——天生的感染力，让人想靠近，像夏天一样热烈而敞开',
+    strengths:['善于交流，让人放松','有感染力，充满热情','情感丰富，表达自然','关系和谐，朋友多'],
+    stress:['容易焦虑或失眠','话变多或语无伦次','可能心悸、胸口发紧','过度消耗自己社交'],
+    advice:['建立"独处充电"的习惯','学会区分"真热情"和"怕冷场"','适度社交，避免过度消耗自己','睡前减少兴奋性活动，帮助安神'],
+    bodyTips:'注意心脏和胸口的感受。你的情绪波动容易反映在心胸区域。规律作息比任何补品都重要。笑点多是好事，但也允许自己安静下来。'
+  },
+  earth:{
+    icon:'🌾',name:'稳重型',tagline:'你是踏实的守护者——温暖包容，让人想依靠，像大地一样稳定而滋养',
+    strengths:['善于照顾他人，有包容力','让人安心，值得信赖','消化良好，生活规律','内心富足，不浮躁'],
+    stress:['容易过度思虑、反复纠结','可能胃胀、消化不良','四肢沉重、倦怠嗜睡','过度付出忽略自己'],
+    advice:['规律饮食是最好的养生——定时定量','减少"想太多"——专注当下在做的事','学会说"不"——不是所有人都需要你照顾','接地气运动：散步、太极、瑜伽'],
+    bodyTips:'你的消化系统是晴雨表。胃不舒服的时候，往往是想太多了。饭后散步15分钟比躺着好。下午犯困是正常的——别硬撑，小睡20分钟。怕潮湿的话注意居住环境的通风。'
+  },
+  metal:{
+    icon:'🍃',name:'思考型',tagline:'你是清醒的独立者——理性而有边界，像秋天一样通透而有序',
+    strengths:['自尊自爱，有边界感','条理分明，做事有序','独立自主，不依附他人','审美敏锐，品味出众'],
+    stress:['容易陷入悲伤或怀旧','皮肤可能出问题（过敏、湿疹）','可能便秘或排便不畅','容易自我价值感降低'],
+    advice:['练习腹式呼吸——你的肺需要深层呼吸','学会释放放不下的事——写日记或找人聊','建立内在价值感——你的价值不需要外部证明','适度打开自己——允许别人走进来'],
+    bodyTips:'注意皮肤和呼吸系统。你的情绪往往通过皮肤表达。每天做5分钟深呼吸练习。凌晨3-5点容易醒的话，可能和悲伤情绪有关。保持皮肤的滋润和护理。'
+  },
+  water:{
+    icon:'💧',name:'沉静型',tagline:'你是深沉的观察者——安静而有洞察力，像水一样深邃而 adaptable',
+    strengths:['洞察力深，看问题透彻','安全感建立后非常坚定','适应力强，灵活流动','内心丰富，不轻易外露'],
+    stress:['容易恐惧退缩','腰膝酸软、耳鸣','可能夜尿多、怕冷','安全感不足时想躲起来'],
+    advice:['建立"根基感"——找到让你安心的锚点','适度冒险——小的突破会增强你的力量','温养身体——避免寒凉，注意腰膝保暖','静养蓄能：打坐、站桩、冥想'],
+    bodyTips:'你的能量中心在腰和肾。怕冷、手脚冰凉是常见信号。每晚泡脚15-20分钟（水温40°C左右）。晚上比白天有精神是你的节奏——别强迫自己"早起"。保护腰部，避免久坐冰冷地面。'
+  }
+};
+
+// ===== STATE =====
+let currentSection = 0;
+let answers = {};
+let totalQuestions = 0;
+let activeQuestions = [];
+
+function calcTotal(){
+  totalQuestions = 0;
+  activeQuestions = [];
+  patientSections.forEach((s,si) => {
+    s.questions.forEach((q,qi) => {
+      activeQuestions.push({si,qi});
+      totalQuestions++;
+    });
+  });
+}
+
+function getAnswered(){
+  let c=0;
+  activeQuestions.forEach(a => { if(answers[a.si+'-'+a.qi]) c++; });
+  return c;
+}
+
+function startQuiz(){
+  currentSection = 1;
+  calcTotal();
+  document.getElementById('sec-welcome').classList.remove('active');
+  document.getElementById('progressWrap').style.display = 'block';
+  showSection(1);
+}
+
+function showSection(n){
+  currentSection = n;
+  const quizSec = document.getElementById('sec-quiz');
+  if(n > patientSections.length){ showResult(); return; }
+  const sec = patientSections[n-1];
+  let html = `<div class="section-header">
+    <span class="part-label">${sec.prefix}</span>
+    <h2>${sec.title}</h2>
+    <p>${sec.desc}</p>
+  </div>`;
+  sec.questions.forEach((q,qi) => {
+    const key = (n-1)+'-'+qi;
+    html += `<div class="q-card">
+      <div class="q-num">${qi+1} / ${sec.questions.length}</div>
+      <div class="q-text">${q.q}</div>`;
+    const shuffled = shuffleOpts(q.opts, (n-1)*10+qi);
+    shuffled.forEach(opt => {
+      const sel = answers[key] === opt.el ? ' selected' : '';
+      html += `<div class="option${sel}" onclick="selectOpt(${n-1},${qi},'${opt.el}',this)">
+        <span class="dot"></span>
+        <span class="opt-text">${opt.t}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `<div class="nav-row">`;
+  if(n > 1) html += `<button class="btn btn-outline" onclick="prevSection()">上一部分</button>`;
+  html += `<button class="btn btn-primary" onclick="nextSection()">${n===patientSections.length?'查看结果':'下一部分'}</button>`;
+  html += `</div>`;
+  quizSec.innerHTML = html;
+  quizSec.classList.add('active');
+  document.getElementById('resultPage').classList.remove('active');
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function shuffleOpts(arr, seed){
+  const a = arr.map((o,i)=>({...o, _i:i}));
+  for(let i=a.length-1;i>0;i--){
+    seed = (seed*31+i)%97;
+    const j = seed%(i+1);
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function selectOpt(si,qi,el,node){
+  answers[si+'-'+qi] = el;
+  node.closest('.q-card').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  node.classList.add('selected');
+  updateProgress();
+}
+
+function prevSection(){ if(currentSection > 1) showSection(currentSection - 1); }
+function nextSection(){
+  if(currentSection < patientSections.length) showSection(currentSection + 1);
+  else showResult();
+}
+
+function updateProgress(){
+  const answered = getAnswered();
+  const pct = totalQuestions > 0 ? (answered/totalQuestions*100) : 0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressCount').textContent = answered+' / '+totalQuestions;
+  const secIdx = Math.min(currentSection, patientSections.length);
+  if(secIdx > 0 && secIdx <= patientSections.length){
+    document.getElementById('progressStep').textContent = patientSections[secIdx-1].prefix;
+  }
+}
+
+function showResult(){
+  document.getElementById('sec-quiz').classList.remove('active');
+  document.getElementById('progressWrap').style.display = 'none';
+  const scores = {wood:0,fire:0,earth:0,metal:0,water:0};
+  Object.keys(answers).forEach(key => {
+    const [si] = key.split('-').map(Number);
+    const el = answers[key];
+    scores[el] += patientSections[si].weight;
+  });
+  let maxScore = 0, maxEl = 'wood';
+  ['wood','fire','earth','metal','water'].forEach(el => { if(scores[el] > maxScore){maxScore=scores[el];maxEl=el;} });
+  const totalScore = ['wood','fire','earth','metal','water'].reduce((s,el) => s+scores[el], 0) || 1;
+  const sorted = ['wood','fire','earth','metal','water']
+    .map(el => ({el, score:scores[el], pct: Math.round(scores[el]/totalScore*100)}))
+    .sort((a,b) => b.score - a.score);
+  const r = patientResults[maxEl];
+  let html = `
+    <div class="result-hero">
+      <span class="icon">${r.icon}</span>
+      <div class="type-name">${r.name}特质</div>
+      <div class="type-tagline">${r.tagline}</div>
+    </div>
+    <div class="trait-chart">`;
+  sorted.forEach(item => {
+    const w = maxScore > 0 ? Math.max(item.score/maxScore*100, 8) : 8;
+    html += `<div class="trait-item">
+      <div class="trait-label">${patientResults[item.el].name}</div>
+      <div class="trait-track">
+        <div class="trait-fill" style="width:${w}%">
+          <span class="trait-score">${item.pct}%</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Strengths card
+  html += `<div class="result-card">
+    <h3>✨ 你的核心优势</h3>
+    <div class="card-sub">${r.name}特质赋予你的天然力量</div>
+    <div class="tag-row">${r.strengths.map(s => `<span class="tag tag-positive">${s}</span>`).join('')}</div>
+  </div>`;
+
+  // Stress card
+  html += `<div class="result-card">
+    <h3>⚡ 压力下的信号</h3>
+    <div class="card-sub">当你超负荷时，可能出现这些表现</div>
+    <ul class="advice-list">${r.stress.map(s => `<li>${s}</li>`).join('')}</ul>
+  </div>`;
+
+  // Advice card
+  html += `<div class="result-card">
+    <h3>💡 个性化建议</h3>
+    <div class="card-sub">适合${r.name}特质的日常调理方向</div>
+    <ul class="advice-list">${r.advice.map(a => `<li>${a}</li>`).join('')}</ul>
+  </div>`;
+
+  // Body signals card
+  html += `<div class="result-card">
+    <h3>🩺 身体信号解读</h3>
+    <div class="card-sub">你的身体在告诉你什么</div>
+    <div class="body-signals">
+      <div class="signal-group">
+        <div class="signal-text">${r.bodyTips}</div>
+      </div>
+    </div>
+  </div>`;
+
+  html += `<div class="nav-row no-print">
+    <button class="btn btn-outline" onclick="backToQuiz()">重新评估</button>
+    <button class="btn btn-primary" onclick="window.print()">保存/打印</button>
+  </div>`;
+  html += `<div class="disclaimer">本评估仅供健康参考，不能替代专业诊疗<br>数据仅在你的设备上处理，不会上传或保存</div>`;
+
+  const rp = document.getElementById('resultPage');
+  rp.innerHTML = html;
+  rp.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(() => {
+    document.querySelectorAll('.trait-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      requestAnimationFrame(() => { b.style.width = w; });
+    });
+  }, 100);
+}
+
+function backToQuiz(){
+  answers = {};
+  currentSection = 1;
+  document.getElementById('resultPage').classList.remove('active');
+  document.getElementById('progressWrap').style.display = 'block';
+  calcTotal();
+  showSection(1);
+}
+
+calcTotal();
+</script>
+</body>
+</html>
