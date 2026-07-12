@@ -3,22 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>个人体质评估</title>
+<title>五行体质判断量表</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --primary:#7EBEE8;--warm:#F0A684;--bg:#F8FBFD;
+  --wood:#4CAF50;--fire:#E53935;--earth:#FFA726;--metal:#90A4AE;--water:#1E88E5;
+  --wood-bg:rgba(76,175,80,.08);--fire-bg:rgba(229,57,53,.08);--earth-bg:rgba(255,167,38,.08);
+  --metal-bg:rgba(144,164,174,.08);--water-bg:rgba(30,136,229,.08);
+  --wood-border:rgba(76,175,80,.3);--fire-border:rgba(229,57,53,.3);--earth-border:rgba(255,167,38,.3);
+  --metal-border:rgba(144,164,174,.3);--water-border:rgba(30,136,229,.3);
   --radius:14px;--shadow:0 2px 16px rgba(0,0,0,.06);
-  --neutral:#7EBEE8;--neutral2:#F0A684;--neutral3:#8BC7A3;--neutral4:#B0A4D4;--neutral5:#E8A0BF;
 }
 html{font-size:16px;-webkit-text-size-adjust:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:#2c3e50;line-height:1.6;min-height:100vh;overflow-x:hidden}
 .container{max-width:520px;margin:0 auto;padding:0 16px 100px}
 
-.header{text-align:center;padding:32px 0 20px}
-.header h1{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--warm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+/* Header */
+.header{text-align:center;padding:32px 0 20px;position:relative}
+.header h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--warm));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
 .header .subtitle{font-size:.82rem;color:#8a9bae;margin-top:6px;letter-spacing:1px}
 
+/* Mode Toggle */
+.mode-toggle{display:flex;justify-content:center;gap:0;margin:16px auto 0;background:#eef3f7;border-radius:25px;padding:3px;width:fit-content}
+.mode-btn{padding:8px 22px;border-radius:22px;font-size:.82rem;border:none;background:transparent;color:#6b7d8e;cursor:pointer;transition:all .3s;font-weight:500}
+.mode-btn.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(126,190,232,.25);font-weight:600}
+
+/* Progress Bar */
 .progress-wrap{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);padding:12px 20px 20px;z-index:100;border-top:1px solid rgba(0,0,0,.05)}
 .progress-bar{max-width:520px;margin:0 auto}
 .progress-track{height:4px;background:#e8eef3;border-radius:4px;overflow:hidden;margin-bottom:8px}
@@ -26,6 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .progress-info{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:#8a9bae}
 .progress-step{font-weight:600;color:var(--primary)}
 
+/* Sections */
 .section{display:none;animation:fadeUp .4s ease}
 .section.active{display:block}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -35,17 +47,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .section-header h2{font-size:1.15rem;font-weight:700;color:#2c3e50;margin-top:10px;line-height:1.4}
 .section-header p{font-size:.8rem;color:#8a9bae;margin-top:4px}
 
-.q-card{background:#fff;border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+/* Question Card */
+.q-card{background:#fff;border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow);transition:transform .2s}
 .q-num{font-size:.7rem;font-weight:600;color:var(--primary);margin-bottom:6px}
 .q-text{font-size:.92rem;font-weight:600;color:#2c3e50;margin-bottom:14px;line-height:1.5}
 
+/* Options */
 .option{position:relative;display:flex;align-items:flex-start;padding:12px 14px;margin-bottom:8px;border-radius:10px;border:1.5px solid #e8eef3;cursor:pointer;transition:all .25s;background:#fafcfd}
 .option:hover{border-color:#c8d8e8;background:#f5f9fc}
-.option.selected{border-color:var(--primary);background:rgba(126,190,232,.06)}
-.option .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;margin-right:10px;background:#c8d8e8;transition:all .25s}
-.option.selected .dot{background:var(--primary);box-shadow:0 0 0 3px rgba(126,190,232,.2)}
+.option.selected{border-color:var(--el-color,var(--primary));background:var(--el-bg,rgba(126,190,232,.06))}
+.option .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;margin-right:10px;background:var(--el-color,#ccc);opacity:.6;transition:opacity .25s}
+.option.selected .dot{opacity:1;box-shadow:0 0 0 3px var(--el-bg,rgba(126,190,232,.2))}
 .option .opt-text{font-size:.85rem;color:#3d5066;line-height:1.45;flex:1}
+.option[data-el="wood"]{--el-color:var(--wood);--el-bg:var(--wood-bg)}
+.option[data-el="fire"]{--el-color:var(--fire);--el-bg:var(--fire-bg)}
+.option[data-el="earth"]{--el-color:var(--earth);--el-bg:var(--earth-bg)}
+.option[data-el="metal"]{--el-color:var(--metal);--el-bg:var(--metal-bg)}
+.option[data-el="water"]{--el-color:var(--water);--el-bg:var(--water-bg)}
+.option.selected[data-el="wood"]{border-color:var(--wood);background:var(--wood-bg)}
+.option.selected[data-el="fire"]{border-color:var(--fire);background:var(--fire-bg)}
+.option.selected[data-el="earth"]{border-color:var(--earth);background:var(--earth-bg)}
+.option.selected[data-el="metal"]{border-color:var(--metal);background:var(--metal-bg)}
+.option.selected[data-el="water"]{border-color:var(--water);background:var(--water-bg)}
 
+/* Navigation */
 .nav-row{display:flex;gap:10px;margin-top:20px;justify-content:center}
 .btn{padding:12px 32px;border-radius:25px;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all .3s}
 .btn-primary{background:linear-gradient(135deg,var(--primary),#5ba8d8);color:#fff;box-shadow:0 4px 14px rgba(126,190,232,.3)}
@@ -54,48 +79,53 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
 .btn-outline:hover{background:rgba(126,190,232,.06)}
 
+/* Result Page */
 .result-page{display:none;animation:fadeUp .5s ease}
 .result-page.active{display:block}
 
 .result-hero{text-align:center;padding:30px 0 20px}
-.result-hero .icon{font-size:3rem;display:block;margin-bottom:12px;width:80px;height:80px;line-height:80px;border-radius:50%;margin:0 auto 12px;background:linear-gradient(135deg,rgba(126,190,232,.15),rgba(240,166,132,.15))}
-.result-hero .type-name{font-size:1.6rem;font-weight:800;color:#2c3e50;margin-bottom:4px}
-.result-hero .type-tagline{font-size:.88rem;color:#6b7d8e;max-width:320px;margin:0 auto;line-height:1.6}
+.result-hero .emoji{font-size:3.5rem;display:block;margin-bottom:8px}
+.result-hero .cf-name{font-size:1.8rem;font-weight:800;margin-bottom:4px}
+.result-hero .cf-tagline{font-size:.9rem;color:#6b7d8e;max-width:320px;margin:0 auto}
 
-.trait-chart{margin:20px 0 24px}
-.trait-item{display:flex;align-items:center;margin-bottom:12px}
-.trait-label{width:80px;font-size:.82rem;font-weight:600;text-align:right;padding-right:12px;color:#3d5066}
-.trait-track{flex:1;height:22px;background:#eef3f7;border-radius:11px;overflow:hidden;position:relative}
-.trait-fill{height:100%;border-radius:11px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:36px}
-.trait-score{font-size:.7rem;color:#fff;font-weight:700}
-.trait-item:nth-child(1) .trait-fill{background:linear-gradient(90deg,#7EBEE8,#5ba8d8)}
-.trait-item:nth-child(2) .trait-fill{background:linear-gradient(90deg,#F0A684,#e8937a)}
-.trait-item:nth-child(3) .trait-fill{background:linear-gradient(90deg,#8BC7A3,#72b88e)}
-.trait-item:nth-child(4) .trait-fill{background:linear-gradient(90deg,#B0A4D4,#9b8fc8)}
-.trait-item:nth-child(5) .trait-fill{background:linear-gradient(90deg,#E8A0BF,#d98db0)}
+/* Radar */
+.radar-wrap{display:flex;justify-content:center;margin:20px 0}
+.radar-wrap svg{max-width:300px;width:100%}
 
-.result-card{background:#fff;border-radius:var(--radius);padding:24px;margin-bottom:14px;box-shadow:var(--shadow)}
-.result-card h3{font-size:1rem;font-weight:700;color:#2c3e50;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.result-card .card-sub{font-size:.78rem;color:#8a9bae;margin-bottom:14px}
-.result-card .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.result-card .tag{display:inline-block;font-size:.75rem;padding:4px 12px;border-radius:16px;font-weight:500}
-.tag-positive{background:rgba(126,190,232,.12);color:#4a8db7}
-.tag-stress{background:rgba(240,166,132,.12);color:#c47d60}
-.result-card .advice-list{list-style:none;padding:0}
-.result-card .advice-list li{font-size:.84rem;color:#3d5066;padding:8px 0 8px 24px;position:relative;border-bottom:1px solid #f0f4f7}
-.result-card .advice-list li:last-child{border-bottom:none}
-.result-card .advice-list li::before{content:"";position:absolute;left:0;top:14px;width:8px;height:8px;border-radius:50%;background:rgba(126,190,232,.3)}
+/* Bar Chart */
+.bar-chart{margin:16px 0 24px}
+.bar-item{display:flex;align-items:center;margin-bottom:10px}
+.bar-label{width:50px;font-size:.82rem;font-weight:600;text-align:right;padding-right:10px;display:flex;align-items:center;justify-content:flex-start;gap:4px}
+.bar-track{flex:1;height:24px;background:#eef3f7;border-radius:12px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:12px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:36px}
+.bar-score{font-size:.7rem;color:#fff;font-weight:700}
 
-.body-signals{margin-top:8px}
-.body-signals .signal-group{margin-bottom:10px}
-.body-signals .signal-label{font-size:.78rem;font-weight:600;color:#6b7d8e;margin-bottom:4px}
-.body-signals .signal-text{font-size:.84rem;color:#3d5066;line-height:1.5}
+/* Detail Cards */
+.detail-cards{margin:20px 0}
+.detail-card{background:#fff;border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid var(--card-color,#ddd)}
+.detail-card h3{font-size:1rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.detail-card .organ{font-size:.75rem;color:#8a9bae;margin-bottom:10px}
+.detail-card .trait{font-size:.85rem;font-weight:600;color:var(--card-color);margin-bottom:12px;padding:6px 12px;background:var(--card-bg);border-radius:8px;display:inline-block}
+.detail-card .sub-title{font-size:.78rem;font-weight:600;color:#6b7d8e;margin:8px 0 4px}
+.detail-card ul{list-style:none;padding:0}
+.detail-card li{font-size:.82rem;color:#3d5066;padding:2px 0 2px 16px;position:relative}
+.detail-card li::before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--card-color);opacity:.5}
 
+/* Reference Table */
+.ref-table{width:100%;border-collapse:separate;border-spacing:0;margin:20px 0;font-size:.78rem;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.ref-table th{background:linear-gradient(135deg,var(--primary),#5ba8d8);color:#fff;padding:10px 8px;font-weight:600;text-align:center}
+.ref-table td{padding:9px 8px;text-align:center;border-bottom:1px solid #f0f4f7;color:#3d5066}
+.ref-table tr:last-child td{border-bottom:none}
+.ref-table tr:hover td{background:rgba(126,190,232,.04)}
+.ref-table .row-label{font-weight:600;color:#6b7d8e;background:#f8fbfd;text-align:left;padding-left:12px}
+
+/* Disclaimer */
 .disclaimer{text-align:center;font-size:.72rem;color:#a0b0c0;padding:24px 0;line-height:1.8}
 
+/* Welcome */
 .welcome{text-align:center;padding:40px 0}
-.welcome .icon-row{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
-.welcome .icon-row span{font-size:1.6rem;width:48px;height:48px;line-height:48px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.welcome .icon-row{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.welcome .icon-row span{font-size:1.8rem}
 .welcome h2{font-size:1.2rem;font-weight:700;margin-bottom:8px}
 .welcome p{font-size:.84rem;color:#6b7d8e;max-width:360px;margin:0 auto 24px;line-height:1.7}
 .welcome .info-box{background:#fff;border-radius:var(--radius);padding:16px;text-align:left;margin-bottom:20px;box-shadow:var(--shadow)}
@@ -103,62 +133,88 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .welcome .info-box .info-item:last-child{margin-bottom:0}
 .welcome .info-box .info-icon{font-size:1rem;flex-shrink:0}
 
+/* Doctor badge */
+.doctor-badge{display:none;background:linear-gradient(135deg,#e8f4fd,#f0f7ff);border:1px solid rgba(126,190,232,.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:.78rem;color:var(--primary);text-align:center}
+.doctor-badge.show{display:block}
+.doctor-badge strong{font-weight:700}
+
+/* Print */
 @media print{
-  .progress-wrap,.nav-row,.btn,.no-print{display:none!important}
+  .progress-wrap,.mode-toggle,.nav-row,.btn,.no-print{display:none!important}
   .section,.result-page{display:block!important;page-break-inside:avoid}
   body{background:#fff}
   .container{max-width:100%;padding:20px}
 }
+
+/* Responsive */
 @media(max-width:380px){
   .header h1{font-size:1.35rem}
   .q-card{padding:16px}
   .option{padding:10px 12px}
-  .result-hero .type-name{font-size:1.4rem}
+  .result-hero .cf-name{font-size:1.5rem}
 }
 </style>
 </head>
 <body>
 
 <div class="container">
+  <!-- Header -->
   <div class="header">
-    <h1>个人体质评估</h1>
-    <div class="subtitle">了解你的身心特质 · 获取个性化健康建议</div>
+    <h1>五行体质判断量表</h1>
+    <div class="subtitle">基于五行针灸诊断体系 · 辨识你的护持一行</div>
+    <div class="mode-toggle no-print">
+      <button class="mode-btn active" onclick="setMode('patient')">患者自评</button>
+      <button class="mode-btn" onclick="setMode('doctor')">医生评估</button>
+    </div>
   </div>
 
+  <div class="doctor-badge" id="doctorBadge">🩺 医生评估模式 — 第四部分（医生观察）已解锁</div>
+
+  <!-- Welcome -->
   <div class="section active" id="sec-welcome">
     <div class="welcome">
-      <div class="icon-row"><span>🌿</span><span>☀️</span><span>🌾</span><span>🍃</span><span>💧</span></div>
-      <h2>探索你的身心特质</h2>
-      <p>每个人都有自己的身心节奏。这份评估通过日常场景中的自然反应，帮你了解自己的核心特质，获得个性化的健康建议。</p>
+      <div class="icon-row"><span>🌳</span><span>🔥</span><span>🌾</span><span>⚔️</span><span>💧</span></div>
+      <h2>探索你的五行体质</h2>
+      <p>这份量表基于五行针灸的诊断理论，通过日常生活场景中的自然反应，帮助你了解自己的体质倾向。没有对错之分，请凭第一直觉作答。</p>
       <div class="info-box">
-        <div class="info-item"><span class="info-icon">📝</span><span>共26道题，分4个部分，约需4-6分钟</span></div>
-        <div class="info-item"><span class="info-icon">🎯</span><span>请凭第一直觉作答，没有对错之分</span></div>
-        <div class="info-item"><span class="info-icon">🔒</span><span>数据仅在你的设备上处理，不会上传或保存</span></div>
+        <div class="info-item"><span class="info-icon">📝</span><span>共30道题，分5个部分，约需5-8分钟</span></div>
+        <div class="info-item"><span class="info-icon">🎯</span><span>选择最接近你"本能反应"的选项，而非理性思考后的选择</span></div>
+        <div class="info-item"><span class="info-icon">🔒</span><span>数据仅在本地处理，不会上传或保存</span></div>
       </div>
       <button class="btn btn-primary" onclick="startQuiz()">开始评估</button>
     </div>
   </div>
 
+  <!-- Quiz Sections (generated by JS) -->
   <div class="section" id="sec-quiz"></div>
+
+  <!-- Result Page -->
   <div class="result-page" id="resultPage"></div>
 </div>
 
+<!-- Progress -->
 <div class="progress-wrap no-print" id="progressWrap" style="display:none">
   <div class="progress-bar">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-info">
       <span class="progress-step" id="progressStep">第 1 部分</span>
-      <span id="progressCount">0 / 26</span>
+      <span id="progressCount">0 / 30</span>
     </div>
   </div>
 </div>
 
 <script>
-// Patient-facing labels - NO element names exposed
-const traitNames = {wood:'行动型',fire:'热情型',earth:'稳重金型',metal:'思考型',water:'沉静型'};
-const patientSections = [
+// ===== DATA =====
+const elements = ['wood','fire','earth','metal','water'];
+const elNames = {wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
+const elEmoji = {wood:'🌳',fire:'🔥',earth:'🌾',metal:'⚔️',water:'💧'};
+const elColors = {wood:'#4CAF50',fire:'#E53935',earth:'#FFA726',metal:'#90A4AE',water:'#1E88E5'};
+const elColorsBg = {wood:'rgba(76,175,80,.12)',fire:'rgba(229,57,53,.12)',earth:'rgba(255,167,38,.12)',metal:'rgba(144,164,174,.12)',water:'rgba(30,136,229,.12)'};
+
+// Questions data
+const sections = [
   {
-    id:'scenario',title:'日常反应',desc:'以下是生活中的常见场景，选择你最自然的反应',prefix:'第一部分',weight:2,questions:[
+    id:'scenario',title:'情景反应',desc:'以下是日常生活中的一些场景，请选择你最自然的反应',weight:2,prefix:'第一部分',questions:[
       {q:'你在开会时，别人提出了一个你觉得明显有问题的方案：',opts:[
         {el:'wood',t:'你会直接指出问题所在，语气可能有点冲'},
         {el:'fire',t:'你会先观察其他人的反应，然后找到一个大家都能接受的方式说'},
@@ -218,11 +274,11 @@ const patientSections = [
     ]
   },
   {
-    id:'voice',title:'说话与交流',desc:'这部分关注你日常的沟通风格',prefix:'第二部分',weight:2,questions:[
+    id:'voice',title:'声音与交流方式',desc:'这部分关注你说话和交流的方式，别人可能比你更清楚',weight:2,prefix:'第二部分',questions:[
       {q:'别人形容你说话的语气：',opts:[
         {el:'wood',t:'干脆、有力、像在安排事情'},
         {el:'fire',t:'热情、有感染力、像在讲故事'},
-        {el:'earth',t:'温和、缓慢、让人觉得很舒服'},
+        {el:'earth',t:'温和、缓慢、像在对歌/哄人'},
         {el:'metal',t:'平淡、克制、像在汇报'},
         {el:'water',t:'很轻、很慢、要凑近才能听清'}
       ]},
@@ -243,7 +299,7 @@ const patientSections = [
       {q:'你讲电话/发语音时：',opts:[
         {el:'wood',t:'语速快、声音大、直奔主题'},
         {el:'fire',t:'语气活泼、语气词多、像在聊天'},
-        {el:'earth',t:'语速慢、尾音长、有点柔和'},
+        {el:'earth',t:'语速慢、尾音长、有点嗲/柔和'},
         {el:'metal',t:'简短、公事公办、不带感情色彩'},
         {el:'water',t:'声音小、犹豫、经常停顿'}
       ]},
@@ -254,7 +310,7 @@ const patientSections = [
         {el:'metal',t:'不说/或者冷冷地来一句'},
         {el:'water',t:'不说/但身体语言明显不认同'}
       ]},
-      {q:'你的口头禅：',opts:[
+      {q:'你的叹气/口头禅：',opts:[
         {el:'wood',t:'"烦死了/气死了/怎么这样"'},
         {el:'fire',t:'"哎呀/天哪/我的妈呀"'},
         {el:'earth',t:'"嗯...我想想/是不是..."'},
@@ -271,7 +327,7 @@ const patientSections = [
     ]
   },
   {
-    id:'behavior',title:'身体与生活习惯',desc:'这些是你日常生活中身体和行为的自然倾向',prefix:'第三部分',weight:1.5,questions:[
+    id:'behavior',title:'行为与身体模式',desc:'这些是你日常生活中身体和行为的自然倾向',weight:1.5,prefix:'第三部分',questions:[
       {q:'你放松/减压的方式：',opts:[
         {el:'wood',t:'运动/做事/让自己忙起来'},
         {el:'fire',t:'找朋友聊天/聚会/分享'},
@@ -331,12 +387,44 @@ const patientSections = [
     ]
   },
   {
-    id:'preference',title:'偏好',desc:'最后几个小问题，选你最喜欢的就好',prefix:'第四部分',weight:1,questions:[
+    id:'doctor',title:'医生观察',desc:'请根据你对患者的临床观察填写',weight:1,prefix:'第四部分',doctorOnly:true,questions:[
+      {q:'患者面部主色调：',opts:[
+        {el:'wood',t:'偏青/青灰/眼周泛青'},
+        {el:'fire',t:'偏红/两颧潮红/眼角发红'},
+        {el:'earth',t:'偏黄/蜡黄/眼周泛黄'},
+        {el:'metal',t:'偏白/苍白/眼周苍白'},
+        {el:'water',t:'偏暗/暗黑/眼下发黑'}
+      ]},
+      {q:'患者声音的第一印象：',opts:[
+        {el:'wood',t:'干脆/有力/带点冲'},
+        {el:'fire',t:'活泼/有笑意/上扬'},
+        {el:'earth',t:'柔和/婉转/尾音长'},
+        {el:'metal',t:'清冷/平淡/尾音消散'},
+        {el:'water',t:'低沉/嗡嗡/有震颤感'}
+      ]},
+      {q:'患者体味倾向：',opts:[
+        {el:'wood',t:'酸味/油脂味'},
+        {el:'fire',t:'焦味/烧灼感'},
+        {el:'earth',t:'甜味/奶香/黏腻'},
+        {el:'metal',t:'腥味/铁锈味'},
+        {el:'water',t:'腐味/水汽味'}
+      ]},
+      {q:'患者的整体气场：',opts:[
+        {el:'wood',t:'有冲劲/有控制感/让人紧张'},
+        {el:'fire',t:'热情/让人放松/想亲近'},
+        {el:'earth',t:'厚重/让人安心/想依靠'},
+        {el:'metal',t:'冷/有距离/让人敬畏'},
+        {el:'water',t:'深沉/看不透/让人想保护'}
+      ]}
+    ]
+  },
+  {
+    id:'preference',title:'季节与偏好',desc:'最后的几个小问题，选你最喜欢的就好',weight:1,prefix:'第五部分',questions:[
       {q:'你最喜欢的季节：',opts:[
         {el:'wood',t:'春天 — 万物复苏，充满生机'},
         {el:'fire',t:'夏天 — 热烈奔放，活力满满'},
-        {el:'earth',t:'初秋 — 温暖舒适，收获充实'},
-        {el:'metal',t:'深秋 — 天高云淡，清爽通透'},
+        {el:'earth',t:'长夏/初秋 — 温暖舒适，收获充实'},
+        {el:'metal',t:'秋天 — 天高云淡，清爽通透'},
         {el:'water',t:'冬天 — 安静深沉，适合蓄养'}
       ]},
       {q:'你最喜欢的味道：',opts:[
@@ -357,55 +445,63 @@ const patientSections = [
   }
 ];
 
-// Patient-facing result content (NO element names, NO organ names)
-const patientResults = {
+// Result detail data
+const detailData = {
   wood:{
-    icon:'🌿',name:'行动型',tagline:'你是天生的推动者——目标明确、雷厉风行，像春天破土而出的力量',
-    strengths:['决策果断，执行力强','有方向感，知道要去哪里','充满干劲，不怕挑战','仗义直率，有担当'],
-    stress:['容易急躁或生闷气','计划被打乱时特别烦躁','可能偏头痛、眼睛疲劳','对自己和他人要求高'],
-    advice:['找到合理的运动出口（跑步、拳击等）','学会"放手"——不是所有事都需要你控制','亲近自然，多在绿色环境中待着','练习"慢半拍"反应——先深呼吸再回应'],
-    bodyTips:'注意头部、肩颈和眼睛的放松。你的紧张往往从上半身开始。定期做颈部拉伸和眼部休息。凌晨1-3点容易醒的话，试试睡前不做需要动脑的事。'
+    organ:'肝 / 胆',core:'前进的、有生命力的、朝气蓬勃',
+    balanced:['充满干劲，目标明确','决策果断，执行力强','有方向感，知道要去哪里','仗义豪爽，有担当'],
+    imbalanced:['易怒或压抑愤怒','偏头痛、眼疾','月经不调','绝望感'],
+    care:['疏肝理气，调畅气机','适当运动发泄（跑步、拳击）','亲近自然，多在绿色环境中','学会放手，接受不完美']
   },
   fire:{
-    icon:'☀️',name:'热情型',tagline:'你是温暖的连接者——天生的感染力，让人想靠近，像夏天一样热烈而敞开',
-    strengths:['善于交流，让人放松','有感染力，充满热情','情感丰富，表达自然','关系和谐，朋友多'],
-    stress:['容易焦虑或失眠','话变多或语无伦次','可能心悸、胸口发紧','过度消耗自己社交'],
-    advice:['建立"独处充电"的习惯','学会区分"真热情"和"怕冷场"','适度社交，避免过度消耗自己','睡前减少兴奋性活动，帮助安神'],
-    bodyTips:'注意心脏和胸口的感受。你的情绪波动容易反映在心胸区域。规律作息比任何补品都重要。笑点多是好事，但也允许自己安静下来。'
+    organ:'心 / 小肠 + 心包 / 三焦',core:'温暖的、敞开的、连接的',
+    balanced:['热情温暖，善于交流','关系和谐，让人放松','有感染力，充满喜悦','情感丰富，表达自然'],
+    imbalanced:['焦虑失眠、心悸','社交障碍或过度社交','过度热情或冷漠','喜悦缺失或情绪过激'],
+    care:['安神定志，养心宁神','建立安全的关系','适度社交，避免过度消耗','学会独处，内在安定']
   },
   earth:{
-    icon:'🌾',name:'稳重型',tagline:'你是踏实的守护者——温暖包容，让人想依靠，像大地一样稳定而滋养',
-    strengths:['善于照顾他人，有包容力','让人安心，值得信赖','消化良好，生活规律','内心富足，不浮躁'],
-    stress:['容易过度思虑、反复纠结','可能胃胀、消化不良','四肢沉重、倦怠嗜睡','过度付出忽略自己'],
-    advice:['规律饮食是最好的养生——定时定量','减少"想太多"——专注当下在做的事','学会说"不"——不是所有人都需要你照顾','接地气运动：散步、太极、瑜伽'],
-    bodyTips:'你的消化系统是晴雨表。胃不舒服的时候，往往是想太多了。饭后散步15分钟比躺着好。下午犯困是正常的——别硬撑，小睡20分钟。怕潮湿的话注意居住环境的通风。'
+    organ:'脾 / 胃',core:'厚重的、稳定的、滋养的',
+    balanced:['安心满足，内心富足','善于照顾他人，有包容力','消化良好，食欲稳定','让人想依靠，值得信赖'],
+    imbalanced:['过度思虑，反复纠结','消化问题（胃胀、便溏）','四肢无力，倦怠嗜睡','过度依赖或封闭自我'],
+    care:['规律饮食，定时定量','接地气运动（散步、太极）','减少思虑，专注当下','学会接受，不过度付出']
   },
   metal:{
-    icon:'🍃',name:'思考型',tagline:'你是清醒的独立者——理性而有边界，像秋天一样通透而有序',
-    strengths:['自尊自爱，有边界感','条理分明，做事有序','独立自主，不依附他人','审美敏锐，品味出众'],
-    stress:['容易陷入悲伤或怀旧','皮肤可能出问题（过敏、湿疹）','可能便秘或排便不畅','容易自我价值感降低'],
-    advice:['练习腹式呼吸——你的肺需要深层呼吸','学会释放放不下的事——写日记或找人聊','建立内在价值感——你的价值不需要外部证明','适度打开自己——允许别人走进来'],
-    bodyTips:'注意皮肤和呼吸系统。你的情绪往往通过皮肤表达。每天做5分钟深呼吸练习。凌晨3-5点容易醒的话，可能和悲伤情绪有关。保持皮肤的滋润和护理。'
+    organ:'肺 / 大肠',core:'收束的、有空间感的、淡然的',
+    balanced:['自尊自爱，有边界感','有序有节，条理分明','皮肤光泽，容光焕发','独立自主，不依附'],
+    imbalanced:['悲伤放不下，沉溺过去','皮肤问题（湿疹、过敏）','便秘或排便不畅','自我价值低，与世隔绝'],
+    care:['呼吸训练（腹式呼吸、冥想）','释放悲伤情绪','建立内在价值感','学会连接，打开边界']
   },
   water:{
-    icon:'💧',name:'沉静型',tagline:'你是深沉的观察者——安静而有洞察力，像水一样深邃而 adaptable',
-    strengths:['洞察力深，看问题透彻','安全感建立后非常坚定','适应力强，灵活流动','内心丰富，不轻易外露'],
-    stress:['容易恐惧退缩','腰膝酸软、耳鸣','可能夜尿多、怕冷','安全感不足时想躲起来'],
-    advice:['建立"根基感"——找到让你安心的锚点','适度冒险——小的突破会增强你的力量','温养身体——避免寒凉，注意腰膝保暖','静养蓄能：打坐、站桩、冥想'],
-    bodyTips:'你的能量中心在腰和肾。怕冷、手脚冰凉是常见信号。每晚泡脚15-20分钟（水温40°C左右）。晚上比白天有精神是你的节奏——别强迫自己"早起"。保护腰部，避免久坐冰冷地面。'
+    organ:'肾 / 膀胱',core:'下沉的、潜藏的、流动的',
+    balanced:['智慧深沉，洞察力强','安全感充足，内心笃定','精力充沛，生命力旺盛','灵活流动，适应力强'],
+    imbalanced:['恐惧退缩，缺乏安全感','腰膝酸软，耳鸣','夜尿多，生殖功能下降','极度恐惧或麻木'],
+    care:['温补肾阳，避免寒凉','建立安全感，找到根基','静养蓄能（打坐、站桩）','适度冒险，突破恐惧']
   }
 };
 
+const refTableData = {
+  '情志':{wood:'怒',fire:'喜',earth:'思',metal:'悲',water:'恐'},
+  '声音':{wood:'呼/ shout',fire:'笑/ laugh',earth:'歌/ sing',metal:'哭/ weep',water:'呻/ groan'},
+  '颜色':{wood:'绿/青',fire:'红/赤',earth:'黄',metal:'白',water:'黑/蓝'},
+  '气味':{wood:'臊/腥酸',fire:'焦',earth:'香',metal:'腥',water:'腐'},
+  '季节':{wood:'春',fire:'夏',earth:'长夏',metal:'秋',water:'冬'},
+  '脏腑':{wood:'肝/胆',fire:'心/小肠',earth:'脾/胃',metal:'肺/大肠',water:'肾/膀胱'},
+  '味':{wood:'酸',fire:'苦',earth:'甘',metal:'辛',water:'咸'},
+  '核心':{wood:'生机·决断',fire:'温暖·连接',earth:'厚重·滋养',metal:'收束·独立',water:'潜藏·流动'}
+};
+
 // ===== STATE =====
-let currentSection = 0;
-let answers = {};
+let currentMode = 'patient';
+let currentSection = 0; // 0=welcome, 1-5=sections
+let answers = {}; // key: "sectionIdx-qIdx" => element
 let totalQuestions = 0;
 let activeQuestions = [];
 
 function calcTotal(){
   totalQuestions = 0;
   activeQuestions = [];
-  patientSections.forEach((s,si) => {
+  sections.forEach((s,si) => {
+    if(s.doctorOnly && currentMode!=='doctor') return;
     s.questions.forEach((q,qi) => {
       activeQuestions.push({si,qi});
       totalQuestions++;
@@ -419,6 +515,22 @@ function getAnswered(){
   return c;
 }
 
+// ===== MODE =====
+function setMode(m){
+  currentMode = m;
+  document.querySelectorAll('.mode-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0 && m==='patient') || (i===1 && m==='doctor'));
+  });
+  document.getElementById('doctorBadge').classList.toggle('show', m==='doctor');
+  calcTotal();
+  // if we're in quiz, rebuild
+  if(currentSection > 0 && currentSection <= 5){
+    showSection(currentSection);
+  }
+  updateProgress();
+}
+
+// ===== RENDER =====
 function startQuiz(){
   currentSection = 1;
   calcTotal();
@@ -427,35 +539,55 @@ function startQuiz(){
   showSection(1);
 }
 
+function getVisibleSections(){
+  return sections.filter(s => !s.doctorOnly || currentMode==='doctor');
+}
+
 function showSection(n){
+  // n is 1-based section index
   currentSection = n;
   const quizSec = document.getElementById('sec-quiz');
-  if(n > patientSections.length){ showResult(); return; }
-  const sec = patientSections[n-1];
+  const visibleSections = getVisibleSections();
+  
+  if(n > visibleSections.length){
+    showResult();
+    return;
+  }
+  
+  const sec = visibleSections[n-1];
+  const realIdx = sections.indexOf(sec);
+  
   let html = `<div class="section-header">
     <span class="part-label">${sec.prefix}</span>
     <h2>${sec.title}</h2>
     <p>${sec.desc}</p>
   </div>`;
+  
   sec.questions.forEach((q,qi) => {
-    const key = (n-1)+'-'+qi;
+    const key = realIdx+'-'+qi;
     html += `<div class="q-card">
       <div class="q-num">${qi+1} / ${sec.questions.length}</div>
       <div class="q-text">${q.q}</div>`;
-    const shuffled = shuffleOpts(q.opts, (n-1)*10+qi);
-    shuffled.forEach(opt => {
+    // Shuffle options order for variety? No - keep the wood-fire-earth-metal-water order but don't reveal the mapping
+    // Actually let's keep consistent order but randomize per question for less predictability
+    // We'll use a deterministic shuffle based on question index
+    const shuffled = shuffleOpts(q.opts, realIdx*10+qi);
+    shuffled.forEach((opt,oi) => {
       const sel = answers[key] === opt.el ? ' selected' : '';
-      html += `<div class="option${sel}" onclick="selectOpt(${n-1},${qi},'${opt.el}',this)">
+      html += `<div class="option${sel}" onclick="selectOpt(${realIdx},${qi},'${opt.el}')">
         <span class="dot"></span>
         <span class="opt-text">${opt.t}</span>
       </div>`;
     });
     html += `</div>`;
   });
+  
+  // Nav buttons
   html += `<div class="nav-row">`;
   if(n > 1) html += `<button class="btn btn-outline" onclick="prevSection()">上一部分</button>`;
-  html += `<button class="btn btn-primary" onclick="nextSection()">${n===patientSections.length?'查看结果':'下一部分'}</button>`;
+  html += `<button class="btn btn-primary" onclick="nextSection()">${n===visibleSections.length?'查看结果':'下一部分'}</button>`;
   html += `</div>`;
+  
   quizSec.innerHTML = html;
   quizSec.classList.add('active');
   document.getElementById('resultPage').classList.remove('active');
@@ -463,8 +595,10 @@ function showSection(n){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// Deterministic shuffle
 function shuffleOpts(arr, seed){
   const a = arr.map((o,i)=>({...o, _i:i}));
+  // Use seed to create a permutation
   for(let i=a.length-1;i>0;i--){
     seed = (seed*31+i)%97;
     const j = seed%(i+1);
@@ -473,17 +607,33 @@ function shuffleOpts(arr, seed){
   return a;
 }
 
-function selectOpt(si,qi,el,node){
+function selectOpt(si,qi,el){
   answers[si+'-'+qi] = el;
-  node.closest('.q-card').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-  node.classList.add('selected');
+  // Update UI
+  const cards = document.querySelectorAll('.q-card');
+  const sec = sections[si];
+  const qIdx = sec.questions.findIndex(q => q === sec.questions[qi]);
+  const card = cards[qIdx];
+  if(!card) return;
+  card.querySelectorAll('.option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.el === el);
+  });
   updateProgress();
 }
 
-function prevSection(){ if(currentSection > 1) showSection(currentSection - 1); }
+function prevSection(){
+  if(currentSection > 1){
+    showSection(currentSection - 1);
+  }
+}
+
 function nextSection(){
-  if(currentSection < patientSections.length) showSection(currentSection + 1);
-  else showResult();
+  const visibleSections = getVisibleSections();
+  if(currentSection < visibleSections.length){
+    showSection(currentSection + 1);
+  } else {
+    showResult();
+  }
 }
 
 function updateProgress(){
@@ -491,97 +641,193 @@ function updateProgress(){
   const pct = totalQuestions > 0 ? (answered/totalQuestions*100) : 0;
   document.getElementById('progressFill').style.width = pct+'%';
   document.getElementById('progressCount').textContent = answered+' / '+totalQuestions;
-  const secIdx = Math.min(currentSection, patientSections.length);
-  if(secIdx > 0 && secIdx <= patientSections.length){
-    document.getElementById('progressStep').textContent = patientSections[secIdx-1].prefix;
+  
+  const visibleSections = getVisibleSections();
+  const secIdx = Math.min(currentSection, visibleSections.length);
+  if(secIdx > 0 && secIdx <= visibleSections.length){
+    document.getElementById('progressStep').textContent = visibleSections[secIdx-1].prefix;
   }
 }
 
+// ===== RESULTS =====
 function showResult(){
   document.getElementById('sec-quiz').classList.remove('active');
   document.getElementById('progressWrap').style.display = 'none';
+  
+  // Calculate scores
   const scores = {wood:0,fire:0,earth:0,metal:0,water:0};
+  const elCategoryScores = {
+    wood:{scenario:0,voice:0,behavior:0,doctor:0,preference:0},
+    fire:{scenario:0,voice:0,behavior:0,doctor:0,preference:0},
+    earth:{scenario:0,voice:0,behavior:0,doctor:0,preference:0},
+    metal:{scenario:0,voice:0,behavior:0,doctor:0,preference:0},
+    water:{scenario:0,voice:0,behavior:0,doctor:0,preference:0}
+  };
+  
+  const catMap = {0:'scenario',1:'voice',2:'behavior',3:'doctor',4:'preference'};
+  
   Object.keys(answers).forEach(key => {
-    const [si] = key.split('-').map(Number);
+    const [si,qi] = key.split('-').map(Number);
     const el = answers[key];
-    scores[el] += patientSections[si].weight;
+    const sec = sections[si];
+    const cat = catMap[si] || 'scenario';
+    scores[el] += sec.weight;
+    elCategoryScores[el][cat] += sec.weight;
   });
+  
+  // Find max
   let maxScore = 0, maxEl = 'wood';
-  ['wood','fire','earth','metal','water'].forEach(el => { if(scores[el] > maxScore){maxScore=scores[el];maxEl=el;} });
-  const totalScore = ['wood','fire','earth','metal','water'].reduce((s,el) => s+scores[el], 0) || 1;
-  const sorted = ['wood','fire','earth','metal','water']
-    .map(el => ({el, score:scores[el], pct: Math.round(scores[el]/totalScore*100)}))
+  elements.forEach(el => { if(scores[el] > maxScore){maxScore=scores[el];maxEl=el;} });
+  
+  // Tiebreaker
+  const tied = elements.filter(el => scores[el] === maxScore);
+  if(tied.length > 1){
+    const tieScores = tied.map(el => elCategoryScores[el].scenario + elCategoryScores[el].voice);
+    const maxTie = Math.max(...tieScores);
+    maxEl = tied[tieScores.indexOf(maxTie)];
+    maxScore = scores[maxEl];
+  }
+  
+  const totalScore = elements.reduce((s,el) => s+scores[el], 0);
+  const maxPossible = totalScore || 1;
+  
+  // Build sorted array
+  const sorted = elements.map(el => ({el, score:scores[el], pct: Math.round(scores[el]/maxPossible*100)}))
     .sort((a,b) => b.score - a.score);
-  const r = patientResults[maxEl];
+  
+  const detail = detailData[maxEl];
+  
   let html = `
     <div class="result-hero">
-      <span class="icon">${r.icon}</span>
-      <div class="type-name">${r.name}特质</div>
-      <div class="type-tagline">${r.tagline}</div>
+      <span class="emoji">${elEmoji[maxEl]}</span>
+      <div class="cf-name" style="color:${elColors[maxEl]}">${elNames[maxEl]}型体质</div>
+      <div class="cf-tagline">${detail.core}</div>
     </div>
-    <div class="trait-chart">`;
+    
+    <div class="radar-wrap">${buildRadar(scores, maxScore || 1)}</div>
+    
+    <div class="bar-chart">`;
+  
   sorted.forEach(item => {
     const w = maxScore > 0 ? Math.max(item.score/maxScore*100, 8) : 8;
-    html += `<div class="trait-item">
-      <div class="trait-label">${patientResults[item.el].name}</div>
-      <div class="trait-track">
-        <div class="trait-fill" style="width:${w}%">
-          <span class="trait-score">${item.pct}%</span>
+    html += `<div class="bar-item">
+      <div class="bar-label"><span>${elEmoji[item.el]}</span>${elNames[item.el]}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${w}%;background:${elColors[item.el]}">
+          <span class="bar-score">${item.score.toFixed(1)}</span>
         </div>
       </div>
     </div>`;
   });
+  
   html += `</div>`;
-
-  // Strengths card
-  html += `<div class="result-card">
-    <h3>✨ 你的核心优势</h3>
-    <div class="card-sub">${r.name}特质赋予你的天然力量</div>
-    <div class="tag-row">${r.strengths.map(s => `<span class="tag tag-positive">${s}</span>`).join('')}</div>
-  </div>`;
-
-  // Stress card
-  html += `<div class="result-card">
-    <h3>⚡ 压力下的信号</h3>
-    <div class="card-sub">当你超负荷时，可能出现这些表现</div>
-    <ul class="advice-list">${r.stress.map(s => `<li>${s}</li>`).join('')}</ul>
-  </div>`;
-
-  // Advice card
-  html += `<div class="result-card">
-    <h3>💡 个性化建议</h3>
-    <div class="card-sub">适合${r.name}特质的日常调理方向</div>
-    <ul class="advice-list">${r.advice.map(a => `<li>${a}</li>`).join('')}</ul>
-  </div>`;
-
-  // Body signals card
-  html += `<div class="result-card">
-    <h3>🩺 身体信号解读</h3>
-    <div class="card-sub">你的身体在告诉你什么</div>
-    <div class="body-signals">
-      <div class="signal-group">
-        <div class="signal-text">${r.bodyTips}</div>
-      </div>
-    </div>
-  </div>`;
-
+  
+  // All 5 element detail cards
+  html += `<h3 style="font-size:1rem;font-weight:700;margin:24px 0 12px;text-align:center">五行详解</h3>`;
+  elements.forEach(el => {
+    const d = detailData[el];
+    const isMain = el === maxEl;
+    html += `<div class="detail-card" style="--card-color:${elColors[el]};--card-bg:${elColorsBg[el]};${isMain?'border-left-width:4px;':'opacity:.85;'}">
+      <h3>${elEmoji[el]} ${elNames[el]}${isMain?' ✦ 你的主导一行':''}</h3>
+      <div class="organ">脏腑：${d.organ}</div>
+      <div class="trait">${d.core}</div>
+      <div class="sub-title">✨ 平衡时</div>
+      <ul>${d.balanced.map(x=>'<li>'+x+'</li>').join('')}</ul>
+      <div class="sub-title">⚠️ 失衡时</div>
+      <ul>${d.imbalanced.map(x=>'<li>'+x+'</li>').join('')}</ul>
+      <div class="sub-title">💡 调理方向</div>
+      <ul>${d.care.map(x=>'<li>'+x+'</li>').join('')}</ul>
+    </div>`;
+  });
+  
+  // Reference table
+  html += `<h3 style="font-size:1rem;font-weight:700;margin:24px 0 12px;text-align:center">五行对应全览</h3>
+  <table class="ref-table">
+    <tr><th></th>`;
+  elements.forEach(el => { html += `<th>${elEmoji[el]}${elNames[el]}</th>`; });
+  html += `</tr>`;
+  Object.keys(refTableData).forEach(row => {
+    html += `<tr><td class="row-label">${row}</td>`;
+    elements.forEach(el => { html += `<td>${refTableData[row][el]}</td>`; });
+    html += `</tr>`;
+  });
+  html += `</table>`;
+  
   html += `<div class="nav-row no-print">
-    <button class="btn btn-outline" onclick="backToQuiz()">重新评估</button>
+    <button class="btn btn-outline" onclick="backToQuiz()">重新作答</button>
     <button class="btn btn-primary" onclick="window.print()">保存/打印</button>
   </div>`;
-  html += `<div class="disclaimer">本评估仅供健康参考，不能替代专业诊疗<br>数据仅在你的设备上处理，不会上传或保存</div>`;
-
+  
+  html += `<div class="disclaimer">本量表仅供健康参考，不能替代专业诊疗<br>基于五行针灸诊断体系 · 辨识你的护持一行</div>`;
+  
   const rp = document.getElementById('resultPage');
   rp.innerHTML = html;
   rp.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  
+  // Animate bars
   setTimeout(() => {
-    document.querySelectorAll('.trait-fill').forEach(b => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
       const w = b.style.width;
       b.style.width = '0%';
       requestAnimationFrame(() => { b.style.width = w; });
     });
   }, 100);
+}
+
+function buildRadar(scores, maxScore){
+  const cx=150, cy=150, r=110;
+  const angles = elements.map((_,i) => -Math.PI/2 + i*2*Math.PI/5);
+  
+  function pt(angle, ratio){
+    return [cx + r*ratio*Math.cos(angle), cy + r*ratio*Math.sin(angle)];
+  }
+  
+  // Grid lines
+  let grid = '';
+  [0.2,0.4,0.6,0.8,1.0].forEach(ratio => {
+    const pts = angles.map(a => pt(a,ratio).join(',')).join(' ');
+    grid += `<polygon points="${pts}" fill="none" stroke="#e0e8ef" stroke-width="${ratio===1?1.5:0.5}"/>`;
+  });
+  
+  // Axis lines
+  let axes = '';
+  angles.forEach(a => {
+    const [x,y] = pt(a,1);
+    axes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e0e8ef" stroke-width="0.5"/>`;
+  });
+  
+  // Labels
+  let labels = '';
+  const labelOffsets = [[-18,-10],[12,-10],[12,6],[-18,6],[-6,18]];
+  elements.forEach((el,i) => {
+    const [x,y] = pt(angles[i], 1.18);
+    labels += `<text x="${x}" y="${y}" text-anchor="middle" font-size="12" font-weight="600" fill="${elColors[el]}">${elEmoji[el]} ${elNames[el]}</text>`;
+  });
+  
+  // Data polygon
+  const ratios = elements.map(el => maxScore > 0 ? scores[el]/maxScore : 0);
+  const dataPts = angles.map((a,i) => pt(a, Math.max(ratios[i], 0.05)).join(',')).join(' ');
+  
+  // Gradient fill
+  let svg = `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#7EBEE8;stop-opacity:.2"/>
+        <stop offset="100%" style="stop-color:#F0A684;stop-opacity:.2"/>
+      </linearGradient>
+    </defs>
+    ${grid}${axes}
+    <polygon points="${dataPts}" fill="url(#rg)" stroke="#7EBEE8" stroke-width="2" stroke-linejoin="round"/>`;
+  
+  // Data points
+  angles.forEach((a,i) => {
+    const [x,y] = pt(a, Math.max(ratios[i], 0.05));
+    svg += `<circle cx="${x}" cy="${y}" r="4" fill="${elColors[elements[i]]}" stroke="#fff" stroke-width="1.5"/>`;
+  });
+  
+  svg += labels + `</svg>`;
+  return svg;
 }
 
 function backToQuiz(){
@@ -593,6 +839,7 @@ function backToQuiz(){
   showSection(1);
 }
 
+// Init
 calcTotal();
 </script>
 </body>
